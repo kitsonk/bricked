@@ -102,6 +102,21 @@ export interface BricklinkCredentials {
   tokenSecret: string;
 }
 
+export type BLNotificationResourceType = "ORDER" | "MESSAGE" | "FEEDBACK";
+
+export interface BLNotification {
+  resource_id: number;
+  resource_type: BLNotificationResourceType;
+  /** The specific event that triggered the notification. */
+  notification_type: string;
+}
+
+/** A persisted notification with receipt metadata. */
+export interface StoredNotification extends BLNotification {
+  id: string;
+  receivedAt: string;
+}
+
 export interface PickListItem {
   itemNo: string;
   itemName: string;

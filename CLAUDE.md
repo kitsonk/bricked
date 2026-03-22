@@ -46,9 +46,9 @@ are imported via `assets/styles.css`. The `@/` alias maps to the project root.
 **Persistence:** Deno KV (`utils/kv.ts`) stores BrickLink API credentials. KV requires `"unstable": ["kv"]` in
 `deno.json` (runtime flag) in addition to `"deno.unstable"` in `compilerOptions.lib` (type checking only).
 
-**BrickLink API:** `utils/bricklink.ts` implements OAuth 1.0a signing via the Web Crypto API. Credentials
-(consumer key/secret, token/secret) are entered via `/settings` and stored in KV. The `remarks` field on order items
-is used as the storage location for pick list generation.
+**BrickLink API:** `utils/bricklink.ts` implements OAuth 1.0a signing via the Web Crypto API. Credentials (consumer
+key/secret, token/secret) are entered via `/settings` and stored in KV. The `remarks` field on order items is used as
+the storage location for pick list generation.
 
 ## Key Conventions
 
@@ -56,8 +56,8 @@ is used as the storage location for pick list generation.
 - JSX: Preact (`/** @jsxImportSource preact */` via compiler options — no manual pragma needed)
 - Imports use the `@/` alias for project-root-relative paths
 - Sidebar toggle state managed via CSS checkbox (no JS state)
-- **Fresh v2 data passing:** Use `page(data)` imported from `"fresh"` to pass data from a handler to the page
-  component. Do NOT use `ctx.render(data)` — in Fresh v2, `ctx.render()` takes a `VNode`, not arbitrary data.
-  Pattern: handler calls `return page({ ... })`, page is defined as `define.page<typeof handler>(({ data }) => ...)`.
-- **Lucide icons:** New icons must be added to the `@source inline(...)` list in `assets/styles.css` or they will
-  not be included in the CSS bundle.
+- **Fresh v2 data passing:** Use `page(data)` imported from `"fresh"` to pass data from a handler to the page component.
+  Do NOT use `ctx.render(data)` — in Fresh v2, `ctx.render()` takes a `VNode`, not arbitrary data. Pattern: handler
+  calls `return page({ ... })`, page is defined as `define.page<typeof handler>(({ data }) => ...)`.
+- **Lucide icons:** New icons must be added to the `@source inline(...)` list in `assets/styles.css` or they will not be
+  included in the CSS bundle.

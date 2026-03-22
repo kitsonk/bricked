@@ -1,4 +1,4 @@
-import type { BLOrder, BLOrderItem, BricklinkCredentials } from "@/utils/types.ts";
+import type { BLNotification, BLOrder, BLOrderItem, BricklinkCredentials } from "@/utils/types.ts";
 
 const BASE_URL = "https://api.bricklink.com/api/store/v1";
 
@@ -97,5 +97,9 @@ export class BricklinkClient {
     // The API returns an array of batches; flatten them.
     const batches = await this.get<BLOrderItem[][]>(`/orders/${orderId}/items`);
     return batches.flat();
+  }
+
+  getNotifications(): Promise<BLNotification[]> {
+    return this.get<BLNotification[]>("/notifications");
   }
 }
