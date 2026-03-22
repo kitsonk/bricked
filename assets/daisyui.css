@@ -1,0 +1,83 @@
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "bricked-light";
+  default: false;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98% 0 0);
+  --color-base-300: oklch(95% 0 0);
+  --color-base-content: oklch(21% 0.006 285.885);
+  --color-primary: oklch(48.348% 0.1984 29.234);
+  --color-primary-content: oklch(94.732% 0.02631 17.626);
+  --color-secondary: oklch(47.341% 0.13944 256.78);
+  --color-secondary-content: oklch(99.012% 0.00341 247.86);
+  --color-accent: oklch(63.13% 0.10669 196.4);
+  --color-accent-content: oklch(96.886% 0.03708 198.62);
+  --color-neutral: oklch(50.323% 0 none);
+  --color-neutral-content: oklch(99.405% 0 none);
+  --color-info: oklch(31.992% 0.07808 259.4);
+  --color-info-content: oklch(91.568% 0.02605 259.05);
+  --color-success: oklch(66.573% 0.16408 139.43);
+  --color-success-content: oklch(98.993% 0.00672 145.52);
+  --color-warning: oklch(66.623% 0.14779 57.318);
+  --color-warning-content: oklch(95.091% 0.02209 63.204);
+  --color-error: oklch(60.193% 0.21662 345.3);
+  --color-error-content: oklch(95.967% 0.01912 338.71);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+
+  --layout-sidebar-background: oklch(98% 0 0);
+  --layout-topbar-background: oklch(98% 0 0);
+  --rounded-box: 0.25rem;
+  --card-p: 20px;
+  --card-fs: var(--text-base);
+}
+
+@plugin "daisyui/theme" {
+  name: "bricked-dark";
+  default: false;
+  prefersdark: false;
+  color-scheme: "dark";
+  --color-base-100: oklch(25.33% 0.016 252.42);
+  --color-base-200: oklch(23.26% 0.014 253.1);
+  --color-base-300: oklch(21.15% 0.012 254.09);
+  --color-base-content: oklch(96% 0.007 247.896);
+  --color-primary: oklch(56.362% 0.23128 29.234);
+  --color-primary-content: oklch(94.732% 0.02631 17.626);
+  --color-secondary: oklch(54.209% 0.16226 256.75);
+  --color-secondary-content: oklch(99.012% 0.00341 247.86);
+  --color-accent: oklch(85.25% 0.1445 196.44);
+  --color-accent-content: oklch(38.145% 0.06383 196.34);
+  --color-neutral: oklch(50.323% 0 none);
+  --color-neutral-content: oklch(99.405% 0 none);
+  --color-info: oklch(66.097% 0.10892 259.61);
+  --color-info-content: oklch(26.986% 0.06145 259.18);
+  --color-success: oklch(77.3% 0.13613 139.28);
+  --color-success-content: oklch(35.365% 0.07926 138.93);
+  --color-warning: oklch(71.779% 0.13437 60.542);
+  --color-warning-content: oklch(23.852% 0.0429 63.416);
+  --color-error: oklch(65.25% 0.18857 343.36);
+  --color-error-content: oklch(24.335% 0.07892 344.11);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+
+  --layout-sidebar-background: oklch(17.739% 0.00442 264.46);
+  --layout-topbar-background: oklch(17.739% 0.00442 264.46);
+  --rounded-box: 0.25rem;
+  --card-p: 20px;
+  --card-fs: var(--text-base);
+}
