@@ -1,0 +1,160 @@
+import { useSignal } from "@preact/signals";
+import type { PickListItem } from "@/utils/types.ts";
+
+function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const key = keyFn(item);
+    const arr = map.get(key) ?? [];
+    arr.push(item);
+    map.set(key, arr);
+  }
+  return map;
+}
+
+export default function PickList({ items, orderIds }: { items: PickListItem[]; orderIds: number[] }) {
+  const picked = useSignal(new Set<string>());
+
+  function itemKey(item: PickListItem) {
+    return `${item.itemNo}|${item.colorId}|${item.condition}|${item.location}`;
+  }
+
+  function togglePicked(key: string) {
+    const next = new Set(picked.value);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    picked.value = next;
+  }
+
+  function resetAll() {
+    picked.value = new Set();
+  }
+
+  const byLocation = groupBy(items, (item) => item.location);
+  const totalPieces = items.reduce((sum, i) => sum + i.quantity, 0);
+  const pickedCount = picked.value.size;
+
+  return (
+    <div>
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold">Pick List</h1>
+          <p class="text-base-content/60 text-sm mt-1">
+            Orders: {orderIds.map((id) => `#${id}`).join(", ")}
+          </p>
+        </div>
+        <div class="flex gap-2 print:hidden">
+          <a href="/orders" class="btn btn-ghost btn-sm">
+            <span class="iconify lucide--arrow-left size-4"></span>
+            Back
+          </a>
+          {pickedCount > 0 && (
+            <button type="button" class="btn btn-ghost btn-sm" onClick={resetAll}>
+              <span class="iconify lucide--rotate-ccw size-4"></span>
+              Reset
+            </button>
+          )}
+          <button type="button" class="btn btn-primary btn-sm" onClick={() => globalThis.print()}>
+            <span class="iconify lucide--printer size-4"></span>
+            Print
+          </button>
+        </div>
+      </div>
+
+      <div class="flex gap-4 mb-6 text-sm text-base-content/60 print:hidden">
+        <span>
+          <span class="font-medium text-base-content">{items.length}</span> lots
+        </span>
+        <span>
+          <span class="font-medium text-base-content">{totalPieces}</span> pieces
+        </span>
+        <span>
+          <span class="font-medium text-base-content">{byLocation.size}</span> locations
+        </span>
+        {pickedCount > 0 && (
+          <span class="text-success">
+            <span class="font-medium">{pickedCount}</span> picked
+          </span>
+        )}
+      </div>
+
+      <div class="space-y-4">
+        {[...byLocation.entries()].map(([location, locationItems]) => {
+          const allPicked = locationItems.every((i) => picked.value.has(itemKey(i)));
+          return (
+            <div
+              key={location}
+              class={`card border transition-opacity ${allPicked ? "opacity-50 bg-base-100" : "bg-base-200"}`}
+            >
+              <div class="card-body p-4">
+                <h2 class="flex items-center gap-2 text-base font-semibold">
+                  <span class={`iconify lucide--map-pin size-4 ${allPicked ? "text-success" : "text-primary"}`}>
+                  </span>
+                  <span class={allPicked ? "line-through text-base-content/50" : ""}>{location}</span>
+                  <span class="badge badge-sm badge-ghost ml-auto">
+                    {locationItems.length} lot{locationItems.length !== 1 ? "s" : ""}
+                  </span>
+                </h2>
+                <table class="table table-sm mt-2">
+                  <thead>
+                    <tr>
+                      <th class="w-8 print:hidden"></th>
+                      <th>Item</th>
+                      <th>Color</th>
+                      <th>Cond.</th>
+                      <th class="text-right">Qty</th>
+                      <th class="print:hidden text-xs">Orders</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {locationItems.map((item) => {
+                      const key = itemKey(item);
+                      const isPicked = picked.value.has(key);
+                      return (
+                        <tr
+                          key={key}
+                          class={`cursor-pointer transition-all ${isPicked ? "opacity-40" : ""}`}
+                          onClick={() => togglePicked(key)}
+                        >
+                          <td class="print:hidden">
+                            <input
+                              type="checkbox"
+                              class="checkbox checkbox-sm checkbox-success"
+                              checked={isPicked}
+                              onChange={() => togglePicked(key)}
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label="Mark as picked"
+                            />
+                          </td>
+                          <td>
+                            <div class={`font-medium ${isPicked ? "line-through" : ""}`}>{item.itemName}</div>
+                            <div class="text-xs text-base-content/50 font-mono">{item.itemNo}</div>
+                          </td>
+                          <td class="text-sm">{item.colorName}</td>
+                          <td>
+                            <span
+                              class={`badge badge-xs ${item.condition === "N" ? "badge-success" : "badge-warning"}`}
+                            >
+                              {item.condition === "N" ? "New" : "Used"}
+                            </span>
+                          </td>
+                          <td class="text-right font-bold text-lg">{item.quantity}</td>
+                          <td class="text-xs text-base-content/50 print:hidden">
+                            {item.orderIds.map((id) => `#${id}`).join(", ")}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
