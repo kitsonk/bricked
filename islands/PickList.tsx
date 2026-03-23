@@ -36,15 +36,13 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
   const byLocation = groupBy(items, (item) => item.location);
   const totalPieces = items.reduce((sum, i) => sum + i.quantity, 0);
   const pickedCount = picked.value.size;
+  const buyerByOrderId = new Map(orders.map((o) => [o.orderId, o.buyerName]));
 
   return (
     <div>
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold">Pick List</h1>
-          <p class="text-base-content/60 text-sm mt-1">
-            {orders.map((o) => `#${o.orderId}`).join(", ")}
-          </p>
         </div>
         <div class="flex gap-2 print:hidden">
           <a href="/orders" class="btn btn-ghost btn-sm">
@@ -177,7 +175,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                         <td class="text-sm">{item.colorName}</td>
                         <td class="text-right font-bold text-lg">{item.quantity}</td>
                         <td class="text-xs text-base-content/50 print:hidden">
-                          {item.orderIds.map((id) => `#${id}`).join(", ")}
+                          {item.orderIds.map((id) => `#${id} (${buyerByOrderId.get(id) ?? ""})`).join(", ")}
                         </td>
                       </tr>
                     );
