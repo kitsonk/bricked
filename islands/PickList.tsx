@@ -127,79 +127,66 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
         </div>
       )}
 
-      <div class="space-y-4">
-        {[...byLocation.entries()].map(([location, locationItems]) => {
-          const allPicked = locationItems.every((i) => picked.value.has(itemKey(i)));
-          return (
-            <div
-              key={location}
-              class={`card border transition-opacity ${allPicked ? "opacity-50 bg-base-100" : "bg-base-200"}`}
-            >
-              <div class="card-body p-4">
-                <h2 class="flex items-center gap-2 text-base font-semibold">
-                  <span class={`iconify lucide--map-pin size-4 ${allPicked ? "text-success" : "text-primary"}`}>
-                  </span>
-                  <span class={allPicked ? "line-through text-base-content/50" : ""}>{location}</span>
-                  <span class="badge badge-sm badge-ghost ml-auto">
-                    {locationItems.length} lot{locationItems.length !== 1 ? "s" : ""}
-                  </span>
-                </h2>
-                <table class="table table-sm mt-2">
-                  <thead>
-                    <tr>
-                      <th class="w-8 print:hidden"></th>
-                      <th>Item</th>
-                      <th>Color</th>
-                      <th>Cond.</th>
-                      <th class="text-right">Qty</th>
-                      <th class="print:hidden text-xs">Orders</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {locationItems.map((item) => {
-                      const key = itemKey(item);
-                      const isPicked = picked.value.has(key);
-                      return (
-                        <tr
-                          key={key}
-                          class={`cursor-pointer transition-all ${isPicked ? "opacity-40" : ""}`}
-                          onClick={() => togglePicked(key)}
+      <div class="overflow-x-auto rounded-box border border-base-content/10">
+        <table class="table table-sm table-pin-rows">
+          {[...byLocation.entries()].map(([location, locationItems]) => {
+            const allPicked = locationItems.every((i) => picked.value.has(itemKey(i)));
+            return (
+              <>
+                <thead key={`head-${location}`}>
+                  <tr>
+                    <th colSpan={4}>
+                      <span class="flex items-center gap-2">
+                        <span
+                          class={`iconify lucide--map-pin size-3.5 ${allPicked ? "text-success" : "text-primary"}`}
                         >
-                          <td class="print:hidden">
-                            <input
-                              type="checkbox"
-                              class="checkbox checkbox-sm checkbox-success"
-                              checked={isPicked}
-                              onChange={() => togglePicked(key)}
-                              onClick={(e) => e.stopPropagation()}
-                              aria-label="Mark as picked"
-                            />
-                          </td>
-                          <td>
-                            <div class={`font-medium ${isPicked ? "line-through" : ""}`}>{item.itemName}</div>
-                            <div class="text-xs text-base-content/50 font-mono">{item.itemNo}</div>
-                          </td>
-                          <td class="text-sm">{item.colorName}</td>
-                          <td>
-                            <span
-                              class={`badge badge-xs ${item.condition === "N" ? "badge-success" : "badge-warning"}`}
-                            >
-                              {item.condition === "N" ? "New" : "Used"}
-                            </span>
-                          </td>
-                          <td class="text-right font-bold text-lg">{item.quantity}</td>
-                          <td class="text-xs text-base-content/50 print:hidden">
-                            {item.orderIds.map((id) => `#${id}`).join(", ")}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        })}
+                        </span>
+                        <span class={allPicked ? "line-through text-base-content/40" : ""}>{location}</span>
+                        <span class="badge badge-xs badge-ghost">
+                          {locationItems.length} lot{locationItems.length !== 1 ? "s" : ""}
+                        </span>
+                      </span>
+                    </th>
+                    <th class="print:hidden"></th>
+                  </tr>
+                </thead>
+                <tbody key={`body-${location}`}>
+                  {locationItems.map((item) => {
+                    const key = itemKey(item);
+                    const isPicked = picked.value.has(key);
+                    return (
+                      <tr
+                        key={key}
+                        class={`cursor-pointer transition-all ${isPicked ? "opacity-40" : ""}`}
+                        onClick={() => togglePicked(key)}
+                      >
+                        <td class="print:hidden">
+                          <input
+                            type="checkbox"
+                            class="checkbox checkbox-sm checkbox-success"
+                            checked={isPicked}
+                            onChange={() => togglePicked(key)}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label="Mark as picked"
+                          />
+                        </td>
+                        <td>
+                          <div class={`font-medium ${isPicked ? "line-through" : ""}`}>{item.itemName}</div>
+                          <div class="text-xs text-base-content/50 font-mono">{item.itemNo}</div>
+                        </td>
+                        <td class="text-sm">{item.colorName}</td>
+                        <td class="text-right font-bold text-lg">{item.quantity}</td>
+                        <td class="text-xs text-base-content/50 print:hidden">
+                          {item.orderIds.map((id) => `#${id}`).join(", ")}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </>
+            );
+          })}
+        </table>
       </div>
     </div>
   );
