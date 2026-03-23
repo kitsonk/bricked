@@ -4,6 +4,7 @@ import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials } from "@/utils/kv.ts";
 import type { BLOrder, PickListItem, PickListOrder } from "@/utils/types.ts";
+import { decodeHtml } from "@/utils/html.ts";
 import PickList from "@/islands/PickList.tsx";
 
 export const handler = define.handlers<
@@ -53,7 +54,7 @@ export const handler = define.handlers<
           } else {
             map.set(key, {
               itemNo: item.item.no,
-              itemName: item.item.name,
+              itemName: decodeHtml(item.item.name),
               itemType: item.item.type,
               colorId: item.color_id,
               colorName: item.color_name,

@@ -4,6 +4,7 @@ import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials } from "@/utils/kv.ts";
 import type { BLOrder, BLOrderItem } from "@/utils/types.ts";
+import { decodeHtml } from "@/utils/html.ts";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "badge-warning",
@@ -134,7 +135,7 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                   {items.map((item: BLOrderItem) => (
                     <tr key={item.order_item_no}>
                       <td>
-                        <div class="font-medium">{item.item.name}</div>
+                        <div class="font-medium">{decodeHtml(item.item.name)}</div>
                         <div class="text-xs text-base-content/50 font-mono">{item.item.no}</div>
                       </td>
                       <td class="text-sm">{item.color_name}</td>
