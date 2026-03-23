@@ -39,28 +39,38 @@ export default define.page<typeof handler>(function Settings({ data }) {
             </p>
             <ul class="text-sm font-mono space-y-1">
               <li>
-                <span class={`badge badge-sm mr-2 ${Deno.env.get("BRICKLINK_CONSUMER_KEY") ? "badge-success" : "badge-warning"}`}>
+                <span
+                  class={`badge badge-sm mr-2 ${
+                    Deno.env.get("BRICKLINK_CONSUMER_KEY") ? "badge-success" : "badge-warning"
+                  }`}
+                >
                   {Deno.env.get("BRICKLINK_CONSUMER_KEY") ? "set" : "missing"}
                 </span>
                 BRICKLINK_CONSUMER_KEY
               </li>
               <li>
                 <span
-                  class={`badge badge-sm mr-2 ${Deno.env.get("BRICKLINK_CONSUMER_SECRET") ? "badge-success" : "badge-warning"}`}
+                  class={`badge badge-sm mr-2 ${
+                    Deno.env.get("BRICKLINK_CONSUMER_SECRET") ? "badge-success" : "badge-warning"
+                  }`}
                 >
                   {Deno.env.get("BRICKLINK_CONSUMER_SECRET") ? "set" : "missing"}
                 </span>
                 BRICKLINK_CONSUMER_SECRET
               </li>
               <li>
-                <span class={`badge badge-sm mr-2 ${Deno.env.get("BRICKLINK_TOKEN") ? "badge-success" : "badge-warning"}`}>
+                <span
+                  class={`badge badge-sm mr-2 ${Deno.env.get("BRICKLINK_TOKEN") ? "badge-success" : "badge-warning"}`}
+                >
                   {Deno.env.get("BRICKLINK_TOKEN") ? "set" : "missing"}
                 </span>
                 BRICKLINK_TOKEN
               </li>
               <li>
                 <span
-                  class={`badge badge-sm mr-2 ${Deno.env.get("BRICKLINK_TOKEN_SECRET") ? "badge-success" : "badge-warning"}`}
+                  class={`badge badge-sm mr-2 ${
+                    Deno.env.get("BRICKLINK_TOKEN_SECRET") ? "badge-success" : "badge-warning"
+                  }`}
                 >
                   {Deno.env.get("BRICKLINK_TOKEN_SECRET") ? "set" : "missing"}
                 </span>
