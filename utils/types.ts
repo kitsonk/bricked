@@ -117,6 +117,12 @@ export interface StoredNotification extends BLNotification {
   receivedAt: string;
 }
 
+export interface PickListOrder {
+  orderId: number;
+  buyerName: string;
+  status: OrderStatus;
+}
+
 export interface PickListItem {
   itemNo: string;
   itemName: string;
@@ -128,4 +134,6 @@ export interface PickListItem {
   /** Storage location derived from inventory remarks. */
   location: string;
   orderIds: number[];
+  /** Per-order piece quantities, keyed by order ID. */
+  orderQuantities: Record<number, number>;
 }

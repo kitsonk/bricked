@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import type { PickListItem } from "@/utils/types.ts";
+import type { PickListItem, PickListOrder } from "@/utils/types.ts";
 
 function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   const map = new Map<string, T[]>();
@@ -12,7 +12,7 @@ function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   return map;
 }
 
-export default function PickList({ items, orderIds }: { items: PickListItem[]; orderIds: number[] }) {
+export default function PickList({ items, orders }: { items: PickListItem[]; orders: PickListOrder[] }) {
   const picked = useSignal(new Set<string>());
 
   function itemKey(item: PickListItem) {
@@ -43,7 +43,7 @@ export default function PickList({ items, orderIds }: { items: PickListItem[]; o
         <div>
           <h1 class="text-2xl font-bold">Pick List</h1>
           <p class="text-base-content/60 text-sm mt-1">
-            Orders: {orderIds.map((id) => `#${id}`).join(", ")}
+            {orders.map((o) => `#${o.orderId}`).join(", ")}
           </p>
         </div>
         <div class="flex gap-2 print:hidden">
@@ -80,6 +80,52 @@ export default function PickList({ items, orderIds }: { items: PickListItem[]; o
           </span>
         )}
       </div>
+
+      {orders.length > 0 && (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 print:hidden">
+          {orders.map((order) => {
+            const orderItems = items.filter((i) => i.orderIds.includes(order.orderId));
+            const totalLots = orderItems.length;
+            const totalOrderPieces = orderItems.reduce((sum, i) => sum + (i.orderQuantities[order.orderId] ?? 0), 0);
+            const pickedLots = orderItems.filter((i) => picked.value.has(itemKey(i))).length;
+            const pickedPieces = orderItems.reduce(
+              (sum, i) => picked.value.has(itemKey(i)) ? sum + (i.orderQuantities[order.orderId] ?? 0) : sum,
+              0,
+            );
+            const done = pickedLots === totalLots;
+            return (
+              <div key={order.orderId} class={`card border transition-opacity ${done ? "opacity-60" : "bg-base-200"}`}>
+                <div class="card-body p-4 gap-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold">#{order.orderId}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-base-content/70">
+                    <span class="iconify lucide--user size-3.5"></span>
+                    <span>{order.buyerName}</span>
+                  </div>
+                  <div class="flex gap-4 mt-1 text-sm">
+                    <span>
+                      <span class={`font-semibold ${done ? "text-success" : ""}`}>{pickedLots}</span>
+                      <span class="text-base-content/50">/{totalLots} lots</span>
+                    </span>
+                    <span>
+                      <span class={`font-semibold ${done ? "text-success" : ""}`}>{pickedPieces}</span>
+                      <span class="text-base-content/50">/{totalOrderPieces} pieces</span>
+                    </span>
+                  </div>
+                  {totalLots > 0 && (
+                    <progress
+                      class={`progress w-full ${done ? "progress-success" : "progress-primary"}`}
+                      value={pickedLots}
+                      max={totalLots}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div class="space-y-4">
         {[...byLocation.entries()].map(([location, locationItems]) => {

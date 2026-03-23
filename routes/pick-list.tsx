@@ -3,10 +3,12 @@ import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials } from "@/utils/kv.ts";
-import type { PickListItem } from "@/utils/types.ts";
+import type { BLOrder, PickListItem, PickListOrder } from "@/utils/types.ts";
 import PickList from "@/islands/PickList.tsx";
 
-export const handler = define.handlers<{ pickList: PickListItem[]; orderIds: number[]; error: string | null }>({
+export const handler = define.handlers<
+  { pickList: PickListItem[]; orders: PickListOrder[]; error: string | null }
+>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
@@ -25,7 +27,16 @@ export const handler = define.handlers<{ pickList: PickListItem[]; orderIds: num
 
     try {
       const client = new BricklinkClient(creds);
-      const itemArrays = await Promise.all(orderIds.map((id) => client.getOrderItems(id)));
+      const [orderDetails, itemArrays] = await Promise.all([
+        Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
+        Promise.all(orderIds.map((id) => client.getOrderItems(id))),
+      ]);
+
+      const orders: PickListOrder[] = orderDetails.map((o) => ({
+        orderId: o.order_id,
+        buyerName: o.buyer_name,
+        status: o.status,
+      }));
 
       const map = new Map<string, PickListItem>();
       orderIds.forEach((orderId, idx) => {
@@ -35,6 +46,7 @@ export const handler = define.handlers<{ pickList: PickListItem[]; orderIds: num
           const existing = map.get(key);
           if (existing) {
             existing.quantity += item.quantity;
+            existing.orderQuantities[orderId] = (existing.orderQuantities[orderId] ?? 0) + item.quantity;
             if (!existing.orderIds.includes(orderId)) {
               existing.orderIds.push(orderId);
             }
@@ -49,6 +61,7 @@ export const handler = define.handlers<{ pickList: PickListItem[]; orderIds: num
               quantity: item.quantity,
               location,
               orderIds: [orderId],
+              orderQuantities: { [orderId]: item.quantity },
             });
           }
         }
@@ -59,15 +72,15 @@ export const handler = define.handlers<{ pickList: PickListItem[]; orderIds: num
         return locCmp !== 0 ? locCmp : a.itemName.localeCompare(b.itemName);
       });
 
-      return page({ pickList, orderIds, error: null });
+      return page({ pickList, orders, error: null });
     } catch (err) {
-      return page({ pickList: [], orderIds, error: String(err) });
+      return page({ pickList: [], orders: [], error: String(err) });
     }
   },
 });
 
 export default define.page<typeof handler>(function PickListPage({ data }) {
-  const { pickList, orderIds, error } = data;
+  const { pickList, orders, error } = data;
   return (
     <AppFrame>
       <div class="p-6">
@@ -90,7 +103,7 @@ export default define.page<typeof handler>(function PickListPage({ data }) {
           </div>
         )}
 
-        {pickList.length > 0 && <PickList items={pickList} orderIds={orderIds} />}
+        {pickList.length > 0 && <PickList items={pickList} orders={orders} />}
       </div>
     </AppFrame>
   );
