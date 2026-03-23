@@ -94,12 +94,10 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
             return (
               <div key={order.orderId} class={`card border transition-opacity ${done ? "opacity-60" : "bg-base-200"}`}>
                 <div class="card-body p-4 gap-2">
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
                     <span class="font-semibold">#{order.orderId}</span>
-                  </div>
-                  <div class="flex items-center gap-2 text-sm text-base-content/70">
-                    <span class="iconify lucide--user size-3.5"></span>
-                    <span>{order.buyerName}</span>
+                    <span class="text-base-content/50">·</span>
+                    <span class="text-sm text-base-content/70">{order.buyerName}</span>
                   </div>
                   <div class="flex gap-4 mt-1 text-sm">
                     <span>
