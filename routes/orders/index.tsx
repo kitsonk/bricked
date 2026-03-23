@@ -9,7 +9,7 @@ import OrdersTable from "@/islands/OrdersTable.tsx";
 
 export const handler = define.handlers<{ orders: BLOrder[]; error: string | null }>({
   async GET(ctx) {
-    const creds = await getCredentials();
+    const creds = getCredentials();
     if (!creds) {
       return ctx.redirect("/settings");
     }

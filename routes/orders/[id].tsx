@@ -17,7 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export const handler = define.handlers<{ order: BLOrder | null; items: BLOrderItem[]; error: string | null }>({
   async GET(ctx) {
-    const creds = await getCredentials();
+    const creds = getCredentials();
     if (!creds) {
       return ctx.redirect("/settings");
     }

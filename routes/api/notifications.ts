@@ -10,7 +10,7 @@ export const handler = define.handlers({
   // We respond by fetching the current notification list from the API and
   // persisting each entry to KV for later use.
   async POST(_ctx) {
-    const creds = await getCredentials();
+    const creds = getCredentials();
     if (!creds) {
       logger.warn`Received notification ping but no credentials are configured`;
       return new Response(null, { status: 503 });

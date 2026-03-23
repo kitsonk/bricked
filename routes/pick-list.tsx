@@ -8,7 +8,7 @@ import PickList from "@/islands/PickList.tsx";
 
 export const handler = define.handlers<{ pickList: PickListItem[]; orderIds: number[]; error: string | null }>({
   async GET(ctx) {
-    const creds = await getCredentials();
+    const creds = getCredentials();
     if (!creds) {
       return ctx.redirect("/settings");
     }

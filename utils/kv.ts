@@ -1,16 +1,12 @@
 import type { BricklinkCredentials, StoredNotification } from "@/utils/types.ts";
 
-const CREDENTIALS_KEY = ["settings", "credentials"] as const;
-
-export async function getCredentials(): Promise<BricklinkCredentials | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<BricklinkCredentials>(CREDENTIALS_KEY);
-  return result.value;
-}
-
-export async function saveCredentials(creds: BricklinkCredentials): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(CREDENTIALS_KEY, creds);
+export function getCredentials(): BricklinkCredentials | null {
+  const consumerKey = Deno.env.get("BRICKLINK_CONSUMER_KEY");
+  const consumerSecret = Deno.env.get("BRICKLINK_CONSUMER_SECRET");
+  const tokenValue = Deno.env.get("BRICKLINK_TOKEN");
+  const tokenSecret = Deno.env.get("BRICKLINK_TOKEN_SECRET");
+  if (!consumerKey || !consumerSecret || !tokenValue || !tokenSecret) return null;
+  return { consumerKey, consumerSecret, tokenValue, tokenSecret };
 }
 
 // Notifications are stored under ["notifications", <iso-timestamp>, <id>] so

@@ -4,9 +4,9 @@
   "tasks": {
     "check": "deno fmt --check . && deno lint . && deno check",
     "test": "deno test --allow-env",
-    "dev": "vite",
-    "build": "vite build",
-    "start": "deno serve -A _fresh/server.js",
+    "dev": "deno run -A --env-file npm:vite",
+    "build": "deno run -A --env-file npm:vite build",
+    "start": "deno serve -A --env-file _fresh/server.js",
     "update": "deno run -A -r jsr:@fresh/update ."
   },
   "lint": {
