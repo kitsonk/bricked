@@ -200,6 +200,9 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                             <div>
                               <div class={`font-medium ${isPicked ? "line-through" : ""}`}>{item.itemName}</div>
                               <div class="text-xs text-base-content/50 font-mono">{item.itemNo}</div>
+                              {item.description && (
+                                <div class="text-xs text-base-content/50 whitespace-normal">{item.description}</div>
+                              )}
                             </div>
                           </div>
                         </td>

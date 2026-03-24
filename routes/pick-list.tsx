@@ -56,6 +56,7 @@ export const handler = define.handlers<
               itemNo: item.item.no,
               itemName: decodeHtml(item.item.name),
               itemType: item.item.type,
+              description: item.description,
               colorId: item.color_id,
               colorName: item.color_name,
               condition: item.new_or_used,

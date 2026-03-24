@@ -163,6 +163,7 @@ export interface PickListItem {
   itemNo: string;
   itemName: string;
   itemType: string;
+  description: string;
   colorId: number;
   colorName: string;
   condition: "N" | "U";
