@@ -1,5 +1,6 @@
 import { useSignal } from "@preact/signals";
 import type { PickListItem, PickListOrder } from "@/utils/types.ts";
+import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 
 const ITEM_TYPE_CODE: Record<string, string> = {
   PART: "P",
@@ -150,7 +151,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
               <>
                 <thead key={`head-${location}`}>
                   <tr>
-                    <th colSpan={4}>
+                    <th colSpan={5}>
                       <span class="flex items-center gap-2">
                         <span
                           class={`iconify lucide--map-pin size-3.5 ${allPicked ? "text-success" : "text-primary"}`}
@@ -203,6 +204,9 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                           </div>
                         </td>
                         <td class="text-sm">{item.colorName}</td>
+                        <td>
+                          <ConditionBadge condition={item.condition} />
+                        </td>
                         <td class="text-right font-bold text-lg">{item.quantity}</td>
                         <td class="text-xs text-base-content/50 print:hidden">
                           {item.orderIds.map((id) => `#${id} (${buyerByOrderId.get(id) ?? ""})`).join(", ")}

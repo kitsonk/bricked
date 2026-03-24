@@ -1,5 +1,6 @@
 import { useSignal } from "@preact/signals";
 import type { BLOrder } from "@/utils/types.ts";
+import { formatAmount } from "@/utils/format.ts";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "badge-warning",
@@ -136,7 +137,7 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
                     {order.total_count} <span class="text-base-content/50">({order.unique_count} lots)</span>
                   </td>
                   <td class="text-right font-medium">
-                    {order.disp_cost.currency_code} {order.disp_cost.grand_total}
+                    {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div class="indicator">

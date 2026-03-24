@@ -4,6 +4,7 @@ import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials, getDriveThruSent, listDriveThruTemplates } from "@/utils/kv.ts";
 import type { BLOrder, DriveThruSentRecord, DriveThruTemplate } from "@/utils/types.ts";
+import { formatAmount } from "@/utils/format.ts";
 import DriveThruSend from "@/islands/DriveThruSend.tsx";
 
 export const handler = define.handlers<{
@@ -80,7 +81,7 @@ export default define.page<typeof handler>(function DriveThruPage({ data }) {
                   <span class="text-base-content/60">Ordered</span>
                   <span>{new Date(order.date_ordered).toLocaleDateString()}</span>
                   <span class="text-base-content/60">Total</span>
-                  <span>{order.disp_cost.currency_code} {order.disp_cost.grand_total}</span>
+                  <span>{order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}</span>
                   <span class="text-base-content/60">Items</span>
                   <span>{order.total_count} ({order.unique_count} lots)</span>
                 </div>

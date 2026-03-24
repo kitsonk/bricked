@@ -5,6 +5,8 @@ import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials } from "@/utils/kv.ts";
 import type { BLOrder, BLOrderItem } from "@/utils/types.ts";
 import { decodeHtml } from "@/utils/html.ts";
+import { ConditionBadge } from "@/components/ConditionBadge.tsx";
+import { formatAmount } from "@/utils/format.ts";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "badge-warning",
@@ -97,7 +99,7 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                   Total
                 </h2>
                 <p class="font-medium text-lg">
-                  {order.disp_cost.currency_code} {order.disp_cost.grand_total}
+                  {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
                 </p>
                 <p class="text-sm text-base-content/60">
                   {order.total_count} items in {order.unique_count} lots
@@ -140,11 +142,7 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                       </td>
                       <td class="text-sm">{item.color_name}</td>
                       <td>
-                        <span
-                          class={`badge badge-xs ${item.new_or_used === "N" ? "badge-success" : "badge-warning"}`}
-                        >
-                          {item.new_or_used === "N" ? "New" : "Used"}
-                        </span>
+                        <ConditionBadge condition={item.new_or_used} />
                       </td>
                       <td class="text-right font-bold">{item.quantity}</td>
                       <td>
@@ -152,7 +150,9 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                           ? <span class="font-mono text-sm text-primary">{item.remarks}</span>
                           : <span class="text-base-content/30 text-xs">—</span>}
                       </td>
-                      <td class="text-right text-sm font-mono">{item.disp_unit_price}</td>
+                      <td class="text-right text-sm font-mono">
+                        {order?.disp_cost.currency_code} {formatAmount(item.disp_unit_price)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
