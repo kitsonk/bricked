@@ -156,6 +156,7 @@ export interface DriveThruSentRecord {
 export interface PickListOrder {
   orderId: number;
   buyerName: string;
+  shippingName: string;
   status: OrderStatus;
 }
 

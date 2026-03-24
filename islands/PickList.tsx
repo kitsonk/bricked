@@ -114,11 +114,11 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
             return (
               <div key={order.orderId} class={`card border transition-opacity ${done ? "opacity-60" : "bg-base-200"}`}>
                 <div class="card-body p-4 gap-2">
-                  <div class="flex items-center gap-2">
-                    <span class="font-semibold">#{order.orderId}</span>
-                    <span class="text-base-content/50">·</span>
-                    <span class="text-sm text-base-content/70">{order.buyerName}</span>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-sm font-medium">{order.buyerName}</span>
+                    {order.shippingName && <span class="text-sm text-base-content/50">({order.shippingName})</span>}
                   </div>
+                  <div class="text-xs text-base-content/40 font-mono">#{order.orderId}</div>
                   <div class="flex gap-4 mt-1 text-sm">
                     <span>
                       <span class={`font-semibold ${done ? "text-success" : ""}`}>{pickedLots}</span>

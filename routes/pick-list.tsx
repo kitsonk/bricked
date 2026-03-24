@@ -36,6 +36,7 @@ export const handler = define.handlers<
       const orders: PickListOrder[] = orderDetails.map((o) => ({
         orderId: o.order_id,
         buyerName: o.buyer_name,
+        shippingName: o.shipping.address.name.first || o.shipping.address.name.full,
         status: o.status,
       }));
 
