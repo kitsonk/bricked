@@ -6,7 +6,7 @@ import { getCredentials } from "@/utils/kv.ts";
 import type { BLOrder, BLOrderItem } from "@/utils/types.ts";
 import { decodeHtml } from "@/utils/html.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
-import { formatAmount } from "@/utils/format.ts";
+import { bricklinkItemImageUrl, formatAmount } from "@/utils/format.ts";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "badge-warning",
@@ -78,7 +78,14 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                 <h2 class="card-title text-sm text-base-content/60 font-normal uppercase tracking-wide">
                   Buyer
                 </h2>
-                <p class="font-medium">{order.buyer_name}</p>
+                <p class="font-medium">
+                  {order.buyer_name}
+                  {(order.shipping.address.name.first || order.shipping.address.name.full) && (
+                    <span class="text-base-content/50 font-normal ml-1">
+                      ({order.shipping.address.name.first || order.shipping.address.name.full})
+                    </span>
+                  )}
+                </p>
                 <p class="text-sm text-base-content/60">{order.buyer_email}</p>
               </div>
             </div>
@@ -137,8 +144,21 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                   {items.map((item: BLOrderItem) => (
                     <tr key={item.order_item_no}>
                       <td>
-                        <div class="font-medium">{decodeHtml(item.item.name)}</div>
-                        <div class="text-xs text-base-content/50 font-mono">{item.item.no}</div>
+                        <div class="flex items-center gap-3">
+                          <img
+                            src={bricklinkItemImageUrl(item.item.type, item.item.no, item.color_id)}
+                            alt={decodeHtml(item.item.name)}
+                            class="size-10 object-contain shrink-0"
+                            loading="lazy"
+                          />
+                          <div>
+                            <div class="font-medium">{decodeHtml(item.item.name)}</div>
+                            <div class="text-xs text-base-content/50 font-mono">{item.item.no}</div>
+                            {item.description && (
+                              <div class="text-xs text-base-content/50 whitespace-normal">{item.description}</div>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td class="text-sm">{item.color_name}</td>
                       <td>
