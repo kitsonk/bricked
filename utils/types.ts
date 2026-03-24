@@ -24,6 +24,24 @@ export const UNFULFILLED_STATUSES: OrderStatus[] = [
   "PACKED",
 ];
 
+export const ALL_STATUSES: OrderStatus[] = [
+  "PENDING",
+  "UPDATED",
+  "PROCESSING",
+  "READY",
+  "PAID",
+  "PACKED",
+  "SHIPPED",
+  "RECEIVED",
+  "COMPLETED",
+  "OCR",
+  "NPB",
+  "NPX",
+  "NRS",
+  "NSS",
+  "CANCELLED",
+];
+
 export interface BLOrder {
   order_id: number;
   date_ordered: string;
@@ -69,6 +87,9 @@ export interface BLOrder {
   total_count: number;
   unique_count: number;
   weight: string;
+  is_filed: boolean;
+  /** Whether BrickLink has recorded a Drive Thru message as sent for this order. */
+  drive_thru_sent: boolean;
 }
 
 export interface BLOrderItem {

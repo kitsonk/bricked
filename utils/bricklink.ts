@@ -1,7 +1,9 @@
 import type { BLNotification, BLOrder, BLOrderItem, BricklinkCredentials } from "@/utils/types.ts";
 import { buildOAuthHeader } from "@/utils/oauth.ts";
+import { getLogger } from "@/utils/log.ts";
 
 const BASE_URL = "https://api.bricklink.com/api/store/v1";
+const logger = getLogger(["bricked", "bricklink"]);
 
 interface BLResponse<T> {
   meta: { code: number; message: string; description: string };
@@ -16,25 +18,41 @@ export class BricklinkClient {
     for (const [k, v] of Object.entries(query)) {
       url.searchParams.set(k, v);
     }
-    const auth = await buildOAuthHeader("GET", url.toString(), this.creds);
-    const resp = await fetch(url.toString(), { headers: { Authorization: auth } });
+    // URLSearchParams encodes commas as %2C, but BrickLink requires literal commas
+    // in multi-value parameters (e.g. status=PENDING,PAID). Decode them back here.
+    // The OAuth signer parses the URL via URLSearchParams so it sees the same
+    // decoded value regardless, making the signature identical either way.
+    const urlString = url.toString().replaceAll("%2C", ",");
+    logger.debug`GET ${urlString}`;
+    const auth = await buildOAuthHeader("GET", urlString, this.creds);
+    const resp = await fetch(urlString, { headers: { Authorization: auth } });
+    logger.debug`GET ${url.pathname} → HTTP ${resp.status}`;
     if (!resp.ok) {
       const text = await resp.text();
+      logger.error`BrickLink HTTP error ${resp.status} for GET ${url.pathname}: ${text}`;
       throw new Error(`BrickLink HTTP ${resp.status}: ${text}`);
     }
     const body: BLResponse<T> = await resp.json();
+    logger.debug`GET ${url.pathname} meta: code=${body.meta.code} message=${body.meta.message}`;
     if (body.meta.code !== 200) {
+      logger.error`BrickLink API error for GET ${url.pathname}: ${body.meta.code} ${body.meta.description}`;
       throw new Error(`BrickLink API error ${body.meta.code}: ${body.meta.description}`);
     }
     return body.data;
   }
 
-  getOrders(direction: "in" | "out" = "in", statuses?: string[]): Promise<BLOrder[]> {
-    const query: Record<string, string> = { direction };
+  async getOrders(direction: "in" | "out" = "in", statuses?: string[]): Promise<BLOrder[]> {
+    // filed=true includes archived orders; without it BrickLink silently omits
+    // any order the seller has filed, making the list appear empty.
+    const query: Record<string, string> = { direction, filed: "true" };
     if (statuses?.length) {
       query.status = statuses.join(",");
     }
-    return this.get<BLOrder[]>("/orders", query);
+    logger.debug`getOrders direction=${direction} statuses=${statuses?.join(",") ?? "(none)"}`;
+    const data = await this.get<BLOrder[] | null>("/orders", query);
+    const orders = data ?? [];
+    logger.debug`getOrders returned ${orders.length} order(s)`;
+    return orders;
   }
 
   async getOrderItems(orderId: number): Promise<BLOrderItem[]> {
