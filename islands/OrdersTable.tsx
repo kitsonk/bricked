@@ -75,8 +75,8 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
         </button>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="table table-zebra">
+      <div class="overflow-x-auto rounded-box border border-base-content/10">
+        <table class="table">
           <thead>
             <tr>
               <th class="w-8">
