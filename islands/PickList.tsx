@@ -1,6 +1,25 @@
 import { useSignal } from "@preact/signals";
 import type { PickListItem, PickListOrder } from "@/utils/types.ts";
 
+const ITEM_TYPE_CODE: Record<string, string> = {
+  PART: "P",
+  MINIFIG: "M",
+  SET: "S",
+  BOOK: "B",
+  GEAR: "G",
+  CATALOG: "C",
+  INSTRUCTION: "I",
+  ORIGINAL_BOX: "O",
+  UNSORTED_LOT: "U",
+};
+
+function bricklinkItemImageUrl(itemType: string, itemNo: string, colorId: number): string {
+  const prefix = ITEM_TYPE_CODE[itemType] ?? itemType;
+  const typeCode = prefix + "N";
+  const colorSegment = itemType === "PART" ? colorId : 0;
+  return `https://img.bricklink.com/ItemImage/${typeCode}/${colorSegment}/${itemNo}.png`;
+}
+
 function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   const map = new Map<string, T[]>();
   for (const item of items) {
@@ -167,8 +186,21 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                           />
                         </td>
                         <td>
-                          <div class={`font-medium ${isPicked ? "line-through" : ""}`}>{item.itemName}</div>
-                          <div class="text-xs text-base-content/50 font-mono">{item.itemNo}</div>
+                          <div class="flex items-center gap-3">
+                            <img
+                              src={bricklinkItemImageUrl(item.itemType, item.itemNo, item.colorId)}
+                              alt={item.itemName}
+                              class="size-10 object-contain shrink-0"
+                              loading="lazy"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = "none";
+                              }}
+                            />
+                            <div>
+                              <div class={`font-medium ${isPicked ? "line-through" : ""}`}>{item.itemName}</div>
+                              <div class="text-xs text-base-content/50 font-mono">{item.itemNo}</div>
+                            </div>
+                          </div>
                         </td>
                         <td class="text-sm">{item.colorName}</td>
                         <td class="text-right font-bold text-lg">{item.quantity}</td>
