@@ -18,7 +18,8 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
+export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOrder[]; sentDriveThruIds: number[] }) {
+  const sentSet = new Set(sentDriveThruIds);
   const selected = useSignal(new Set<number>());
 
   function toggle(id: number) {
@@ -92,11 +93,13 @@ export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
               <th>Status</th>
               <th>Items</th>
               <th class="text-right">Total</th>
+              <th class="w-10"></th>
             </tr>
           </thead>
           <tbody>
             {orders.map((order) => {
               const isSelected = selected.value.has(order.order_id);
+              const driveThruSent = sentSet.has(order.order_id);
               return (
                 <tr
                   key={order.order_id}
@@ -134,6 +137,23 @@ export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
                   </td>
                   <td class="text-right font-medium">
                     {order.disp_cost.currency_code} {order.disp_cost.grand_total}
+                  </td>
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <div class="indicator">
+                      {driveThruSent && (
+                        <span class="indicator-item badge badge-success badge-xs" title="Drive Thru sent"></span>
+                      )}
+                      <a
+                        href={`/drive-thru/${order.order_id}`}
+                        class={`btn btn-ghost btn-xs btn-square ${
+                          driveThruSent ? "text-success" : "text-base-content/40"
+                        }`}
+                        title={driveThruSent ? "Drive Thru sent — send again" : "Send Drive Thru"}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span class="iconify lucide--send size-3.5"></span>
+                      </a>
+                    </div>
                   </td>
                 </tr>
               );

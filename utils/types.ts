@@ -117,6 +117,21 @@ export interface StoredNotification extends BLNotification {
   receivedAt: string;
 }
 
+export interface DriveThruTemplate {
+  id: string;
+  name: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DriveThruSentRecord {
+  orderId: number;
+  templateId: string | null;
+  templateName: string | null;
+  sentAt: string;
+}
+
 export interface PickListOrder {
   orderId: number;
   buyerName: string;

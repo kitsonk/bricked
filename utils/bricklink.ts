@@ -46,4 +46,26 @@ export class BricklinkClient {
   getNotifications(): Promise<BLNotification[]> {
     return this.get<BLNotification[]>("/notifications");
   }
+
+  getOrder(orderId: number): Promise<BLOrder> {
+    return this.get<BLOrder>(`/orders/${orderId}`);
+  }
+
+  async sendDriveThru(orderId: number): Promise<void> {
+    const url = new URL(`${BASE_URL}/orders/${orderId}/drive_thru`);
+    const auth = await buildOAuthHeader("POST", url.toString(), this.creds);
+    const resp = await fetch(url.toString(), {
+      method: "POST",
+      headers: { Authorization: auth, "Content-Type": "application/json" },
+      body: JSON.stringify({ mail_me: false }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`BrickLink HTTP ${resp.status}: ${text}`);
+    }
+    const body: BLResponse<unknown> = await resp.json();
+    if (body.meta.code !== 200) {
+      throw new Error(`BrickLink API error ${body.meta.code}: ${body.meta.description}`);
+    }
+  }
 }

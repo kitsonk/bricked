@@ -2,12 +2,12 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials } from "@/utils/kv.ts";
+import { getCredentials, listDriveThruSentOrderIds } from "@/utils/kv.ts";
 import type { BLOrder } from "@/utils/types.ts";
 import { UNFULFILLED_STATUSES } from "@/utils/types.ts";
 import OrdersTable from "@/islands/OrdersTable.tsx";
 
-export const handler = define.handlers<{ orders: BLOrder[]; error: string | null }>({
+export const handler = define.handlers<{ orders: BLOrder[]; sentDriveThruIds: number[]; error: string | null }>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
@@ -15,10 +15,13 @@ export const handler = define.handlers<{ orders: BLOrder[]; error: string | null
     }
     try {
       const client = new BricklinkClient(creds);
-      const orders = await client.getOrders("in", UNFULFILLED_STATUSES);
-      return page({ orders, error: null });
+      const [orders, sentDriveThruIds] = await Promise.all([
+        client.getOrders("in", UNFULFILLED_STATUSES),
+        listDriveThruSentOrderIds(),
+      ]);
+      return page({ orders, sentDriveThruIds, error: null });
     } catch (err) {
-      return page({ orders: [], error: String(err) });
+      return page({ orders: [], sentDriveThruIds: [], error: String(err) });
     }
   },
 });
@@ -45,7 +48,7 @@ export default define.page<typeof handler>(function Orders({ data }) {
           </div>
         )}
 
-        <OrdersTable orders={data.orders} />
+        <OrdersTable orders={data.orders} sentDriveThruIds={data.sentDriveThruIds} />
       </div>
     </AppFrame>
   );
