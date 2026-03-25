@@ -180,7 +180,15 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                               }}
                             />
                             <div>
-                              <div class={`font-medium ${isPicked ? "line-through" : ""}`}>{item.itemName}</div>
+                              <a
+                                href={`https://www.bricklink.com/v2/catalog/catalogitem.page?P=${item.itemNo}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class={`font-medium link link-hover ${isPicked ? "line-through" : ""}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {item.itemName}
+                              </a>
                               <div class="text-xs text-base-content/50 font-mono">{item.itemNo}</div>
                               {item.description && (
                                 <div class="text-xs text-base-content/50 whitespace-normal">{item.description}</div>
