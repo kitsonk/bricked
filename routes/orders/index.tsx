@@ -6,6 +6,7 @@ import { getCredentials, listDriveThruSentOrderIds } from "@/utils/kv.ts";
 import type { BLOrder } from "@/utils/types.ts";
 import { ALL_STATUSES, UNFULFILLED_STATUSES } from "@/utils/types.ts";
 import OrdersTable from "@/islands/OrdersTable.tsx";
+import OrdersFilterTabs from "@/islands/OrdersFilterTabs.tsx";
 import { getLogger } from "@/utils/log.ts";
 
 const logger = getLogger(["bricked", "routes", "orders"]);
@@ -53,34 +54,19 @@ export default define.page<typeof handler>(function Orders({ data }) {
         </a>
       </div>
 
-      <div role="tablist" class="tabs tabs-box mb-6 w-fit">
-        <a
-          role="tab"
-          href="/orders"
-          class={`tab ${filter === "unfulfilled" ? "tab-active" : ""}`}
-        >
-          Unfulfilled
-        </a>
-        <a
-          role="tab"
-          href="/orders?filter=all"
-          class={`tab ${filter === "all" ? "tab-active" : ""}`}
-        >
-          All Orders
-        </a>
-      </div>
-
-      {data.error && (
-        <div role="alert" class="alert alert-error mb-6">
-          <span class="iconify lucide--alert-circle size-5"></span>
-          <div>
-            <div class="font-medium">Failed to load orders</div>
-            <div class="text-sm">{data.error}</div>
+      <OrdersFilterTabs filter={filter} />
+      <div class="border border-t-0 border-base-content/10 rounded-b-box p-4">
+        {data.error && (
+          <div role="alert" class="alert alert-error mb-6">
+            <span class="iconify lucide--alert-circle size-5"></span>
+            <div>
+              <div class="font-medium">Failed to load orders</div>
+              <div class="text-sm">{data.error}</div>
+            </div>
           </div>
-        </div>
-      )}
-
-      <OrdersTable orders={data.orders} sentDriveThruIds={data.sentDriveThruIds} />
+        )}
+        <OrdersTable orders={data.orders} sentDriveThruIds={data.sentDriveThruIds} />
+      </div>
     </AppFrame>
   );
 });
