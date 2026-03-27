@@ -131,7 +131,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
             const canPack = done && !isPacked && PACKABLE_STATUSES.includes(order.status);
             const isPacking = packingOrderId.value === order.orderId;
             return (
-              <div key={order.orderId} class={`card border transition-opacity ${done ? "opacity-60" : "bg-base-200"}`}>
+              <div key={order.orderId} class="card border">
                 <div class="card-body p-4 gap-2">
                   <div class="flex items-start justify-between gap-2">
                     <div>
