@@ -42,9 +42,7 @@ export class BricklinkClient {
   }
 
   async getOrders(direction: "in" | "out" = "in", statuses?: string[]): Promise<BLOrder[]> {
-    // filed=true includes archived orders; without it BrickLink silently omits
-    // any order the seller has filed, making the list appear empty.
-    const query: Record<string, string> = { direction, filed: "true" };
+    const query: Record<string, string> = { direction };
     if (statuses?.length) {
       query.status = statuses.join(",");
     }
