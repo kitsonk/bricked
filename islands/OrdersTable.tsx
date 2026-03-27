@@ -1,23 +1,7 @@
 import { useSignal } from "@preact/signals";
 import type { BLOrder } from "@/utils/types.ts";
 import { formatAmount } from "@/utils/format.ts";
-
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: "badge-warning",
-  UPDATED: "badge-info",
-  PROCESSING: "badge-primary",
-  READY: "badge-success",
-  PAID: "badge-success",
-  PACKED: "badge-neutral",
-};
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span class={`badge badge-sm ${STATUS_COLORS[status] ?? "badge-ghost"}`}>
-      {status}
-    </span>
-  );
-}
+import { StatusBadge } from "@/components/StatusBadge.tsx";
 
 export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOrder[]; sentDriveThruIds: number[] }) {
   const sentSet = new Set(sentDriveThruIds);

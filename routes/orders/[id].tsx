@@ -6,17 +6,8 @@ import { getCredentials } from "@/utils/kv.ts";
 import type { BLOrder, BLOrderItem } from "@/utils/types.ts";
 import { decodeHtml } from "@/utils/html.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
+import { StatusBadge } from "@/components/StatusBadge.tsx";
 import { bricklinkItemImageUrl, formatAmount } from "@/utils/format.ts";
-
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: "badge-warning",
-  UPDATED: "badge-info",
-  PROCESSING: "badge-primary",
-  READY: "badge-success",
-  PAID: "badge-success",
-  PACKED: "badge-neutral",
-  SHIPPED: "badge-neutral",
-};
 
 export const handler = define.handlers<{ order: BLOrder | null; items: BLOrderItem[]; error: string | null }>({
   async GET(ctx) {
@@ -53,9 +44,7 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
         {order && (
           <>
             <h1 class="text-2xl font-bold">Order #{order.order_id}</h1>
-            <span class={`badge ${STATUS_COLORS[order.status] ?? "badge-ghost"}`}>
-              {order.status}
-            </span>
+            <StatusBadge status={order.status} size="md" />
           </>
         )}
       </div>
