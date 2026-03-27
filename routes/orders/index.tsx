@@ -55,7 +55,7 @@ export default define.page<typeof handler>(function Orders({ data }) {
       </div>
 
       <OrdersFilterTabs filter={filter} />
-      <div class="border border-t-0 border-base-content/10 rounded-b-box p-4">
+      <div class="border border-base-content/10 rounded-box p-4">
         {data.error && (
           <div role="alert" class="alert alert-error mb-6">
             <span class="iconify lucide--alert-circle size-5"></span>
