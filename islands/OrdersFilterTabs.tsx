@@ -1,27 +1,27 @@
-export default function OrdersFilterTabs({ filter }: { filter: "unfulfilled" | "all" }) {
+export default function OrdersFilterTabs({ filter }: { filter: "unfiled" | "filed" }) {
   return (
     <div role="tablist" class="tabs tabs-border">
       <button
         role="tab"
         type="button"
-        class={`tab${filter === "unfulfilled" ? " tab-active" : ""}`}
-        aria-selected={filter === "unfulfilled"}
+        class={`tab${filter === "unfiled" ? " tab-active" : ""}`}
+        aria-selected={filter === "unfiled"}
         onClick={() => {
           globalThis.location.href = "/orders";
         }}
       >
-        Unfulfilled
+        Unfiled
       </button>
       <button
         role="tab"
         type="button"
-        class={`tab${filter === "all" ? " tab-active" : ""}`}
-        aria-selected={filter === "all"}
+        class={`tab${filter === "filed" ? " tab-active" : ""}`}
+        aria-selected={filter === "filed"}
         onClick={() => {
-          globalThis.location.href = "/orders?filter=all";
+          globalThis.location.href = "/orders?filter=filed";
         }}
       >
-        All Orders
+        Filed
       </button>
     </div>
   );

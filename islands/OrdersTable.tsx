@@ -35,8 +35,8 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
     return (
       <div class="text-center py-16 text-base-content/50">
         <span class="iconify lucide--inbox size-12 block mx-auto mb-3"></span>
-        <p class="font-medium">No unfulfilled orders</p>
-        <p class="text-sm mt-1">All caught up!</p>
+        <p class="font-medium">No orders</p>
+        <p class="text-sm mt-1">Nothing here!</p>
       </div>
     );
   }

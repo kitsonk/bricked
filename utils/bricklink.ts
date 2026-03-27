@@ -41,12 +41,11 @@ export class BricklinkClient {
     return body.data;
   }
 
-  async getOrders(direction: "in" | "out" = "in", statuses?: string[]): Promise<BLOrder[]> {
+  async getOrders(direction: "in" | "out" = "in", filed = false, statuses?: string[]): Promise<BLOrder[]> {
     const query: Record<string, string> = { direction };
-    if (statuses?.length) {
-      query.status = statuses.join(",");
-    }
-    logger.debug`getOrders direction=${direction} statuses=${statuses?.join(",") ?? "(none)"}`;
+    if (filed) query.filed = "true";
+    if (statuses?.length) query.status = statuses.join(",");
+    logger.debug`getOrders direction=${direction} filed=${filed} statuses=${statuses?.join(",") ?? "(none)"}`;
     const data = await this.get<BLOrder[] | null>("/orders", query);
     const orders = data ?? [];
     logger.debug`getOrders returned ${orders.length} order(s)`;

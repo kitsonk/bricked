@@ -13,18 +13,10 @@ export type OrderStatus =
   | "NPX"
   | "NRS"
   | "NSS"
-  | "CANCELLED";
+  | "CANCELLED"
+  | "PURGED";
 
-export const UNFULFILLED_STATUSES: OrderStatus[] = [
-  "PENDING",
-  "UPDATED",
-  "PROCESSING",
-  "READY",
-  "PAID",
-  "PACKED",
-];
-
-export const ALL_STATUSES: OrderStatus[] = [
+export const FILED_STATUSES: OrderStatus[] = [
   "PENDING",
   "UPDATED",
   "PROCESSING",

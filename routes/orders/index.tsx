@@ -4,7 +4,7 @@ import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials, listDriveThruSentOrderIds } from "@/utils/kv.ts";
 import type { BLOrder } from "@/utils/types.ts";
-import { ALL_STATUSES, UNFULFILLED_STATUSES } from "@/utils/types.ts";
+import { FILED_STATUSES } from "@/utils/types.ts";
 import OrdersTable from "@/islands/OrdersTable.tsx";
 import OrdersFilterTabs from "@/islands/OrdersFilterTabs.tsx";
 import { getLogger } from "@/utils/log.ts";
@@ -14,7 +14,7 @@ const logger = getLogger(["bricked", "routes", "orders"]);
 export const handler = define.handlers<{
   orders: BLOrder[];
   sentDriveThruIds: number[];
-  filter: "unfulfilled" | "all";
+  filter: "unfiled" | "filed";
   error: string | null;
 }>({
   async GET(ctx) {
@@ -22,12 +22,12 @@ export const handler = define.handlers<{
     if (!creds) {
       return ctx.redirect("/settings");
     }
-    const filter = ctx.url.searchParams.get("filter") === "all" ? "all" : "unfulfilled";
+    const filter = ctx.url.searchParams.get("filter") === "filed" ? "filed" : "unfiled";
     try {
       const client = new BricklinkClient(creds);
       logger.debug`Fetching orders (filter=${filter}) and drive-thru sent IDs`;
       const [orders, sentDriveThruIds] = await Promise.all([
-        client.getOrders("in", filter === "unfulfilled" ? UNFULFILLED_STATUSES : ALL_STATUSES),
+        client.getOrders("in", filter === "filed", filter === "filed" ? FILED_STATUSES : undefined),
         listDriveThruSentOrderIds().catch((err) => {
           logger.error`Failed to load drive-thru sent IDs from KV: ${err}`;
           return [];
@@ -48,7 +48,7 @@ export default define.page<typeof handler>(function Orders({ data }) {
     <AppFrame>
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold">Orders</h1>
-        <a href={`/orders${filter === "all" ? "?filter=all" : ""}`} class="btn btn-ghost btn-sm">
+        <a href={`/orders${filter === "filed" ? "?filter=filed" : ""}`} class="btn btn-ghost btn-sm">
           <span class="iconify lucide--refresh-cw size-4"></span>
           Refresh
         </a>
