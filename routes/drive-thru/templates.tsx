@@ -15,7 +15,7 @@ export const handler = define.handlers<{ templates: DriveThruTemplate[] }>({
 export default define.page<typeof handler>(function TemplatesPage({ data }) {
   return (
     <AppFrame>
-      <div class="p-6 max-w-2xl">
+      <div class="max-w-2xl">
         <div class="mb-6">
           <h1 class="text-2xl font-bold">Drive Thru Templates</h1>
           <p class="text-sm text-base-content/60 mt-1">

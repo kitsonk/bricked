@@ -33,7 +33,9 @@ export function AppFrame({ children }: { children: ComponentChildren }) {
               <Topbar />
             </div>
           </div>
-          <div id="layout-content">{children}</div>
+          <div id="layout-content">
+            <div class="p-3 sm:p-6">{children}</div>
+          </div>
           <div class="px-4 py-1">
             <div class="h-full">
               <Footer />

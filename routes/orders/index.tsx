@@ -45,44 +45,42 @@ export default define.page<typeof handler>(function Orders({ data }) {
   const { filter } = data;
   return (
     <AppFrame>
-      <div class="p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h1 class="text-2xl font-bold">Orders</h1>
-          <a href={`/orders${filter === "all" ? "?filter=all" : ""}`} class="btn btn-ghost btn-sm">
-            <span class="iconify lucide--refresh-cw size-4"></span>
-            Refresh
-          </a>
-        </div>
-
-        <div role="tablist" class="tabs tabs-box mb-6 w-fit">
-          <a
-            role="tab"
-            href="/orders"
-            class={`tab ${filter === "unfulfilled" ? "tab-active" : ""}`}
-          >
-            Unfulfilled
-          </a>
-          <a
-            role="tab"
-            href="/orders?filter=all"
-            class={`tab ${filter === "all" ? "tab-active" : ""}`}
-          >
-            All Orders
-          </a>
-        </div>
-
-        {data.error && (
-          <div role="alert" class="alert alert-error mb-6">
-            <span class="iconify lucide--alert-circle size-5"></span>
-            <div>
-              <div class="font-medium">Failed to load orders</div>
-              <div class="text-sm">{data.error}</div>
-            </div>
-          </div>
-        )}
-
-        <OrdersTable orders={data.orders} sentDriveThruIds={data.sentDriveThruIds} />
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold">Orders</h1>
+        <a href={`/orders${filter === "all" ? "?filter=all" : ""}`} class="btn btn-ghost btn-sm">
+          <span class="iconify lucide--refresh-cw size-4"></span>
+          Refresh
+        </a>
       </div>
+
+      <div role="tablist" class="tabs tabs-box mb-6 w-fit">
+        <a
+          role="tab"
+          href="/orders"
+          class={`tab ${filter === "unfulfilled" ? "tab-active" : ""}`}
+        >
+          Unfulfilled
+        </a>
+        <a
+          role="tab"
+          href="/orders?filter=all"
+          class={`tab ${filter === "all" ? "tab-active" : ""}`}
+        >
+          All Orders
+        </a>
+      </div>
+
+      {data.error && (
+        <div role="alert" class="alert alert-error mb-6">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <div>
+            <div class="font-medium">Failed to load orders</div>
+            <div class="text-sm">{data.error}</div>
+          </div>
+        </div>
+      )}
+
+      <OrdersTable orders={data.orders} sentDriveThruIds={data.sentDriveThruIds} />
     </AppFrame>
   );
 });

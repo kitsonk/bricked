@@ -86,28 +86,26 @@ export default define.page<typeof handler>(function PickListPage({ data }) {
   const { pickList, orders, error } = data;
   return (
     <AppFrame>
-      <div class="p-6">
-        {error && (
-          <div role="alert" class="alert alert-error mb-6">
-            <span class="iconify lucide--alert-circle size-5"></span>
-            <div>
-              <div class="font-medium">Failed to generate pick list</div>
-              <div class="text-sm">{error}</div>
-            </div>
+      {error && (
+        <div role="alert" class="alert alert-error mb-6">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <div>
+            <div class="font-medium">Failed to generate pick list</div>
+            <div class="text-sm">{error}</div>
           </div>
-        )}
+        </div>
+      )}
 
-        {!error && pickList.length === 0 && (
-          <div class="text-center py-16 text-base-content/50">
-            <span class="iconify lucide--package size-12 block mx-auto mb-3"></span>
-            <p class="font-medium">No items found</p>
-            <p class="text-sm mt-1">The selected orders have no items.</p>
-            <a href="/orders" class="btn btn-ghost btn-sm mt-4">Back to Orders</a>
-          </div>
-        )}
+      {!error && pickList.length === 0 && (
+        <div class="text-center py-16 text-base-content/50">
+          <span class="iconify lucide--package size-12 block mx-auto mb-3"></span>
+          <p class="font-medium">No items found</p>
+          <p class="text-sm mt-1">The selected orders have no items.</p>
+          <a href="/orders" class="btn btn-ghost btn-sm mt-4">Back to Orders</a>
+        </div>
+      )}
 
-        {pickList.length > 0 && <PickList items={pickList} orders={orders} />}
-      </div>
+      {pickList.length > 0 && <PickList items={pickList} orders={orders} />}
     </AppFrame>
   );
 });

@@ -43,7 +43,7 @@ export default define.page<typeof handler>(function DriveThruPage({ data }) {
 
   return (
     <AppFrame>
-      <div class="p-6 max-w-2xl">
+      <div class="max-w-2xl">
         <div class="flex items-center gap-3 mb-6">
           <a href="/orders" class="btn btn-ghost btn-sm btn-circle">
             <span class="iconify lucide--arrow-left size-4"></span>

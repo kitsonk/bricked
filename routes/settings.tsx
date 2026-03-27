@@ -13,7 +13,7 @@ export const handler = define.handlers<{ configured: boolean }>({
 export default define.page<typeof handler>(function Settings({ data }) {
   return (
     <AppFrame>
-      <div class="p-6 max-w-lg">
+      <div class="max-w-lg">
         <h1 class="text-2xl font-bold mb-6">Settings</h1>
 
         {data.configured

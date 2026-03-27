@@ -81,7 +81,7 @@
 /* == Layout: Content == */
 
 #layout-content {
-  @apply grow p-6 transition-all;
+  @apply grow transition-all;
 }
 
 /* == Sidebar: Toggle == */
