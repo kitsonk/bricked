@@ -40,7 +40,7 @@ export function buildParamString(params: Record<string, string>): string {
  */
 export async function buildOAuthHeader(
   method: string,
-  url: string,
+  url: string | URL,
   creds: BricklinkCredentials,
   overrides?: { timestamp?: string; nonce?: string },
 ): Promise<string> {
@@ -56,7 +56,7 @@ export async function buildOAuthHeader(
     oauth_version: "1.0",
   };
 
-  const urlObj = new URL(url);
+  const urlObj = url instanceof URL ? url : new URL(url);
   const allParams: Record<string, string> = { ...oauthParams };
   urlObj.searchParams.forEach((value, key) => {
     allParams[key] = value;

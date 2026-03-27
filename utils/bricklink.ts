@@ -19,13 +19,13 @@ export class BricklinkClient {
       url.searchParams.set(k, v);
     }
     // URLSearchParams encodes commas as %2C, but BrickLink requires literal commas
-    // in multi-value parameters (e.g. status=PENDING,PAID). Decode them back here.
-    // The OAuth signer parses the URL via URLSearchParams so it sees the same
-    // decoded value regardless, making the signature identical either way.
-    const urlString = url.toString().replaceAll("%2C", ",");
-    logger.debug`GET ${urlString}`;
-    const auth = await buildOAuthHeader("GET", urlString, this.creds);
-    const resp = await fetch(urlString, { headers: { Authorization: auth } });
+    // in multi-value parameters (e.g. status=PENDING,PAID). Setting .search
+    // directly preserves literal commas since they are not in the special-query
+    // percent-encode set, allowing the URL object to be used for both signing and fetch.
+    url.search = url.search.replaceAll("%2C", ",");
+    logger.debug`GET ${url}`;
+    const auth = await buildOAuthHeader("GET", url, this.creds);
+    const resp = await fetch(url, { headers: { Authorization: auth } });
     logger.debug`GET ${url.pathname} → HTTP ${resp.status}`;
     if (!resp.ok) {
       const text = await resp.text();
@@ -69,10 +69,28 @@ export class BricklinkClient {
     return this.get<BLOrder>(`/orders/${orderId}`);
   }
 
+  async updateOrderStatus(orderId: number, status: string): Promise<void> {
+    const url = new URL(`${BASE_URL}/orders/${orderId}/status`);
+    const auth = await buildOAuthHeader("PUT", url, this.creds);
+    const resp = await fetch(url, {
+      method: "PUT",
+      headers: { Authorization: auth, "Content-Type": "application/json" },
+      body: JSON.stringify({ field: "status", value: status }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`BrickLink HTTP ${resp.status}: ${text}`);
+    }
+    const body: BLResponse<unknown> = await resp.json();
+    if (body.meta.code !== 200) {
+      throw new Error(`BrickLink API error ${body.meta.code}: ${body.meta.description}`);
+    }
+  }
+
   async sendDriveThru(orderId: number): Promise<void> {
     const url = new URL(`${BASE_URL}/orders/${orderId}/drive_thru`);
-    const auth = await buildOAuthHeader("POST", url.toString(), this.creds);
-    const resp = await fetch(url.toString(), {
+    const auth = await buildOAuthHeader("POST", url, this.creds);
+    const resp = await fetch(url, {
       method: "POST",
       headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({ mail_me: false }),

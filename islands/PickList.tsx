@@ -14,8 +14,13 @@ function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   return map;
 }
 
+const PACKABLE_STATUSES = ["PENDING", "UPDATED", "PROCESSING", "READY", "PAID"];
+
 export default function PickList({ items, orders }: { items: PickListItem[]; orders: PickListOrder[] }) {
   const picked = useSignal(new Set<string>());
+  const packedOrderIds = useSignal(new Set<number>());
+  const packingOrderId = useSignal<number | null>(null);
+  const packError = useSignal<string | null>(null);
 
   function itemKey(item: PickListItem) {
     return `${item.itemNo}|${item.colorId}|${item.condition}|${item.location}`;
@@ -33,6 +38,27 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
 
   function resetAll() {
     picked.value = new Set();
+  }
+
+  async function packOrder(orderId: number) {
+    packingOrderId.value = orderId;
+    packError.value = null;
+    try {
+      const resp = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "PACKED" }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? `HTTP ${resp.status}`);
+      const next = new Set(packedOrderIds.value);
+      next.add(orderId);
+      packedOrderIds.value = next;
+    } catch (err) {
+      packError.value = String(err);
+    } finally {
+      packingOrderId.value = null;
+    }
   }
 
   const byLocation = groupBy(items, (item) => item.location);
@@ -81,6 +107,13 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
         )}
       </div>
 
+      {packError.value && (
+        <div role="alert" class="alert alert-error mb-4 print:hidden">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <div>{packError.value}</div>
+        </div>
+      )}
+
       {orders.length > 0 && (
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 print:hidden">
           {orders.map((order) => {
@@ -92,15 +125,32 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
               (sum, i) => picked.value.has(itemKey(i)) ? sum + (i.orderQuantities[order.orderId] ?? 0) : sum,
               0,
             );
-            const done = pickedLots === totalLots;
+            const done = pickedLots === totalLots && totalLots > 0;
+            const isPacked = packedOrderIds.value.has(order.orderId);
+            const canPack = done && !isPacked && PACKABLE_STATUSES.includes(order.status);
+            const isPacking = packingOrderId.value === order.orderId;
             return (
               <div key={order.orderId} class={`card border transition-opacity ${done ? "opacity-60" : "bg-base-200"}`}>
                 <div class="card-body p-4 gap-2">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-sm font-medium">{order.buyerName}</span>
-                    {order.shippingName && <span class="text-sm text-base-content/50">({order.shippingName})</span>}
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-sm font-medium">{order.buyerName}</span>
+                        {order.shippingName && <span class="text-sm text-base-content/50">({order.shippingName})</span>}
+                      </div>
+                      <div class="text-xs text-base-content/40 font-mono">#{order.orderId}</div>
+                    </div>
+                    <button
+                      type="button"
+                      class={`btn btn-xs shrink-0 ${isPacked ? "btn-ghost" : "btn-primary"}`}
+                      disabled={isPacking || (!canPack && !isPacked)}
+                      onClick={() =>
+                        !isPacked && packOrder(order.orderId)}
+                    >
+                      {isPacking && <span class="loading loading-spinner loading-xs"></span>}
+                      {isPacked ? "Ship..." : "Packed"}
+                    </button>
                   </div>
-                  <div class="text-xs text-base-content/40 font-mono">#{order.orderId}</div>
                   <div class="flex gap-4 mt-1 text-sm">
                     <span>
                       <span class={`font-semibold ${done ? "text-success" : ""}`}>{pickedLots}</span>
