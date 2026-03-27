@@ -11,7 +11,10 @@ function interpolate(body: string, order: BLOrder): string {
     .replaceAll("{{item_count}}", String(order.total_count))
     .replaceAll("{{lot_count}}", String(order.unique_count))
     .replaceAll("{{status}}", order.status)
-    .replaceAll("{{payment_status}}", order.payment.status);
+    .replaceAll("{{payment_status}}", order.payment.status)
+    .replaceAll("{{shipping_first_name}}", order.shipping.address.name.first)
+    .replaceAll("{{shipping_last_name}}", order.shipping.address.name.last)
+    .replaceAll("{{shipping_full_name}}", order.shipping.address.name.full);
 }
 
 export default function DriveThruSend({
