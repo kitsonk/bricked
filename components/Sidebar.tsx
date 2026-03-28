@@ -33,6 +33,7 @@ export function Sidebar() {
           <MenuItem icon="house" label="Home" href="/" />
           <MenuItem icon="shopping-bag" label="Orders" href="/orders" />
           <MenuItem icon="send" label="Drive Thru Templates" href="/drive-thru/templates" />
+          <MenuItem icon="truck" label="Shipping Methods" href="/shipping-methods" />
         </div>
         <p class="menu-label mt-4 px-2.5">Account</p>
         <div class="mt-2">

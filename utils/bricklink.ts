@@ -1,4 +1,4 @@
-import type { BLNotification, BLOrder, BLOrderItem, BricklinkCredentials } from "@/utils/types.ts";
+import type { BLNotification, BLOrder, BLOrderItem, BLShippingMethod, BricklinkCredentials } from "@/utils/types.ts";
 import { buildOAuthHeader } from "@/utils/oauth.ts";
 import { getLogger } from "@/utils/log.ts";
 
@@ -60,6 +60,11 @@ export class BricklinkClient {
 
   getNotifications(): Promise<BLNotification[]> {
     return this.get<BLNotification[]>("/notifications");
+  }
+
+  async getShippingMethods(): Promise<BLShippingMethod[]> {
+    const data = await this.get<BLShippingMethod[] | null>("/settings/shipping_methods");
+    return data ?? [];
   }
 
   getOrder(orderId: number): Promise<BLOrder> {

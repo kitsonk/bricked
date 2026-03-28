@@ -130,6 +130,23 @@ export interface StoredNotification extends BLNotification {
   receivedAt: string;
 }
 
+export interface BLShippingMethod {
+  method_id: number;
+  name: string;
+  note: string;
+  insurance: boolean;
+  is_default: boolean;
+  area: string;
+}
+
+export interface ShippingMethodEnrichment {
+  hasTracking: boolean;
+}
+
+export interface ShippingMethod extends BLShippingMethod {
+  enrichment: ShippingMethodEnrichment;
+}
+
 export interface DriveThruTemplate {
   id: string;
   name: string;

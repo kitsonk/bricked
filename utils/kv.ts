@@ -1,7 +1,9 @@
 import type {
+  BLShippingMethod,
   BricklinkCredentials,
   DriveThruSentRecord,
   DriveThruTemplate,
+  ShippingMethodEnrichment,
   StoredNotification,
 } from "@/utils/types.ts";
 
@@ -92,4 +94,59 @@ export async function listDriveThruSentOrderIds(): Promise<number[]> {
     ids.push(entry.value.orderId);
   }
   return ids;
+}
+
+// Shipping Methods Cache
+
+export interface ShippingMethodsCache {
+  methods: BLShippingMethod[];
+  fetchedAt: string;
+}
+
+const SHIPPING_METHODS_CACHE_KEY: Deno.KvKey = ["shipping_methods_cache"];
+
+export async function getShippingMethodsCache(): Promise<ShippingMethodsCache | null> {
+  const kv = await Deno.openKv();
+  const result = await kv.get<ShippingMethodsCache>(SHIPPING_METHODS_CACHE_KEY);
+  return result.value;
+}
+
+export async function saveShippingMethodsCache(cache: ShippingMethodsCache): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.set(SHIPPING_METHODS_CACHE_KEY, cache);
+}
+
+// Shipping Method Enrichment
+
+function shippingMethodEnrichmentKey(methodId: number): Deno.KvKey {
+  return ["shipping_method_enrichment", methodId];
+}
+
+export async function getShippingMethodEnrichment(methodId: number): Promise<ShippingMethodEnrichment | null> {
+  const kv = await Deno.openKv();
+  const result = await kv.get<ShippingMethodEnrichment>(shippingMethodEnrichmentKey(methodId));
+  return result.value;
+}
+
+export async function saveShippingMethodEnrichment(
+  methodId: number,
+  enrichment: ShippingMethodEnrichment,
+): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.set(shippingMethodEnrichmentKey(methodId), enrichment);
+}
+
+export async function deleteShippingMethodEnrichment(methodId: number): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.delete(shippingMethodEnrichmentKey(methodId));
+}
+
+export async function listShippingMethodEnrichments(): Promise<Map<number, ShippingMethodEnrichment>> {
+  const kv = await Deno.openKv();
+  const entries = kv.list<ShippingMethodEnrichment>({ prefix: ["shipping_method_enrichment"] });
+  const map = new Map<number, ShippingMethodEnrichment>();
+  for await (const entry of entries) {
+    map.set(entry.key[1] as number, entry.value);
+  }
+  return map;
 }
