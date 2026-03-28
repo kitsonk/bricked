@@ -23,7 +23,7 @@ export class BricklinkClient {
     // directly preserves literal commas since they are not in the special-query
     // percent-encode set, allowing the URL object to be used for both signing and fetch.
     url.search = url.search.replaceAll("%2C", ",");
-    logger.debug`GET ${url}`;
+    logger.debug`GET ${url.toString()}`;
     const auth = await buildOAuthHeader("GET", url, this.creds);
     const resp = await fetch(url, { headers: { Authorization: auth } });
     logger.debug`GET ${url.pathname} → HTTP ${resp.status}`;
