@@ -149,6 +149,7 @@ export interface PickListOrder {
   orderId: number;
   buyerName: string;
   shippingName: string;
+  shippingMethod: string;
   status: OrderStatus;
 }
 

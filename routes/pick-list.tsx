@@ -37,6 +37,7 @@ export const handler = define.handlers<
         orderId: o.order_id,
         buyerName: o.buyer_name,
         shippingName: o.shipping.address.name.first || o.shipping.address.name.full,
+        shippingMethod: o.shipping.method,
         status: o.status,
       }));
 

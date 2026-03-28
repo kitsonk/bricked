@@ -143,13 +143,15 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                         <span class="text-xs text-base-content/40 font-mono">#{order.orderId}</span>
                         <StatusBadge status={order.status} size="xs" />
                       </div>
+                      {order.shippingMethod && (
+                        <div class="text-xs text-base-content/50 mt-0.5">{order.shippingMethod}</div>
+                      )}
                     </div>
                     <button
                       type="button"
                       class={`btn btn-xs shrink-0 ${isPacked ? "btn-ghost" : "btn-primary"}`}
                       disabled={isPacking || (!canPack && !isPacked)}
-                      onClick={() =>
-                        !isPacked && packOrder(order.orderId)}
+                      onClick={() => !isPacked && packOrder(order.orderId)}
                     >
                       {isPacking && <span class="loading loading-spinner loading-xs"></span>}
                       {isPacked ? "Ship..." : "Packed"}
