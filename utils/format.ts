@@ -1,3 +1,13 @@
+import { humanReadableTimestamp } from "@blaze/human-readable-timestamp";
+
+/**
+ * Format a date string or Date object as a human-readable relative time,
+ * e.g. "3 hours ago", "2 days ago".
+ */
+export function humanTime(date: string | Date): string {
+  return humanReadableTimestamp(typeof date === "string" ? new Date(date) : date);
+}
+
 /**
  * Format a BrickLink monetary amount string (always 4 decimal places) to
  * 2 decimal places for display purposes.

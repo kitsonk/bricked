@@ -1,6 +1,7 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@blaze/human-readable-timestamp@1": "1.0.0",
     "jsr:@deno/esbuild-plugin@^1.2.0": "1.2.1",
     "jsr:@deno/loader@~0.3.10": "0.3.14",
     "jsr:@deno/loader@~0.3.2": "0.3.14",
@@ -54,6 +55,9 @@
     "npm:vite@^7.1.4": "7.3.1"
   },
   "jsr": {
+    "@blaze/human-readable-timestamp@1.0.0": {
+      "integrity": "e5d751f968de4c92e9a28ca9e6de13a0e6ce1af4530636e004be00251a30544a"
+    },
     "@deno/esbuild-plugin@1.2.1": {
       "integrity": "df629467913adc1f960149fdfa3a3430ba8c20381c310fba096db244e6c3c9f6",
       "dependencies": [
@@ -1638,6 +1642,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@blaze/human-readable-timestamp@1",
       "jsr:@fresh/core@^2.2.0",
       "jsr:@fresh/plugin-vite@^1.0.8",
       "jsr:@logtape/logtape@^2.0.4",

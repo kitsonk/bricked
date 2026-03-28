@@ -1,6 +1,6 @@
 import { useSignal } from "@preact/signals";
 import type { BLOrder } from "@/utils/types.ts";
-import { formatAmount } from "@/utils/format.ts";
+import { formatAmount, humanTime } from "@/utils/format.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 
 const STATUS_ORDER: Record<string, number> = {
@@ -96,7 +96,7 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
               </th>
               <th>Order</th>
               <th>Buyer</th>
-              <th>Date</th>
+              <th>Created</th>
               <th>Status</th>
               <th>Items</th>
               <th class="text-right">Total</th>
@@ -135,7 +135,7 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
                     <div class="font-medium">{order.buyer_name}</div>
                     <div class="text-xs text-base-content/50">{order.buyer_email}</div>
                   </td>
-                  <td class="text-sm">{new Date(order.date_ordered).toLocaleDateString()}</td>
+                  <td class="text-sm">{humanTime(order.date_ordered)}</td>
                   <td>
                     <StatusBadge status={order.status} />
                   </td>
