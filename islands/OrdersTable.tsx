@@ -1,7 +1,9 @@
 import { useSignal } from "@preact/signals";
-import type { BLOrder } from "@/utils/types.ts";
+import type { BLOrder, OrderStatus } from "@/utils/types.ts";
 import { formatAmount, humanTime } from "@/utils/format.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
+import { ShipOrderDialog } from "@/components/ShipOrderDialog.tsx";
+import type { ShipFormData } from "@/components/ShipOrderDialog.tsx";
 
 const STATUS_ORDER: Record<string, number> = {
   PENDING: 0,
@@ -24,9 +26,16 @@ function sortOrders(orders: BLOrder[]): BLOrder[] {
   });
 }
 
-export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
-  const sorted = sortOrders(orders);
+export default function OrdersTable(
+  { orders, trackingMethodIds }: { orders: BLOrder[]; trackingMethodIds: number[] },
+) {
+  const trackingMethodSet = new Set(trackingMethodIds);
+  const localOrders = useSignal<BLOrder[]>(sortOrders(orders));
   const selected = useSignal(new Set<number>());
+  const shippingOrder = useSignal<BLOrder | null>(null);
+  const shipError = useSignal<string | null>(null);
+  const shipLoading = useSignal(false);
+  const shipDialogLoading = useSignal<number | null>(null);
 
   function toggle(id: number) {
     const next = new Set(selected.value);
@@ -39,9 +48,9 @@ export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
   }
 
   function toggleAll() {
-    selected.value = selected.value.size === sorted.length && sorted.length > 0
+    selected.value = selected.value.size === localOrders.value.length && localOrders.value.length > 0
       ? new Set()
-      : new Set(sorted.map((o) => o.order_id));
+      : new Set(localOrders.value.map((o) => o.order_id));
   }
 
   function generatePickList() {
@@ -49,10 +58,49 @@ export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
     globalThis.location.href = `/pick-list?orders=${ids}`;
   }
 
-  const allSelected = selected.value.size === sorted.length && sorted.length > 0;
+  async function openShipDialog(orderId: number) {
+    shipDialogLoading.value = orderId;
+    shipError.value = null;
+    try {
+      const resp = await fetch(`/api/orders/${orderId}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const order: BLOrder = await resp.json();
+      shippingOrder.value = order;
+    } catch (err) {
+      shipError.value = String(err);
+    } finally {
+      shipDialogLoading.value = null;
+    }
+  }
+
+  async function shipOrder(data: ShipFormData) {
+    const order = shippingOrder.value;
+    if (!order) return;
+    shipLoading.value = true;
+    shipError.value = null;
+    try {
+      const resp = await fetch(`/api/orders/${order.order_id}/ship`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
+      localOrders.value = localOrders.value.map((o) =>
+        o.order_id === order.order_id ? { ...o, status: "SHIPPED" as OrderStatus } : o
+      );
+      shippingOrder.value = null;
+    } catch (err) {
+      shipError.value = String(err);
+    } finally {
+      shipLoading.value = false;
+    }
+  }
+
+  const allSelected = selected.value.size === localOrders.value.length && localOrders.value.length > 0;
   const someSelected = selected.value.size > 0;
 
-  if (sorted.length === 0) {
+  if (localOrders.value.length === 0) {
     return (
       <div class="text-center py-16 text-base-content/50">
         <span class="iconify lucide--inbox size-12 block mx-auto mb-3"></span>
@@ -64,9 +112,24 @@ export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
 
   return (
     <div>
+      {shipError.value && (
+        <div role="alert" class="alert alert-error mb-4">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <div>{shipError.value}</div>
+        </div>
+      )}
+
+      <ShipOrderDialog
+        order={shippingOrder.value}
+        hasTracking={trackingMethodSet.has(shippingOrder.value?.shipping?.method_id ?? -1)}
+        isOpen={shippingOrder.value !== null}
+        onConfirm={shipOrder}
+        onClose={() => (shippingOrder.value = null)}
+      />
+
       <div class="flex items-center justify-between mb-4">
         <p class="text-sm text-base-content/60">
-          {sorted.length} order{sorted.length !== 1 ? "s" : ""}
+          {localOrders.value.length} order{localOrders.value.length !== 1 ? "s" : ""}
         </p>
         <button
           type="button"
@@ -103,7 +166,7 @@ export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((order) => {
+            {localOrders.value.map((order) => {
               const isSelected = selected.value.has(order.order_id);
               return (
                 <tr
@@ -144,18 +207,33 @@ export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
                     {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
-                    {!order.drive_thru_sent && (
-                      <a
-                        href={`/drive-thru/${order.order_id}`}
-                        class={`btn btn-ghost btn-xs btn-square ${
-                          order.status === "SHIPPED" ? "text-info" : "text-base-content/40"
-                        }`}
-                        title="Send Drive Thru"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <span class="iconify lucide--send size-3.5"></span>
-                      </a>
-                    )}
+                    <div class="flex items-center gap-1">
+                      {order.status === "PACKED" && (
+                        <button
+                          type="button"
+                          class="btn btn-ghost btn-xs btn-square text-info"
+                          title="Ship order"
+                          disabled={shipDialogLoading.value === order.order_id || shipLoading.value}
+                          onClick={() => openShipDialog(order.order_id)}
+                        >
+                          {shipDialogLoading.value === order.order_id
+                            ? <span class="loading loading-spinner loading-xs"></span>
+                            : <span class="iconify lucide--truck size-3.5"></span>}
+                        </button>
+                      )}
+                      {!order.drive_thru_sent && (
+                        <a
+                          href={`/drive-thru/${order.order_id}`}
+                          class={`btn btn-ghost btn-xs btn-square ${
+                            order.status === "SHIPPED" ? "text-info" : "text-base-content/40"
+                          }`}
+                          title="Send Drive Thru"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span class="iconify lucide--send size-3.5"></span>
+                        </a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

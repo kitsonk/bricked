@@ -107,7 +107,12 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                 Shipping
               </h2>
               <div class="flex flex-wrap gap-x-8 gap-y-1">
-                {order.shipping.method && <p class="font-medium">{order.shipping.method}</p>}
+                {order.shipping.method && (
+                  <p class="font-medium">
+                    {order.shipping.method}
+                    <span class="text-xs text-base-content/40 font-mono ml-2">#{order.shipping.method_id}</span>
+                  </p>
+                )}
                 {order.shipping.address.name.full && (
                   <p class="text-sm text-base-content/60">{order.shipping.address.name.full}</p>
                 )}

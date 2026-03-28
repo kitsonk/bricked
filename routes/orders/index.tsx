@@ -2,7 +2,7 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials } from "@/utils/kv.ts";
+import { getCredentials, listShippingMethodEnrichments } from "@/utils/kv.ts";
 import type { BLOrder } from "@/utils/types.ts";
 import { FILED_STATUSES } from "@/utils/types.ts";
 import OrdersTable from "@/islands/OrdersTable.tsx";
@@ -13,6 +13,7 @@ const logger = getLogger(["bricked", "routes", "orders"]);
 
 export const handler = define.handlers<{
   orders: BLOrder[];
+  trackingMethodIds: number[];
   filter: "unfiled" | "filed";
   error: string | null;
 }>({
@@ -24,13 +25,18 @@ export const handler = define.handlers<{
     const filter = ctx.url.searchParams.get("filter") === "filed" ? "filed" : "unfiled";
     try {
       const client = new BricklinkClient(creds);
-      logger.debug`Fetching orders (filter=${filter}) and drive-thru sent IDs`;
-      const orders = await client.getOrders("in", filter === "filed", filter === "filed" ? FILED_STATUSES : undefined);
-      logger.debug`Orders page: ${orders.length} order(s)`;
-      return page({ orders, filter, error: null });
+      const [orders, enrichments] = await Promise.all([
+        client.getOrders("in", filter === "filed", filter === "filed" ? FILED_STATUSES : undefined),
+        listShippingMethodEnrichments(),
+      ]);
+      const trackingMethodIds = [...enrichments.entries()]
+        .filter(([, e]) => e.hasTracking)
+        .map(([id]) => id);
+      logger.debug`Orders page: ${orders.length} order(s), ${trackingMethodIds.length} tracking method(s)`;
+      return page({ orders, trackingMethodIds, filter, error: null });
     } catch (err) {
       logger.error`Failed to load orders: ${err}`;
-      return page({ orders: [], filter, error: String(err) });
+      return page({ orders: [], trackingMethodIds: [], filter, error: String(err) });
     }
   },
 });
@@ -58,7 +64,7 @@ export default define.page<typeof handler>(function Orders({ data }) {
             </div>
           </div>
         )}
-        <OrdersTable orders={data.orders} />
+        <OrdersTable orders={data.orders} trackingMethodIds={data.trackingMethodIds} />
       </div>
     </AppFrame>
   );

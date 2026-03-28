@@ -89,6 +89,27 @@ export class BricklinkClient {
     }
   }
 
+  async updateOrderShipping(
+    orderId: number,
+    data: { date_shipped: string; tracking_no: string; tracking_link: string },
+  ): Promise<void> {
+    const url = new URL(`${BASE_URL}/orders/${orderId}/shipping`);
+    const auth = await buildOAuthHeader("PUT", url, this.creds);
+    const resp = await fetch(url, {
+      method: "PUT",
+      headers: { Authorization: auth, "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`BrickLink HTTP ${resp.status}: ${text}`);
+    }
+    const body: BLResponse<unknown> = await resp.json();
+    if (body.meta.code !== 200) {
+      throw new Error(`BrickLink API error ${body.meta.code}: ${body.meta.description}`);
+    }
+  }
+
   async sendDriveThru(orderId: number): Promise<void> {
     const url = new URL(`${BASE_URL}/orders/${orderId}/drive_thru`);
     const auth = await buildOAuthHeader("POST", url, this.creds);
