@@ -2,7 +2,7 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, listDriveThruSentOrderIds } from "@/utils/kv.ts";
+import { getCredentials } from "@/utils/kv.ts";
 import type { BLOrder } from "@/utils/types.ts";
 import { FILED_STATUSES } from "@/utils/types.ts";
 import OrdersTable from "@/islands/OrdersTable.tsx";
@@ -13,7 +13,6 @@ const logger = getLogger(["bricked", "routes", "orders"]);
 
 export const handler = define.handlers<{
   orders: BLOrder[];
-  sentDriveThruIds: number[];
   filter: "unfiled" | "filed";
   error: string | null;
 }>({
@@ -26,18 +25,12 @@ export const handler = define.handlers<{
     try {
       const client = new BricklinkClient(creds);
       logger.debug`Fetching orders (filter=${filter}) and drive-thru sent IDs`;
-      const [orders, sentDriveThruIds] = await Promise.all([
-        client.getOrders("in", filter === "filed", filter === "filed" ? FILED_STATUSES : undefined),
-        listDriveThruSentOrderIds().catch((err) => {
-          logger.error`Failed to load drive-thru sent IDs from KV: ${err}`;
-          return [];
-        }),
-      ]);
-      logger.debug`Orders page: ${orders.length} order(s), ${sentDriveThruIds.length} drive-thru sent ID(s)`;
-      return page({ orders, sentDriveThruIds, filter, error: null });
+      const orders = await client.getOrders("in", filter === "filed", filter === "filed" ? FILED_STATUSES : undefined);
+      logger.debug`Orders page: ${orders.length} order(s)`;
+      return page({ orders, filter, error: null });
     } catch (err) {
       logger.error`Failed to load orders: ${err}`;
-      return page({ orders: [], sentDriveThruIds: [], filter, error: String(err) });
+      return page({ orders: [], filter, error: String(err) });
     }
   },
 });
@@ -65,7 +58,7 @@ export default define.page<typeof handler>(function Orders({ data }) {
             </div>
           </div>
         )}
-        <OrdersTable orders={data.orders} sentDriveThruIds={data.sentDriveThruIds} />
+        <OrdersTable orders={data.orders} />
       </div>
     </AppFrame>
   );

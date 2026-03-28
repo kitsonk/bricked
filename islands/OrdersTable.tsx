@@ -24,8 +24,7 @@ function sortOrders(orders: BLOrder[]): BLOrder[] {
   });
 }
 
-export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOrder[]; sentDriveThruIds: number[] }) {
-  const sentSet = new Set(sentDriveThruIds);
+export default function OrdersTable({ orders }: { orders: BLOrder[] }) {
   const sorted = sortOrders(orders);
   const selected = useSignal(new Set<number>());
 
@@ -106,7 +105,6 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
           <tbody>
             {sorted.map((order) => {
               const isSelected = selected.value.has(order.order_id);
-              const driveThruSent = sentSet.has(order.order_id);
               return (
                 <tr
                   key={order.order_id}
@@ -146,21 +144,18 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
                     {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
-                    <div class="indicator">
-                      {driveThruSent && (
-                        <span class="indicator-item badge badge-success badge-xs" title="Drive Thru sent"></span>
-                      )}
+                    {!order.drive_thru_sent && (
                       <a
                         href={`/drive-thru/${order.order_id}`}
                         class={`btn btn-ghost btn-xs btn-square ${
-                          driveThruSent ? "text-success" : "text-base-content/40"
+                          order.status === "SHIPPED" ? "text-info" : "text-base-content/40"
                         }`}
-                        title={driveThruSent ? "Drive Thru sent — send again" : "Send Drive Thru"}
+                        title="Send Drive Thru"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <span class="iconify lucide--send size-3.5"></span>
                       </a>
-                    </div>
+                    )}
                   </td>
                 </tr>
               );
