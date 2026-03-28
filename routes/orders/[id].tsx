@@ -60,7 +60,7 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
       )}
 
       {order && (
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           <div class="card bg-base-200">
             <div class="card-body p-4">
               <h2 class="card-title text-sm text-base-content/60 font-normal uppercase tracking-wide">
@@ -99,6 +99,52 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
               <p class="text-sm text-base-content/60">
                 {order.total_count} items in {order.unique_count} lots
               </p>
+            </div>
+          </div>
+          <div class="card bg-base-200 lg:col-span-3">
+            <div class="card-body p-4">
+              <h2 class="card-title text-sm text-base-content/60 font-normal uppercase tracking-wide">
+                Shipping
+              </h2>
+              <div class="flex flex-wrap gap-x-8 gap-y-1">
+                {order.shipping.method && <p class="font-medium">{order.shipping.method}</p>}
+                {order.shipping.address.name.full && (
+                  <p class="text-sm text-base-content/60">{order.shipping.address.name.full}</p>
+                )}
+                {(order.shipping.address.address1 || order.shipping.address.city) && (
+                  <p class="text-sm text-base-content/60">
+                    {[
+                      order.shipping.address.address1,
+                      order.shipping.address.address2,
+                      order.shipping.address.city,
+                      order.shipping.address.state,
+                      order.shipping.address.postal_code,
+                      order.shipping.address.country_code,
+                    ].filter(Boolean).join(", ")}
+                  </p>
+                )}
+                {order.shipping.date_shipped && (
+                  <p class="text-sm text-base-content/60">
+                    Shipped: {new Date(order.shipping.date_shipped).toLocaleDateString()}
+                  </p>
+                )}
+                {order.shipping.tracking_no && (
+                  <p class="text-sm">
+                    Tracking: {order.shipping.tracking_link
+                      ? (
+                        <a
+                          href={order.shipping.tracking_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="link font-mono"
+                        >
+                          {order.shipping.tracking_no}
+                        </a>
+                      )
+                      : <span class="font-mono">{order.shipping.tracking_no}</span>}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
