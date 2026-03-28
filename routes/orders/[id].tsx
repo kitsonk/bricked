@@ -2,14 +2,20 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials } from "@/utils/kv.ts";
+import { getCredentials, getShippingMethodEnrichment } from "@/utils/kv.ts";
 import type { BLOrder, BLOrderItem } from "@/utils/types.ts";
 import { decodeHtml } from "@/utils/html.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 import { bricklinkItemImageUrl, formatAmount, humanTime } from "@/utils/format.ts";
+import OrderShipButton from "@/islands/OrderShipButton.tsx";
 
-export const handler = define.handlers<{ order: BLOrder | null; items: BLOrderItem[]; error: string | null }>({
+export const handler = define.handlers<{
+  order: BLOrder | null;
+  items: BLOrderItem[];
+  hasTracking: boolean;
+  error: string | null;
+}>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
@@ -25,9 +31,10 @@ export const handler = define.handlers<{ order: BLOrder | null; items: BLOrderIt
         client.get<BLOrder>(`/orders/${orderId}`),
         client.getOrderItems(orderId),
       ]);
-      return page({ order, items, error: null });
+      const enrichment = order.shipping?.method_id ? await getShippingMethodEnrichment(order.shipping.method_id) : null;
+      return page({ order, items, hasTracking: enrichment?.hasTracking ?? false, error: null });
     } catch (err) {
-      return page({ order: null, items: [], error: String(err) });
+      return page({ order: null, items: [], hasTracking: false, error: String(err) });
     }
   },
 });
@@ -103,9 +110,12 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
           </div>
           <div class="card bg-base-200 lg:col-span-3">
             <div class="card-body p-4">
-              <h2 class="card-title text-sm text-base-content/60 font-normal uppercase tracking-wide">
-                Shipping
-              </h2>
+              <div class="flex items-center justify-between">
+                <h2 class="card-title text-sm text-base-content/60 font-normal uppercase tracking-wide">
+                  Shipping
+                </h2>
+                {order.status === "PACKED" && <OrderShipButton order={order} hasTracking={data.hasTracking} />}
+              </div>
               <div class="flex flex-wrap gap-x-8 gap-y-1">
                 {order.shipping.method && (
                   <p class="font-medium">
