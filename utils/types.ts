@@ -168,6 +168,7 @@ export interface PickListOrder {
   shippingName: string;
   shippingMethod: string;
   status: OrderStatus;
+  dateOrdered: string;
 }
 
 export interface PickListItem {

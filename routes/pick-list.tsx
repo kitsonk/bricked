@@ -39,6 +39,7 @@ export const handler = define.handlers<
         shippingName: o.shipping.address.name.first || o.shipping.address.name.full,
         shippingMethod: o.shipping.method,
         status: o.status,
+        dateOrdered: o.date_ordered,
       }));
 
       const map = new Map<string, PickListItem>();

@@ -2,7 +2,7 @@ import { useSignal } from "@preact/signals";
 import type { PickListItem, PickListOrder } from "@/utils/types.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
-import { bricklinkItemImageUrl } from "@/utils/format.ts";
+import { bricklinkItemImageUrl, humanTime } from "@/utils/format.ts";
 
 function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   const map = new Map<string, T[]>();
@@ -158,6 +158,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                     </button>
                   </div>
                   <div class="flex gap-4 mt-1 text-sm">
+                    <span class="text-base-content/50">Ordered {humanTime(order.dateOrdered)}</span>
                     <span>
                       <span class={`font-semibold ${done ? "text-success" : ""}`}>{pickedLots}</span>
                       <span class="text-base-content/50">/{totalLots} lots</span>
