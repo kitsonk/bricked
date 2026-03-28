@@ -3,8 +3,30 @@ import type { BLOrder } from "@/utils/types.ts";
 import { formatAmount } from "@/utils/format.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 
+const STATUS_ORDER: Record<string, number> = {
+  PENDING: 0,
+  UPDATED: 1,
+  PROCESSING: 2,
+  READY: 3,
+  PAID: 4,
+  PACKED: 5,
+  SHIPPED: 6,
+  RECEIVED: 7,
+  COMPLETED: 8,
+  CANCELLED: 9,
+};
+
+function sortOrders(orders: BLOrder[]): BLOrder[] {
+  return [...orders].sort((a, b) => {
+    const statusDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
+    if (statusDiff !== 0) return statusDiff;
+    return new Date(a.date_ordered).getTime() - new Date(b.date_ordered).getTime();
+  });
+}
+
 export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOrder[]; sentDriveThruIds: number[] }) {
   const sentSet = new Set(sentDriveThruIds);
+  const sorted = sortOrders(orders);
   const selected = useSignal(new Set<number>());
 
   function toggle(id: number) {
@@ -18,9 +40,9 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
   }
 
   function toggleAll() {
-    selected.value = selected.value.size === orders.length && orders.length > 0
+    selected.value = selected.value.size === sorted.length && sorted.length > 0
       ? new Set()
-      : new Set(orders.map((o) => o.order_id));
+      : new Set(sorted.map((o) => o.order_id));
   }
 
   function generatePickList() {
@@ -28,10 +50,10 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
     globalThis.location.href = `/pick-list?orders=${ids}`;
   }
 
-  const allSelected = selected.value.size === orders.length && orders.length > 0;
+  const allSelected = selected.value.size === sorted.length && sorted.length > 0;
   const someSelected = selected.value.size > 0;
 
-  if (orders.length === 0) {
+  if (sorted.length === 0) {
     return (
       <div class="text-center py-16 text-base-content/50">
         <span class="iconify lucide--inbox size-12 block mx-auto mb-3"></span>
@@ -45,7 +67,7 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
     <div>
       <div class="flex items-center justify-between mb-4">
         <p class="text-sm text-base-content/60">
-          {orders.length} order{orders.length !== 1 ? "s" : ""}
+          {sorted.length} order{sorted.length !== 1 ? "s" : ""}
         </p>
         <button
           type="button"
@@ -82,7 +104,7 @@ export default function OrdersTable({ orders, sentDriveThruIds }: { orders: BLOr
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => {
+            {sorted.map((order) => {
               const isSelected = selected.value.has(order.order_id);
               const driveThruSent = sentSet.has(order.order_id);
               return (
