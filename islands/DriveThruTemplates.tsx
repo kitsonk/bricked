@@ -1,21 +1,7 @@
 import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import type { DriveThruTemplate } from "@/utils/types.ts";
-
-const TEMPLATE_VARIABLES: { variable: string; description: string }[] = [
-  { variable: "{{buyer_name}}", description: "Buyer's username" },
-  { variable: "{{buyer_email}}", description: "Buyer's email address" },
-  { variable: "{{shipping_first_name}}", description: "Recipient's first name" },
-  { variable: "{{shipping_last_name}}", description: "Recipient's last name" },
-  { variable: "{{shipping_full_name}}", description: "Recipient's full name" },
-  { variable: "{{order_id}}", description: "Order number" },
-  { variable: "{{order_date}}", description: "Date the order was placed" },
-  { variable: "{{total}}", description: "Order total with currency" },
-  { variable: "{{item_count}}", description: "Total number of items" },
-  { variable: "{{lot_count}}", description: "Number of distinct lots" },
-  { variable: "{{status}}", description: "Order status" },
-  { variable: "{{payment_status}}", description: "Payment status" },
-];
+import { TEMPLATE_VARIABLES } from "@/utils/drive-thru.ts";
 
 export default function DriveThruTemplates({ initialTemplates }: { initialTemplates: DriveThruTemplate[] }) {
   const templates = useSignal<DriveThruTemplate[]>(initialTemplates);

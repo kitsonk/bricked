@@ -1,21 +1,6 @@
 import { useSignal } from "@preact/signals";
 import type { BLOrder, DriveThruSentRecord, DriveThruTemplate } from "@/utils/types.ts";
-
-function interpolate(body: string, order: BLOrder): string {
-  return body
-    .replaceAll("{{buyer_name}}", order.buyer_name)
-    .replaceAll("{{buyer_email}}", order.buyer_email)
-    .replaceAll("{{order_id}}", String(order.order_id))
-    .replaceAll("{{order_date}}", new Date(order.date_ordered).toLocaleDateString())
-    .replaceAll("{{total}}", `${order.disp_cost.currency_code} ${order.disp_cost.grand_total}`)
-    .replaceAll("{{item_count}}", String(order.total_count))
-    .replaceAll("{{lot_count}}", String(order.unique_count))
-    .replaceAll("{{status}}", order.status)
-    .replaceAll("{{payment_status}}", order.payment.status)
-    .replaceAll("{{shipping_first_name}}", order.shipping.address.name.first)
-    .replaceAll("{{shipping_last_name}}", order.shipping.address.name.last)
-    .replaceAll("{{shipping_full_name}}", order.shipping.address.name.full);
-}
+import { interpolate } from "@/utils/drive-thru.ts";
 
 export default function DriveThruSend({
   order,
