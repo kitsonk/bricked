@@ -201,7 +201,14 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                           loading="lazy"
                         />
                         <div>
-                          <div class="font-medium">{decodeHtml(item.item.name)}</div>
+                          <a
+                            href={`https://www.bricklink.com/v2/catalog/catalogitem.page?P=${item.item.no}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-medium link link-hover"
+                          >
+                            {decodeHtml(item.item.name)}
+                          </a>
                           <div class="text-xs text-base-content/50 font-mono">{item.item.no}</div>
                           {item.description && (
                             <div class="text-xs text-base-content/50 whitespace-normal">{item.description}</div>
