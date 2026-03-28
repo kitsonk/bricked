@@ -7,7 +7,7 @@ import type { BLOrder, BLOrderItem } from "@/utils/types.ts";
 import { decodeHtml } from "@/utils/html.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
-import { bricklinkItemImageUrl, formatAmount } from "@/utils/format.ts";
+import { bricklinkItemImageUrl, formatAmount, humanTime } from "@/utils/format.ts";
 
 export const handler = define.handlers<{ order: BLOrder | null; items: BLOrderItem[]; error: string | null }>({
   async GET(ctx) {
@@ -80,9 +80,9 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
           <div class="card bg-base-200">
             <div class="card-body p-4">
               <h2 class="card-title text-sm text-base-content/60 font-normal uppercase tracking-wide">
-                Order Date
+                Ordered
               </h2>
-              <p class="font-medium">{new Date(order.date_ordered).toLocaleDateString()}</p>
+              <p class="font-medium">{humanTime(order.date_ordered)}</p>
               <p class="text-sm text-base-content/60">
                 Payment: {order.payment.status}
               </p>
