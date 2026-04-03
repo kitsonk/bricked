@@ -53,7 +53,7 @@ export default function ShipList(
             <th>Buyer</th>
             <th>Ordered</th>
             <th>Shipping Method</th>
-            <th>Shipping Address</th>
+            <th>Ship To</th>
             <th>Package Type</th>
             <th>L (cm)</th>
             <th>W (cm)</th>
@@ -63,11 +63,6 @@ export default function ShipList(
         <tbody>
           {orders.map((order) => {
             const addr = order.shipping?.address;
-            const addressLine = addr
-              ? [addr.address1, addr.address2, addr.city, addr.state, addr.postal_code, addr.country_code]
-                .filter(Boolean)
-                .join(", ")
-              : "—";
             const isCustom = selectedPackage.value[order.order_id] === "";
             const dims = dimensions.value[order.order_id];
             return (
@@ -83,7 +78,23 @@ export default function ShipList(
                 </td>
                 <td class="text-sm">{humanTime(order.date_ordered)}</td>
                 <td class="text-sm">{order.shipping?.method || "—"}</td>
-                <td class="text-sm">{addressLine}</td>
+                <td class="text-sm leading-snug">
+                  {addr
+                    ? (
+                      <div>
+                        <div class="font-medium">
+                          {addr.name.full || [addr.name.first, addr.name.last].filter(Boolean).join(" ")}
+                        </div>
+                        {addr.address1 && <div>{addr.address1}</div>}
+                        {addr.address2 && <div>{addr.address2}</div>}
+                        {(addr.city || addr.state || addr.postal_code) && (
+                          <div>{[addr.city, addr.state, addr.postal_code].filter(Boolean).join(", ")}</div>
+                        )}
+                        {addr.country_code && <div>{addr.country_code}</div>}
+                      </div>
+                    )
+                    : "—"}
+                </td>
                 <td>
                   <select
                     class="select select-sm w-full min-w-48"
