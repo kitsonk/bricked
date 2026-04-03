@@ -18,19 +18,20 @@ const STATUS_ORDER: Record<string, number> = {
   CANCELLED: 9,
 };
 
-function sortOrders(orders: BLOrder[]): BLOrder[] {
+function sortOrders(orders: BLOrder[], dateSort: "asc" | "desc"): BLOrder[] {
   return [...orders].sort((a, b) => {
     const statusDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
     if (statusDiff !== 0) return statusDiff;
-    return new Date(a.date_ordered).getTime() - new Date(b.date_ordered).getTime();
+    const timeDiff = new Date(a.date_ordered).getTime() - new Date(b.date_ordered).getTime();
+    return dateSort === "desc" ? -timeDiff : timeDiff;
   });
 }
 
 export default function OrdersTable(
-  { orders, trackingMethodIds }: { orders: BLOrder[]; trackingMethodIds: number[] },
+  { orders, trackingMethodIds, dateSort }: { orders: BLOrder[]; trackingMethodIds: number[]; dateSort: "asc" | "desc" },
 ) {
   const trackingMethodSet = new Set(trackingMethodIds);
-  const localOrders = useSignal<BLOrder[]>(sortOrders(orders));
+  const localOrders = useSignal<BLOrder[]>(sortOrders(orders, dateSort));
   const selected = useSignal(new Set<number>());
   const shippingOrder = useSignal<BLOrder | null>(null);
   const shipError = useSignal<string | null>(null);
@@ -86,8 +87,9 @@ export default function OrdersTable(
       });
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
-      localOrders.value = localOrders.value.map((o) =>
-        o.order_id === order.order_id ? { ...o, status: "SHIPPED" as OrderStatus } : o
+      localOrders.value = sortOrders(
+        localOrders.value.map((o) => o.order_id === order.order_id ? { ...o, status: "SHIPPED" as OrderStatus } : o),
+        dateSort,
       );
       shippingOrder.value = null;
     } catch (err) {

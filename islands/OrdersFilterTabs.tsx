@@ -18,7 +18,7 @@ export default function OrdersFilterTabs({ filter }: { filter: "unfiled" | "file
         class={`tab${filter === "filed" ? " tab-active" : ""}`}
         aria-selected={filter === "filed"}
         onClick={() => {
-          globalThis.location.href = "/orders?filter=filed";
+          globalThis.location.href = "/orders?filter=filed&sort=desc";
         }}
       >
         Filed

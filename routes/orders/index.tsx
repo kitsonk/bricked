@@ -15,6 +15,7 @@ export const handler = define.handlers<{
   orders: BLOrder[];
   trackingMethodIds: number[];
   filter: "unfiled" | "filed";
+  dateSort: "asc" | "desc";
   error: string | null;
 }>({
   async GET(ctx) {
@@ -23,6 +24,7 @@ export const handler = define.handlers<{
       return ctx.redirect("/settings");
     }
     const filter = ctx.url.searchParams.get("filter") === "filed" ? "filed" : "unfiled";
+    const dateSort = ctx.url.searchParams.get("sort") === "desc" ? "desc" : "asc";
     try {
       const client = new BricklinkClient(creds);
       const [orders, enrichments] = await Promise.all([
@@ -33,21 +35,22 @@ export const handler = define.handlers<{
         .filter(([, e]) => e.hasTracking)
         .map(([id]) => id);
       logger.debug`Orders page: ${orders.length} order(s), ${trackingMethodIds.length} tracking method(s)`;
-      return page({ orders, trackingMethodIds, filter, error: null });
+      return page({ orders, trackingMethodIds, filter, dateSort, error: null });
     } catch (err) {
       logger.error`Failed to load orders: ${err}`;
-      return page({ orders: [], trackingMethodIds: [], filter, error: String(err) });
+      return page({ orders: [], trackingMethodIds: [], filter, dateSort, error: String(err) });
     }
   },
 });
 
 export default define.page<typeof handler>(function Orders({ data }) {
-  const { filter } = data;
+  const { filter, dateSort } = data;
+  const refreshHref = `/orders${filter === "filed" ? `?filter=filed&sort=${dateSort}` : ""}`;
   return (
     <AppFrame>
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold">Orders</h1>
-        <a href={`/orders${filter === "filed" ? "?filter=filed" : ""}`} class="btn btn-ghost btn-sm">
+        <a href={refreshHref} class="btn btn-ghost btn-sm">
           <span class="iconify lucide--refresh-cw size-4"></span>
           Refresh
         </a>
@@ -64,7 +67,7 @@ export default define.page<typeof handler>(function Orders({ data }) {
             </div>
           </div>
         )}
-        <OrdersTable orders={data.orders} trackingMethodIds={data.trackingMethodIds} />
+        <OrdersTable orders={data.orders} trackingMethodIds={data.trackingMethodIds} dateSort={dateSort} />
       </div>
     </AppFrame>
   );
