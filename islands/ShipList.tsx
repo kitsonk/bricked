@@ -10,6 +10,7 @@ interface Dims {
 
 const EMPTY_ADDRESS: AusPostAddress = {
   recipientName: "",
+  recipientEmail: "",
   addressLine1: "",
   addressLine2: "",
   addressLine3: "",
@@ -277,6 +278,7 @@ export default function ShipList(
               <th>Items</th>
               <th>Shipping Method</th>
               <th>Ship To</th>
+              <th>Recipient Email</th>
               <th>Package Type</th>
               <th>L (cm)</th>
               <th>W (cm)</th>
@@ -319,6 +321,22 @@ export default function ShipList(
                         <span class="iconify lucide--pencil size-3.5"></span>
                       </button>
                     </div>
+                  </td>
+                  <td>
+                    <input
+                      type="email"
+                      class="input input-sm w-full min-w-48"
+                      value={addr?.recipientEmail ?? ""}
+                      onInput={(e) => {
+                        addresses.value = {
+                          ...addresses.value,
+                          [order.order_id]: {
+                            ...addresses.value[order.order_id],
+                            recipientEmail: (e.target as HTMLInputElement).value,
+                          },
+                        };
+                      }}
+                    />
                   </td>
                   <td>
                     <select
