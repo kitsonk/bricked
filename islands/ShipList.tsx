@@ -1,7 +1,6 @@
 import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import type { AusPostAddress, BLOrder, PackageType } from "@/utils/types.ts";
-import { humanTime } from "@/utils/format.ts";
 
 interface Dims {
   l: string;
@@ -196,8 +195,7 @@ export default function ShipList(
           <thead>
             <tr>
               <th>Order</th>
-              <th>Buyer</th>
-              <th>Ordered</th>
+              <th>Items</th>
               <th>Shipping Method</th>
               <th>Ship To</th>
               <th>Package Type</th>
@@ -218,11 +216,9 @@ export default function ShipList(
                       #{order.order_id}
                     </a>
                   </td>
-                  <td>
-                    <div class="font-medium">{order.buyer_name}</div>
-                    <div class="text-xs text-base-content/50">{order.buyer_email}</div>
+                  <td class="text-sm">
+                    {order.total_count} <span class="text-base-content/50">({order.unique_count} lots)</span>
                   </td>
-                  <td class="text-sm">{humanTime(order.date_ordered)}</td>
                   <td class="text-sm">{order.shipping?.method || "—"}</td>
                   <td>
                     <div class="flex items-start justify-between gap-2">
