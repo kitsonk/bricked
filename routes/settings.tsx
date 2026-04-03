@@ -2,11 +2,13 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { getCredentials } from "@/utils/kv.ts";
+import { getAddressFinderCredentials } from "@/utils/addressfinder.ts";
 
-export const handler = define.handlers<{ configured: boolean }>({
+export const handler = define.handlers<{ configured: boolean; addressFinderConfigured: boolean }>({
   GET(_ctx) {
     const creds = getCredentials();
-    return page({ configured: !!creds });
+    const afCreds = getAddressFinderCredentials();
+    return page({ configured: !!creds, addressFinderConfigured: !!afCreds });
   },
 });
 
@@ -15,6 +17,20 @@ export default define.page<typeof handler>(function Settings({ data }) {
     <AppFrame>
       <div class="max-w-lg">
         <h1 class="text-2xl font-bold mb-6">Settings</h1>
+
+        {data.addressFinderConfigured
+          ? (
+            <div role="alert" class="alert alert-success mb-4">
+              <span class="iconify lucide--circle-check size-5"></span>
+              <span>AddressFinder credentials are configured.</span>
+            </div>
+          )
+          : (
+            <div role="alert" class="alert alert-warning mb-4">
+              <span class="iconify lucide--alert-triangle size-5"></span>
+              <span>AddressFinder credentials are not configured.</span>
+            </div>
+          )}
 
         {data.configured
           ? (
@@ -88,6 +104,37 @@ export default define.page<typeof handler>(function Settings({ data }) {
                 BrickLink API settings
               </a>.
             </p>
+          </div>
+        </div>
+
+        <div class="card bg-base-200 mt-6">
+          <div class="card-body">
+            <h2 class="card-title text-lg">AddressFinder Credentials</h2>
+            <p class="text-sm text-base-content/60 mb-4">
+              Used to verify and normalise Australian shipping addresses. Set the following in your <code>.env</code>
+              {" "}
+              file (local) or application configuration (Deno Deploy):
+            </p>
+            <ul class="text-sm font-mono space-y-1">
+              <li>
+                <span
+                  class={`badge badge-sm mr-2 ${Deno.env.get("ADDRESSFINDER_KEY") ? "badge-success" : "badge-warning"}`}
+                >
+                  {Deno.env.get("ADDRESSFINDER_KEY") ? "set" : "missing"}
+                </span>
+                ADDRESSFINDER_KEY
+              </li>
+              <li>
+                <span
+                  class={`badge badge-sm mr-2 ${
+                    Deno.env.get("ADDRESSFINDER_SECRET") ? "badge-success" : "badge-warning"
+                  }`}
+                >
+                  {Deno.env.get("ADDRESSFINDER_SECRET") ? "set" : "missing"}
+                </span>
+                ADDRESSFINDER_SECRET
+              </li>
+            </ul>
           </div>
         </div>
       </div>
