@@ -1,4 +1,4 @@
-import type { BLOrder, VerifiedAustralianAddress } from "@/utils/types.ts";
+import type { AusPostAddress, VerifiedAustralianAddress } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
 
 const API_URL = "https://api.addressfinder.io/api/au/address/v2/verification";
@@ -32,7 +32,7 @@ export function getAddressFinderCredentials(): { key: string; secret: string } |
  * Caller is responsible for ensuring country_code === "AU".
  */
 export async function verifyAustralianAddress(
-  address: BLOrder["shipping"]["address"],
+  address: AusPostAddress,
 ): Promise<VerifiedAustralianAddress | null> {
   const creds = getAddressFinderCredentials();
   if (!creds) {
@@ -40,11 +40,11 @@ export async function verifyAustralianAddress(
   }
 
   const q = [
-    address.address1,
-    address.address2,
-    address.city,
+    address.addressLine1,
+    address.addressLine2,
+    address.suburb,
     address.state,
-    address.postal_code,
+    address.postcode,
   ].filter(Boolean).join(", ");
 
   const url = new URL(API_URL);

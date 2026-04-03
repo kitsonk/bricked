@@ -42,8 +42,11 @@ export default function ShipList(
 
   const addresses = useSignal<Record<number, AusPostAddress>>(initialAddresses);
   const editingOrderId = useSignal<number | null>(null);
+  const editingCountryCode = useSignal<string>("");
   const formAddress = useSignal<AusPostAddress>(EMPTY_ADDRESS);
   const saving = useSignal(false);
+  const verifying = useSignal(false);
+  const verifyResult = useSignal<"success" | "unmatched" | null>(null);
   const addressError = useSignal<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -66,9 +69,12 @@ export default function ShipList(
   }
 
   function openAddressDialog(orderId: number) {
+    const order = orders.find((o) => o.order_id === orderId);
     editingOrderId.value = orderId;
+    editingCountryCode.value = order?.shipping?.address?.country_code ?? "";
     formAddress.value = { ...addresses.value[orderId] };
     addressError.value = null;
+    verifyResult.value = null;
     dialogRef.current?.showModal();
   }
 
@@ -79,6 +85,40 @@ export default function ShipList(
 
   function updateForm(field: keyof AusPostAddress, value: string) {
     formAddress.value = { ...formAddress.value, [field]: value };
+    verifyResult.value = null;
+  }
+
+  async function verifyAddress() {
+    verifying.value = true;
+    addressError.value = null;
+    verifyResult.value = null;
+    try {
+      const resp = await fetch("/api/ship-list/verify-address", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formAddress.value),
+      });
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
+      if (!json.matched) {
+        verifyResult.value = "unmatched";
+      } else {
+        formAddress.value = {
+          ...formAddress.value,
+          addressLine1: json.addressLine1,
+          addressLine2: json.addressLine2 ?? "",
+          addressLine3: json.addressLine3 ?? "",
+          suburb: json.suburb,
+          state: json.state,
+          postcode: json.postcode,
+        };
+        verifyResult.value = "success";
+      }
+    } catch (err) {
+      addressError.value = String(err);
+    } finally {
+      verifying.value = false;
+    }
   }
 
   async function saveAddress(e: Event) {
@@ -112,6 +152,18 @@ export default function ShipList(
             <div role="alert" class="alert alert-error mb-4 text-sm">
               <span class="iconify lucide--alert-circle size-4"></span>
               <span>{addressError.value}</span>
+            </div>
+          )}
+          {verifyResult.value === "success" && (
+            <div role="alert" class="alert alert-success mb-4 text-sm">
+              <span class="iconify lucide--circle-check size-4"></span>
+              <span>Address verified and updated.</span>
+            </div>
+          )}
+          {verifyResult.value === "unmatched" && (
+            <div role="alert" class="alert alert-warning mb-4 text-sm">
+              <span class="iconify lucide--alert-triangle size-4"></span>
+              <span>Address could not be verified — please check and correct manually.</span>
             </div>
           )}
           <form onSubmit={saveAddress}>
@@ -186,10 +238,27 @@ export default function ShipList(
               </fieldset>
             </div>
             <div class="modal-action">
+              {editingCountryCode.value === "AU" && (
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm mr-auto"
+                  disabled={verifying.value || saving.value}
+                  onClick={verifyAddress}
+                >
+                  {verifying.value
+                    ? (
+                      <>
+                        <span class="loading loading-spinner loading-xs"></span>
+                        Verifying
+                      </>
+                    )
+                    : "Verify"}
+                </button>
+              )}
               <button type="button" class="btn btn-ghost btn-sm" onClick={closeAddressDialog}>
                 Cancel
               </button>
-              <button type="submit" class="btn btn-primary btn-sm" disabled={saving.value}>
+              <button type="submit" class="btn btn-primary btn-sm" disabled={saving.value || verifying.value}>
                 {saving.value ? <span class="loading loading-spinner loading-xs"></span> : "Save"}
               </button>
             </div>
