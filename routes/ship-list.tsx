@@ -2,12 +2,11 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials } from "@/utils/kv.ts";
-import type { BLOrder } from "@/utils/types.ts";
-import { StatusBadge } from "@/components/StatusBadge.tsx";
-import { humanTime } from "@/utils/format.ts";
+import { getCredentials, listPackageTypes } from "@/utils/kv.ts";
+import type { BLOrder, PackageType } from "@/utils/types.ts";
+import ShipList from "@/islands/ShipList.tsx";
 
-export const handler = define.handlers<{ orders: BLOrder[]; error: string | null }>({
+export const handler = define.handlers<{ orders: BLOrder[]; packageTypes: PackageType[]; error: string | null }>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) return ctx.redirect("/environment");
@@ -22,16 +21,19 @@ export const handler = define.handlers<{ orders: BLOrder[]; error: string | null
 
     try {
       const client = new BricklinkClient(creds);
-      const orders = await Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`)));
-      return page({ orders, error: null });
+      const [orders, packageTypes] = await Promise.all([
+        Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
+        listPackageTypes(),
+      ]);
+      return page({ orders, packageTypes, error: null });
     } catch (err) {
-      return page({ orders: [], error: String(err) });
+      return page({ orders: [], packageTypes: [], error: String(err) });
     }
   },
 });
 
 export default define.page<typeof handler>(function ShipListPage({ data }) {
-  const { orders, error } = data;
+  const { orders, packageTypes, error } = data;
   return (
     <AppFrame>
       <div class="flex items-center justify-between mb-6">
@@ -60,51 +62,7 @@ export default define.page<typeof handler>(function ShipListPage({ data }) {
         </div>
       )}
 
-      {orders.length > 0 && (
-        <div class="overflow-x-auto">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Order</th>
-                <th>Buyer</th>
-                <th>Ordered</th>
-                <th>Status</th>
-                <th>Shipping Method</th>
-                <th>Shipping Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                const addr = order.shipping?.address;
-                const addressLine = addr
-                  ? [addr.address1, addr.address2, addr.city, addr.state, addr.postal_code, addr.country_code]
-                    .filter(Boolean)
-                    .join(", ")
-                  : "—";
-                return (
-                  <tr key={order.order_id}>
-                    <td>
-                      <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
-                        #{order.order_id}
-                      </a>
-                    </td>
-                    <td>
-                      <div class="font-medium">{order.buyer_name}</div>
-                      <div class="text-xs text-base-content/50">{order.buyer_email}</div>
-                    </td>
-                    <td class="text-sm">{humanTime(order.date_ordered)}</td>
-                    <td>
-                      <StatusBadge status={order.status} />
-                    </td>
-                    <td class="text-sm">{order.shipping?.method || "—"}</td>
-                    <td class="text-sm">{addressLine}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {orders.length > 0 && <ShipList orders={orders} packageTypes={packageTypes} />}
     </AppFrame>
   );
 });
