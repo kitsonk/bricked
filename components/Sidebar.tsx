@@ -38,6 +38,7 @@ export function Sidebar() {
         <p class="menu-label mt-4 px-2.5">Settings</p>
         <div class="mt-2">
           <MenuItem icon="settings" label="Environment" href="/environment" />
+          <MenuItem icon="package" label="Package Types" href="/package-types" />
         </div>
       </div>
     </div>

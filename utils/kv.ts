@@ -3,6 +3,7 @@ import type {
   BricklinkCredentials,
   DriveThruSentRecord,
   DriveThruTemplate,
+  PackageType,
   ShippingMethodEnrichment,
   StoredNotification,
 } from "@/utils/types.ts";
@@ -149,4 +150,36 @@ export async function listShippingMethodEnrichments(): Promise<Map<number, Shipp
     map.set(entry.key[1] as number, entry.value);
   }
   return map;
+}
+
+// Package Types
+
+function packageTypeKey(id: string): Deno.KvKey {
+  return ["package_type", id];
+}
+
+export async function listPackageTypes(): Promise<PackageType[]> {
+  const kv = await Deno.openKv();
+  const entries = kv.list<PackageType>({ prefix: ["package_type"] });
+  const results: PackageType[] = [];
+  for await (const entry of entries) {
+    results.push(entry.value);
+  }
+  return results.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function getPackageType(id: string): Promise<PackageType | null> {
+  const kv = await Deno.openKv();
+  const result = await kv.get<PackageType>(packageTypeKey(id));
+  return result.value;
+}
+
+export async function savePackageType(packageType: PackageType): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.set(packageTypeKey(packageType.id), packageType);
+}
+
+export async function deletePackageType(id: string): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.delete(packageTypeKey(id));
 }

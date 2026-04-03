@@ -172,6 +172,16 @@ export interface DriveThruSentRecord {
   sentAt: string;
 }
 
+export interface PackageType {
+  id: string;
+  label: string;
+  lengthCm: number;
+  widthCm: number;
+  heightCm: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PickListOrder {
   orderId: number;
   buyerName: string;
