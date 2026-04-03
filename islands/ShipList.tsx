@@ -3,6 +3,12 @@ import type { BLOrder, PackageType } from "@/utils/types.ts";
 import { humanTime } from "@/utils/format.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 
+interface Dims {
+  l: string;
+  w: string;
+  h: string;
+}
+
 function packageLabel(pt: PackageType): string {
   const dims = `${pt.lengthCm.toFixed(1)} × ${pt.widthCm.toFixed(1)} × ${pt.heightCm.toFixed(1)} cm`;
   return `${pt.label} (${dims})`;
@@ -11,12 +17,32 @@ function packageLabel(pt: PackageType): string {
 export default function ShipList(
   { orders, packageTypes }: { orders: BLOrder[]; packageTypes: PackageType[] },
 ) {
+  const packageById = new Map(packageTypes.map((pt) => [pt.id, pt]));
+
   const selectedPackage = useSignal<Record<number, string>>(
     Object.fromEntries(orders.map((o) => [o.order_id, ""])),
   );
 
+  const dimensions = useSignal<Record<number, Dims>>(
+    Object.fromEntries(orders.map((o) => [o.order_id, { l: "", w: "", h: "" }])),
+  );
+
   function setPackage(orderId: number, value: string) {
     selectedPackage.value = { ...selectedPackage.value, [orderId]: value };
+    const pt = packageById.get(value);
+    dimensions.value = {
+      ...dimensions.value,
+      [orderId]: pt
+        ? { l: pt.lengthCm.toFixed(1), w: pt.widthCm.toFixed(1), h: pt.heightCm.toFixed(1) }
+        : { l: "", w: "", h: "" },
+    };
+  }
+
+  function setDim(orderId: number, field: keyof Dims, value: string) {
+    dimensions.value = {
+      ...dimensions.value,
+      [orderId]: { ...dimensions.value[orderId], [field]: value },
+    };
   }
 
   return (
@@ -31,6 +57,9 @@ export default function ShipList(
             <th>Shipping Method</th>
             <th>Shipping Address</th>
             <th>Package Type</th>
+            <th>L (cm)</th>
+            <th>W (cm)</th>
+            <th>H (cm)</th>
           </tr>
         </thead>
         <tbody>
@@ -41,6 +70,8 @@ export default function ShipList(
                 .filter(Boolean)
                 .join(", ")
               : "—";
+            const isCustom = selectedPackage.value[order.order_id] === "";
+            const dims = dimensions.value[order.order_id];
             return (
               <tr key={order.order_id}>
                 <td>
@@ -67,6 +98,39 @@ export default function ShipList(
                     <option value="">Custom</option>
                     {packageTypes.map((pt) => <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>)}
                   </select>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    class="input input-sm w-20"
+                    step="0.1"
+                    min="0"
+                    disabled={!isCustom}
+                    value={dims.l}
+                    onInput={(e) => setDim(order.order_id, "l", (e.target as HTMLInputElement).value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    class="input input-sm w-20"
+                    step="0.1"
+                    min="0"
+                    disabled={!isCustom}
+                    value={dims.w}
+                    onInput={(e) => setDim(order.order_id, "w", (e.target as HTMLInputElement).value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    class="input input-sm w-20"
+                    step="0.1"
+                    min="0"
+                    disabled={!isCustom}
+                    value={dims.h}
+                    onInput={(e) => setDim(order.order_id, "h", (e.target as HTMLInputElement).value)}
+                  />
                 </td>
               </tr>
             );
