@@ -59,6 +59,11 @@ export default function OrdersTable(
     globalThis.location.href = `/pick-list?orders=${ids}`;
   }
 
+  function prepareToShip() {
+    const ids = [...selected.value].join(",");
+    globalThis.location.href = `/ship-list?orders=${ids}`;
+  }
+
   async function openShipDialog(orderId: number) {
     shipDialogLoading.value = orderId;
     shipError.value = null;
@@ -133,16 +138,28 @@ export default function OrdersTable(
         <p class="text-sm text-base-content/60">
           {localOrders.value.length} order{localOrders.value.length !== 1 ? "s" : ""}
         </p>
-        <button
-          type="button"
-          class="btn btn-primary btn-sm"
-          disabled={!someSelected}
-          onClick={generatePickList}
-        >
-          <span class="iconify lucide--package size-4"></span>
-          Generate Pick List
-          {someSelected && <span class="badge badge-sm badge-primary-content ml-1">{selected.value.size}</span>}
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            disabled={!someSelected}
+            onClick={generatePickList}
+          >
+            <span class="iconify lucide--package size-4"></span>
+            Generate Pick List
+            {someSelected && <span class="badge badge-sm badge-primary-content ml-1">{selected.value.size}</span>}
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            disabled={!someSelected}
+            onClick={prepareToShip}
+          >
+            <span class="iconify lucide--truck size-4"></span>
+            Prepare to Ship
+            {someSelected && <span class="badge badge-sm badge-primary-content ml-1">{selected.value.size}</span>}
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
