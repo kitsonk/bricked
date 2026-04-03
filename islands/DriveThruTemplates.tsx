@@ -14,6 +14,23 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
   const formName = useSignal("");
   const formBody = useSignal("");
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function insertVariable(variable: string) {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart ?? formBody.value.length;
+      const end = textarea.selectionEnd ?? formBody.value.length;
+      formBody.value = formBody.value.slice(0, start) + variable + formBody.value.slice(end);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const newPos = start + variable.length;
+        textarea.setSelectionRange(newPos, newPos);
+      });
+    } else {
+      formBody.value += variable;
+    }
+  }
 
   function openNew() {
     isNew.value = true;
@@ -165,6 +182,7 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
           <fieldset class="fieldset mb-3">
             <legend class="fieldset-legend">Message Body</legend>
             <textarea
+              ref={textareaRef}
               class="textarea w-full h-40"
               placeholder="Hi {{buyer_name}}, thank you for your order #{{order_id}}!"
               value={formBody.value}
@@ -173,7 +191,15 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
             <p class="label text-xs flex flex-wrap gap-x-1">
               <span class="text-base-content/60">Variables:</span>
               {TEMPLATE_VARIABLES.map((v) => (
-                <code key={v.variable} class="text-primary" title={v.description}>{v.variable}</code>
+                <button
+                  key={v.variable}
+                  type="button"
+                  title={v.description}
+                  class="cursor-pointer"
+                  onClick={() => insertVariable(v.variable)}
+                >
+                  <code class="text-primary hover:text-primary/70">{v.variable}</code>
+                </button>
               ))}
             </p>
           </fieldset>
