@@ -1,50 +1,11 @@
-import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
-import { getCredentials } from "@/utils/kv.ts";
-import { getAddressFinderCredentials } from "@/utils/addressfinder.ts";
 
-export const handler = define.handlers<{ configured: boolean; addressFinderConfigured: boolean }>({
-  GET(_ctx) {
-    const creds = getCredentials();
-    const afCreds = getAddressFinderCredentials();
-    return page({ configured: !!creds, addressFinderConfigured: !!afCreds });
-  },
-});
-
-export default define.page<typeof handler>(function Settings({ data }) {
+export default define.page(function Settings() {
   return (
     <AppFrame>
       <div class="max-w-lg">
         <h1 class="text-2xl font-bold mb-6">Settings</h1>
-
-        {data.addressFinderConfigured
-          ? (
-            <div role="alert" class="alert alert-success mb-4">
-              <span class="iconify lucide--circle-check size-5"></span>
-              <span>AddressFinder credentials are configured.</span>
-            </div>
-          )
-          : (
-            <div role="alert" class="alert alert-warning mb-4">
-              <span class="iconify lucide--alert-triangle size-5"></span>
-              <span>AddressFinder credentials are not configured.</span>
-            </div>
-          )}
-
-        {data.configured
-          ? (
-            <div role="alert" class="alert alert-success mb-6">
-              <span class="iconify lucide--circle-check size-5"></span>
-              <span>BrickLink API credentials are configured.</span>
-            </div>
-          )
-          : (
-            <div role="alert" class="alert alert-warning mb-6">
-              <span class="iconify lucide--alert-triangle size-5"></span>
-              <span>BrickLink API credentials are not configured.</span>
-            </div>
-          )}
 
         <div class="card bg-base-200">
           <div class="card-body">
