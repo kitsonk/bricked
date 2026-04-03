@@ -12,6 +12,7 @@ const EMPTY_ADDRESS: AusPostAddress = {
   recipientName: "",
   addressLine1: "",
   addressLine2: "",
+  addressLine3: "",
   suburb: "",
   state: "",
   postcode: "",
@@ -143,6 +144,15 @@ export default function ShipList(
                 onInput={(e) => updateForm("addressLine2", (e.target as HTMLInputElement).value)}
               />
             </fieldset>
+            <fieldset class="fieldset mb-3">
+              <legend class="fieldset-legend">Address line 3</legend>
+              <input
+                type="text"
+                class="input input-sm w-full"
+                value={formAddress.value.addressLine3}
+                onInput={(e) => updateForm("addressLine3", (e.target as HTMLInputElement).value)}
+              />
+            </fieldset>
             <div class="grid grid-cols-3 gap-3 mb-3">
               <fieldset class="fieldset col-span-1">
                 <legend class="fieldset-legend">Suburb *</legend>
@@ -226,6 +236,7 @@ export default function ShipList(
                         <div class="font-medium">{addr.recipientName || "—"}</div>
                         {addr.addressLine1 && <div>{addr.addressLine1}</div>}
                         {addr.addressLine2 && <div>{addr.addressLine2}</div>}
+                        {addr.addressLine3 && <div>{addr.addressLine3}</div>}
                         {(addr.suburb || addr.state || addr.postcode) && (
                           <div>{[addr.suburb, addr.state, addr.postcode].filter(Boolean).join(", ")}</div>
                         )}

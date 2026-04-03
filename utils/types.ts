@@ -134,6 +134,7 @@ export interface AusPostAddress {
   recipientName: string;
   addressLine1: string;
   addressLine2: string;
+  addressLine3: string;
   suburb: string;
   state: string;
   postcode: string;

@@ -12,6 +12,7 @@ function deriveAddress(order: BLOrder): AusPostAddress {
     recipientName: addr?.name.full || [addr?.name.first, addr?.name.last].filter(Boolean).join(" ") || "",
     addressLine1: addr?.address1 || "",
     addressLine2: addr?.address2 || "",
+    addressLine3: "",
     suburb: addr?.city || "",
     state: addr?.state || "",
     postcode: addr?.postal_code || "",
