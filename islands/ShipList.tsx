@@ -1,7 +1,6 @@
 import { useSignal } from "@preact/signals";
 import type { BLOrder, PackageType } from "@/utils/types.ts";
 import { humanTime } from "@/utils/format.ts";
-import { StatusBadge } from "@/components/StatusBadge.tsx";
 
 interface Dims {
   l: string;
@@ -53,7 +52,6 @@ export default function ShipList(
             <th>Order</th>
             <th>Buyer</th>
             <th>Ordered</th>
-            <th>Status</th>
             <th>Shipping Method</th>
             <th>Shipping Address</th>
             <th>Package Type</th>
@@ -84,9 +82,6 @@ export default function ShipList(
                   <div class="text-xs text-base-content/50">{order.buyer_email}</div>
                 </td>
                 <td class="text-sm">{humanTime(order.date_ordered)}</td>
-                <td>
-                  <StatusBadge status={order.status} />
-                </td>
                 <td class="text-sm">{order.shipping?.method || "—"}</td>
                 <td class="text-sm">{addressLine}</td>
                 <td>
