@@ -14,7 +14,7 @@ export const handler = define.handlers<{ methods: ShippingMethod[]; error: strin
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
-      return ctx.redirect("/settings");
+      return ctx.redirect("/environment");
     }
     try {
       const client = new BricklinkClient(creds);

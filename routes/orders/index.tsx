@@ -21,7 +21,7 @@ export const handler = define.handlers<{
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
-      return ctx.redirect("/settings");
+      return ctx.redirect("/environment");
     }
     const filter = ctx.url.searchParams.get("filter") === "filed" ? "filed" : "unfiled";
     const dateSort = ctx.url.searchParams.get("sort") === "desc" ? "desc" : "asc";

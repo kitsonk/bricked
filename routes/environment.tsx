@@ -5,7 +5,7 @@ export default define.page(function Settings() {
   return (
     <AppFrame>
       <div class="max-w-lg">
-        <h1 class="text-2xl font-bold mb-6">Settings</h1>
+        <h1 class="text-2xl font-bold mb-6">Environment</h1>
 
         <div class="card bg-base-200">
           <div class="card-body">

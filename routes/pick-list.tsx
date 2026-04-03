@@ -13,7 +13,7 @@ export const handler = define.handlers<
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
-      return ctx.redirect("/settings");
+      return ctx.redirect("/environment");
     }
 
     const orderParam = ctx.url.searchParams.get("orders") ?? "";

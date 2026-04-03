@@ -10,7 +10,7 @@ import { humanTime } from "@/utils/format.ts";
 export const handler = define.handlers<{ orders: BLOrder[]; error: string | null }>({
   async GET(ctx) {
     const creds = getCredentials();
-    if (!creds) return ctx.redirect("/settings");
+    if (!creds) return ctx.redirect("/environment");
 
     const orderParam = ctx.url.searchParams.get("orders") ?? "";
     const orderIds = orderParam
