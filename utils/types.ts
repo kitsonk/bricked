@@ -130,6 +130,15 @@ export interface StoredNotification extends BLNotification {
   receivedAt: string;
 }
 
+export interface AusPostAddress {
+  recipientName: string;
+  addressLine1: string;
+  addressLine2: string;
+  suburb: string;
+  state: string;
+  postcode: string;
+}
+
 export interface VerifiedAustralianAddress {
   addressLine1: string;
   addressLine2: string | null;

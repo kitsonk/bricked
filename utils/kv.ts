@@ -1,4 +1,5 @@
 import type {
+  AusPostAddress,
   BLShippingMethod,
   BricklinkCredentials,
   DriveThruSentRecord,
@@ -182,4 +183,21 @@ export async function savePackageType(packageType: PackageType): Promise<void> {
 export async function deletePackageType(id: string): Promise<void> {
   const kv = await Deno.openKv();
   await kv.delete(packageTypeKey(id));
+}
+
+// Ship List Addresses
+
+function shipListAddressKey(orderId: number): Deno.KvKey {
+  return ["ship_list_address", orderId];
+}
+
+export async function getShipListAddress(orderId: number): Promise<AusPostAddress | null> {
+  const kv = await Deno.openKv();
+  const result = await kv.get<AusPostAddress>(shipListAddressKey(orderId));
+  return result.value;
+}
+
+export async function saveShipListAddress(orderId: number, address: AusPostAddress): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.set(shipListAddressKey(orderId), address);
 }

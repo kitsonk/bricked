@@ -2,11 +2,28 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, listPackageTypes } from "@/utils/kv.ts";
-import type { BLOrder, PackageType } from "@/utils/types.ts";
+import { getCredentials, getShipListAddress, listPackageTypes } from "@/utils/kv.ts";
+import type { AusPostAddress, BLOrder, PackageType } from "@/utils/types.ts";
 import ShipList from "@/islands/ShipList.tsx";
 
-export const handler = define.handlers<{ orders: BLOrder[]; packageTypes: PackageType[]; error: string | null }>({
+function deriveAddress(order: BLOrder): AusPostAddress {
+  const addr = order.shipping?.address;
+  return {
+    recipientName: addr?.name.full || [addr?.name.first, addr?.name.last].filter(Boolean).join(" ") || "",
+    addressLine1: addr?.address1 || "",
+    addressLine2: addr?.address2 || "",
+    suburb: addr?.city || "",
+    state: addr?.state || "",
+    postcode: addr?.postal_code || "",
+  };
+}
+
+export const handler = define.handlers<{
+  orders: BLOrder[];
+  packageTypes: PackageType[];
+  addresses: Record<number, AusPostAddress>;
+  error: string | null;
+}>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) return ctx.redirect("/environment");
@@ -21,13 +38,20 @@ export const handler = define.handlers<{ orders: BLOrder[]; packageTypes: Packag
 
     try {
       const client = new BricklinkClient(creds);
-      const [orders, packageTypes] = await Promise.all([
+      const [orders, packageTypes, savedAddresses] = await Promise.all([
         Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
         listPackageTypes(),
+        Promise.all(orderIds.map((id) => getShipListAddress(id))),
       ]);
-      return page({ orders, packageTypes, error: null });
+
+      const addresses: Record<number, AusPostAddress> = {};
+      orders.forEach((order, idx) => {
+        addresses[order.order_id] = savedAddresses[idx] ?? deriveAddress(order);
+      });
+
+      return page({ orders, packageTypes, addresses, error: null });
     } catch (err) {
-      return page({ orders: [], packageTypes: [], error: String(err) });
+      return page({ orders: [], packageTypes: [], addresses: {}, error: String(err) });
     }
   },
 });
@@ -62,7 +86,7 @@ export default define.page<typeof handler>(function ShipListPage({ data }) {
         </div>
       )}
 
-      {orders.length > 0 && <ShipList orders={orders} packageTypes={packageTypes} />}
+      {orders.length > 0 && <ShipList orders={orders} packageTypes={packageTypes} addresses={data.addresses} />}
     </AppFrame>
   );
 });
