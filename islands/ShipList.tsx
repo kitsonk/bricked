@@ -20,6 +20,10 @@ const EMPTY_ADDRESS: AusPostAddress = {
   postcode: "",
 };
 
+function isExportable(order: BLOrder): boolean {
+  return order.shipping?.address?.country_code === "AU";
+}
+
 function packageLabel(pt: PackageType): string {
   const dims = `${pt.lengthCm.toFixed(1)} × ${pt.widthCm.toFixed(1)} × ${pt.heightCm.toFixed(1)} cm`;
   return `${pt.label} (${dims})`;
@@ -132,7 +136,7 @@ export default function ShipList(
   }
 
   async function exportManifest() {
-    const rows = orders.map((order) => ({
+    const rows = orders.filter(isExportable).map((order) => ({
       orderId: order.order_id,
       buyerEmail: order.buyer_email,
       countryCode: order.shipping?.address?.country_code ?? "",
@@ -342,9 +346,9 @@ export default function ShipList(
               const isCustom = selectedPackage.value[order.order_id] === "";
               const dims = dimensions.value[order.order_id];
               const addr = addresses.value[order.order_id];
-              const isAU = order.shipping?.address?.country_code === "AU";
+              const exportable = isExportable(order);
               return (
-                <tr key={order.order_id} class={!isAU ? "opacity-50 line-through" : ""}>
+                <tr key={order.order_id} class={!exportable ? "bg-neutral text-neutral-content" : ""}>
                   <td>
                     <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
                       #{order.order_id}
@@ -394,77 +398,85 @@ export default function ShipList(
                       }}
                     />
                   </td>
-                  <td>
-                    <select
-                      class="select select-sm w-full min-w-48"
-                      value={selectedPackage.value[order.order_id]}
-                      onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
-                    >
-                      <option value="">Custom</option>
-                      {packageTypes.map((pt) => <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>)}
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      class="input input-sm w-20"
-                      step="0.1"
-                      min="0"
-                      disabled={!isCustom}
-                      value={dims.l}
-                      onInput={(e) => setDim(order.order_id, "l", (e.target as HTMLInputElement).value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      class="input input-sm w-20"
-                      step="0.1"
-                      min="0"
-                      disabled={!isCustom}
-                      value={dims.w}
-                      onInput={(e) => setDim(order.order_id, "w", (e.target as HTMLInputElement).value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      class="input input-sm w-20"
-                      step="0.1"
-                      min="0"
-                      disabled={!isCustom}
-                      value={dims.h}
-                      onInput={(e) => setDim(order.order_id, "h", (e.target as HTMLInputElement).value)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      class="input input-sm w-24"
-                      step="0.001"
-                      min="0"
-                      value={weights.value[order.order_id]}
-                      onInput={(e) =>
-                        weights.value = {
-                          ...weights.value,
-                          [order.order_id]: (e.target as HTMLInputElement).value,
-                        }}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      class="input input-sm w-24"
-                      step="0.01"
-                      min="0"
-                      value={extraCover.value[order.order_id]}
-                      onInput={(e) =>
-                        extraCover.value = {
-                          ...extraCover.value,
-                          [order.order_id]: (e.target as HTMLInputElement).value,
-                        }}
-                    />
-                  </td>
+                  {exportable
+                    ? (
+                      <>
+                        <td>
+                          <select
+                            class="select select-sm w-full min-w-48"
+                            value={selectedPackage.value[order.order_id]}
+                            onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
+                          >
+                            <option value="">Custom</option>
+                            {packageTypes.map((pt) => (
+                              <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            class="input input-sm w-20"
+                            step="0.1"
+                            min="0"
+                            disabled={!isCustom}
+                            value={dims.l}
+                            onInput={(e) => setDim(order.order_id, "l", (e.target as HTMLInputElement).value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            class="input input-sm w-20"
+                            step="0.1"
+                            min="0"
+                            disabled={!isCustom}
+                            value={dims.w}
+                            onInput={(e) => setDim(order.order_id, "w", (e.target as HTMLInputElement).value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            class="input input-sm w-20"
+                            step="0.1"
+                            min="0"
+                            disabled={!isCustom}
+                            value={dims.h}
+                            onInput={(e) => setDim(order.order_id, "h", (e.target as HTMLInputElement).value)}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            class="input input-sm w-24"
+                            step="0.001"
+                            min="0"
+                            value={weights.value[order.order_id]}
+                            onInput={(e) =>
+                              weights.value = {
+                                ...weights.value,
+                                [order.order_id]: (e.target as HTMLInputElement).value,
+                              }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            class="input input-sm w-24"
+                            step="0.01"
+                            min="0"
+                            value={extraCover.value[order.order_id]}
+                            onInput={(e) =>
+                              extraCover.value = {
+                                ...extraCover.value,
+                                [order.order_id]: (e.target as HTMLInputElement).value,
+                              }}
+                          />
+                        </td>
+                      </>
+                    )
+                    : <td colSpan={6}></td>}
                 </tr>
               );
             })}
