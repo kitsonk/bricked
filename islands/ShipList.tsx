@@ -300,8 +300,9 @@ export default function ShipList(
               const isCustom = selectedPackage.value[order.order_id] === "";
               const dims = dimensions.value[order.order_id];
               const addr = addresses.value[order.order_id];
+              const isAU = order.shipping?.address?.country_code === "AU";
               return (
-                <tr key={order.order_id}>
+                <tr key={order.order_id} class={!isAU ? "opacity-50 line-through" : ""}>
                   <td>
                     <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
                       #{order.order_id}
