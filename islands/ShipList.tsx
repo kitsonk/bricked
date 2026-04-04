@@ -41,6 +41,10 @@ export default function ShipList(
     Object.fromEntries(orders.map((o) => [o.order_id, { l: "", w: "", h: "" }])),
   );
 
+  const weights = useSignal<Record<number, string>>(
+    Object.fromEntries(orders.map((o) => [o.order_id, ""])),
+  );
+
   const addresses = useSignal<Record<number, AusPostAddress>>(initialAddresses);
   const editingOrderId = useSignal<number | null>(null);
   const editingCountryCode = useSignal<string>("");
@@ -283,6 +287,7 @@ export default function ShipList(
               <th>L (cm)</th>
               <th>W (cm)</th>
               <th>H (cm)</th>
+              <th>Weight (kg)</th>
             </tr>
           </thead>
           <tbody>
@@ -379,6 +384,20 @@ export default function ShipList(
                       disabled={!isCustom}
                       value={dims.h}
                       onInput={(e) => setDim(order.order_id, "h", (e.target as HTMLInputElement).value)}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      class="input input-sm w-24"
+                      step="0.001"
+                      min="0"
+                      value={weights.value[order.order_id]}
+                      onInput={(e) =>
+                        weights.value = {
+                          ...weights.value,
+                          [order.order_id]: (e.target as HTMLInputElement).value,
+                        }}
                     />
                   </td>
                 </tr>
