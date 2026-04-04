@@ -1,6 +1,7 @@
 import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import type { AusPostAddress, BLOrder, PackageType } from "@/utils/types.ts";
+import { formatAmount } from "@/utils/format.ts";
 
 interface Dims {
   l: string;
@@ -324,6 +325,7 @@ export default function ShipList(
             <tr>
               <th>Order</th>
               <th>Items</th>
+              <th class="text-right">Total</th>
               <th>Shipping Method</th>
               <th>Ship To</th>
               <th>Recipient Email</th>
@@ -350,6 +352,9 @@ export default function ShipList(
                   </td>
                   <td class="text-sm">
                     {order.total_count} <span class="text-base-content/50">({order.unique_count} lots)</span>
+                  </td>
+                  <td class="text-right font-medium text-sm">
+                    {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
                   </td>
                   <td class="text-sm">{order.shipping?.method || "—"}</td>
                   <td>
