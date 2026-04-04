@@ -32,13 +32,13 @@ export function Sidebar() {
         <div class="mt-2">
           <MenuItem icon="house" label="Home" href="/" />
           <MenuItem icon="shopping-bag" label="Orders" href="/orders" />
-          <MenuItem icon="send" label="Drive Thru Templates" href="/drive-thru/templates" />
         </div>
         <p class="menu-label mt-4 px-2.5">Settings</p>
         <div class="mt-2">
           <MenuItem icon="settings" label="Environment" href="/environment" />
           <MenuItem icon="truck" label="Shipping Methods" href="/shipping-methods" />
           <MenuItem icon="package" label="Package Types" href="/package-types" />
+          <MenuItem icon="send" label="Drive Thru Templates" href="/drive-thru/templates" />
         </div>
       </div>
     </div>
