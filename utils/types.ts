@@ -219,3 +219,24 @@ export interface PickListItem {
   /** Per-order piece quantities, keyed by order ID. */
   orderQuantities: Record<number, number>;
 }
+
+/** An aggregated customer record built from BrickLink order history. */
+export interface Customer {
+  /** BrickLink buyer username — unique identifier. */
+  buyerName: string;
+  /** Number of non-cancelled orders. */
+  orderCount: number;
+  /** ISO date string of the earliest order. */
+  firstOrderDate: string;
+  /** ISO date string of the most recent order. */
+  lastOrderDate: string;
+  /** Sum of grand_total per currency code. */
+  totalsByCurrency: Record<string, number>;
+  /** ISO timestamp of when this record was last computed. */
+  updatedAt: string;
+}
+
+/** Metadata for the CRM refresh process. */
+export interface CrmMeta {
+  lastRefreshedAt: string;
+}

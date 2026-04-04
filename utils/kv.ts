@@ -2,6 +2,8 @@ import type {
   AusPostAddress,
   BLShippingMethod,
   BricklinkCredentials,
+  CrmMeta,
+  Customer,
   DriveThruSentRecord,
   DriveThruTemplate,
   PackageType,
@@ -200,4 +202,60 @@ export async function getShipListAddress(orderId: number): Promise<AusPostAddres
 export async function saveShipListAddress(orderId: number, address: AusPostAddress): Promise<void> {
   const kv = await Deno.openKv();
   await kv.set(shipListAddressKey(orderId), address);
+}
+
+// CRM Customers
+
+function customerKey(buyerName: string): Deno.KvKey {
+  return ["crm_customer", buyerName];
+}
+
+export async function saveCustomer(customer: Customer): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.set(customerKey(customer.buyerName), customer);
+}
+
+export interface CustomerPage {
+  customers: Customer[];
+  /** Opaque KV cursor for the next page, or null if this is the last page. */
+  nextCursor: string | null;
+}
+
+export async function listCustomers(limit = 20, cursor?: string): Promise<CustomerPage> {
+  const kv = await Deno.openKv();
+  const listOptions: Deno.KvListOptions = { limit };
+  if (cursor) listOptions.cursor = cursor;
+
+  const iter = kv.list<Customer>({ prefix: ["crm_customer"] }, listOptions);
+  const results: Customer[] = [];
+  for await (const entry of iter) {
+    results.push(entry.value);
+  }
+
+  // Peek one entry beyond the current page to determine whether a next page exists.
+  let nextCursor: string | null = null;
+  if (results.length === limit) {
+    const peekIter = kv.list<Customer>({ prefix: ["crm_customer"] }, { limit: 1, cursor: iter.cursor });
+    const peek = await peekIter.next();
+    if (!peek.done) {
+      nextCursor = iter.cursor;
+    }
+  }
+
+  return { customers: results, nextCursor };
+}
+
+// CRM Metadata
+
+const CRM_META_KEY: Deno.KvKey = ["crm_meta"];
+
+export async function getCrmMeta(): Promise<CrmMeta | null> {
+  const kv = await Deno.openKv();
+  const result = await kv.get<CrmMeta>(CRM_META_KEY);
+  return result.value;
+}
+
+export async function saveCrmMeta(meta: CrmMeta): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.set(CRM_META_KEY, meta);
 }

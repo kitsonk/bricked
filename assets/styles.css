@@ -19,4 +19,4 @@
   prefixes: lucide;
 }
 
-@source inline("lucide--{arrow-down-to-dot,house,user,building-2,router,cable,view,list-checks,book-text,shopping-bag,clipboard-list,settings,package,map-pin,printer,arrow-left,circle-check,alert-circle,alert-triangle,inbox,refresh-cw,rotate-ccw,send,file-text,trash-2,pencil,plus,truck,download}");
+@source inline("lucide--{arrow-down-to-dot,arrow-right,house,user,users,building-2,router,cable,view,list-checks,book-text,shopping-bag,clipboard-list,settings,package,map-pin,printer,arrow-left,circle-check,alert-circle,alert-triangle,inbox,refresh-cw,rotate-ccw,send,file-text,trash-2,pencil,plus,truck,download}");

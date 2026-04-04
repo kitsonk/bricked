@@ -1,6 +1,6 @@
 {
   "nodeModulesDir": "manual",
-  "unstable": ["kv"],
+  "unstable": ["kv", "cron"],
   "tasks": {
     "check": "deno fmt --check . && deno lint . && deno check",
     "test": "deno test --allow-env",

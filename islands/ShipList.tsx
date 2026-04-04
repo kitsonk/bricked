@@ -213,7 +213,9 @@ export default function ShipList(
           type="button"
           class="btn btn-primary btn-sm"
           disabled={!exportReady.value}
-          title={!exportReady.value ? "All exportable rows must have length, width, height and weight filled in" : undefined}
+          title={!exportReady.value
+            ? "All exportable rows must have length, width, height and weight filled in"
+            : undefined}
           onClick={exportManifest}
         >
           <span class="iconify lucide--download size-4"></span>
@@ -404,7 +406,9 @@ export default function ShipList(
                   <td>
                     <div class="space-y-1">
                       <div class="flex items-center gap-2">
-                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>Email</span>
+                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>
+                          Email
+                        </span>
                         <input
                           type="email"
                           class="input input-sm w-full min-w-48"
@@ -421,7 +425,9 @@ export default function ShipList(
                         />
                       </div>
                       <div class="flex items-center gap-2">
-                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>Phone</span>
+                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>
+                          Phone
+                        </span>
                         <input
                           type="tel"
                           class="input input-sm w-full min-w-36"
@@ -449,9 +455,7 @@ export default function ShipList(
                             onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
                           >
                             <option value="">Custom</option>
-                            {packageTypes.map((pt) => (
-                              <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>
-                            ))}
+                            {packageTypes.map((pt) => <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>)}
                           </select>
                         </td>
                         <td>
