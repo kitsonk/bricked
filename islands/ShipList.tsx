@@ -351,8 +351,7 @@ export default function ShipList(
               <th>Order Info</th>
               <th>Shipping Method</th>
               <th>Ship To</th>
-              <th>Recipient Email</th>
-              <th>Recipient Phone</th>
+              <th>Recipient Info</th>
               <th>Package</th>
               <th>Weight (kg)</th>
               <th>Extra Cover ($)</th>
@@ -402,36 +401,42 @@ export default function ShipList(
                     </div>
                   </td>
                   <td>
-                    <input
-                      type="email"
-                      class="input input-sm w-full min-w-48"
-                      value={addr?.recipientEmail ?? ""}
-                      onInput={(e) => {
-                        addresses.value = {
-                          ...addresses.value,
-                          [order.order_id]: {
-                            ...addresses.value[order.order_id],
-                            recipientEmail: (e.target as HTMLInputElement).value,
-                          },
-                        };
-                      }}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="tel"
-                      class="input input-sm w-full min-w-36"
-                      value={addr?.recipientPhone ?? ""}
-                      onInput={(e) => {
-                        addresses.value = {
-                          ...addresses.value,
-                          [order.order_id]: {
-                            ...addresses.value[order.order_id],
-                            recipientPhone: (e.target as HTMLInputElement).value,
-                          },
-                        };
-                      }}
-                    />
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs text-base-content/50 w-10">Email</span>
+                        <input
+                          type="email"
+                          class="input input-sm w-full min-w-48"
+                          value={addr?.recipientEmail ?? ""}
+                          onInput={(e) => {
+                            addresses.value = {
+                              ...addresses.value,
+                              [order.order_id]: {
+                                ...addresses.value[order.order_id],
+                                recipientEmail: (e.target as HTMLInputElement).value,
+                              },
+                            };
+                          }}
+                        />
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs text-base-content/50 w-10">Phone</span>
+                        <input
+                          type="tel"
+                          class="input input-sm w-full min-w-36"
+                          value={addr?.recipientPhone ?? ""}
+                          onInput={(e) => {
+                            addresses.value = {
+                              ...addresses.value,
+                              [order.order_id]: {
+                                ...addresses.value[order.order_id],
+                                recipientPhone: (e.target as HTMLInputElement).value,
+                              },
+                            };
+                          }}
+                        />
+                      </div>
+                    </div>
                   </td>
                   {exportable
                     ? (
