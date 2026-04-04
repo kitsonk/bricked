@@ -1,5 +1,6 @@
 import type {
   AusPostAddress,
+  BLOrder,
   BLShippingMethod,
   BricklinkCredentials,
   CrmMeta,
@@ -202,6 +203,32 @@ export async function getShipListAddress(orderId: number): Promise<AusPostAddres
 export async function saveShipListAddress(orderId: number, address: AusPostAddress): Promise<void> {
   const kv = await Deno.openKv();
   await kv.set(shipListAddressKey(orderId), address);
+}
+
+// Order Cache
+
+function orderCacheKey(orderId: number): Deno.KvKey {
+  return ["order_cache", orderId];
+}
+
+/**
+ * Persist a BrickLink order to the local cache.
+ * Only call this for non-PURGED orders — callers are responsible for the guard.
+ */
+export async function saveOrderCache(order: BLOrder): Promise<void> {
+  const kv = await Deno.openKv();
+  await kv.set(orderCacheKey(order.order_id), order);
+}
+
+/** Return every order stored in the local cache. */
+export async function listCachedOrders(): Promise<BLOrder[]> {
+  const kv = await Deno.openKv();
+  const iter = kv.list<BLOrder>({ prefix: ["order_cache"] });
+  const results: BLOrder[] = [];
+  for await (const entry of iter) {
+    results.push(entry.value);
+  }
+  return results;
 }
 
 // CRM Customers

@@ -1,14 +1,22 @@
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, saveCrmMeta, saveCustomer } from "@/utils/kv.ts";
-import type { Customer } from "@/utils/types.ts";
+import { getCredentials, listCachedOrders, saveCrmMeta, saveCustomer, saveOrderCache } from "@/utils/kv.ts";
 import { FILED_STATUSES } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
 
 const logger = getLogger(["bricked", "crm"]);
 
 /**
- * Fetches all inbound orders from BrickLink, aggregates them by buyer_name
- * (excluding cancelled orders), and persists the results to Deno KV.
+ * Two-phase CRM refresh:
+ *
+ * Phase 1 — sync the local order cache from BrickLink.
+ *   Fetches all inbound orders and writes each one to KV, except for orders
+ *   with status PURGED (BrickLink degrades the order data before removing it;
+ *   we preserve our last known-good copy instead).
+ *
+ * Phase 2 — rebuild customer aggregates from the full local cache.
+ *   Because the cache retains orders that BrickLink has since purged, the
+ *   customer view reflects the complete order history, not just the 6-month
+ *   window the API exposes.
  */
 export async function buildCrm(): Promise<void> {
   const creds = getCredentials();
@@ -17,16 +25,31 @@ export async function buildCrm(): Promise<void> {
   logger.info`CRM refresh started`;
   const client = new BricklinkClient(creds);
 
-  // Fetch unfiled (active) and filed (historical) orders in parallel.
+  // ── Phase 1: fetch from BrickLink and update the order cache ─────────────
+
   const [unfiledOrders, filedOrders] = await Promise.all([
     client.getOrders("in", false),
     client.getOrders("in", true, FILED_STATUSES),
   ]);
 
-  const allOrders = [...unfiledOrders, ...filedOrders];
-  logger.debug`CRM: ${allOrders.length} total orders fetched`;
+  const apiOrders = [...unfiledOrders, ...filedOrders];
+  logger.debug`CRM phase 1: ${apiOrders.length} order(s) fetched from API`;
 
-  // Aggregate by buyer_name, excluding cancelled orders.
+  let cacheUpdates = 0;
+  for (const order of apiOrders) {
+    // PURGED orders have degraded data — keep the cached version intact.
+    if (order.status !== "PURGED") {
+      await saveOrderCache(order);
+      cacheUpdates++;
+    }
+  }
+  logger.debug`CRM phase 1: ${cacheUpdates} order(s) written to cache`;
+
+  // ── Phase 2: aggregate customer records from the full local cache ─────────
+
+  const cachedOrders = await listCachedOrders();
+  logger.debug`CRM phase 2: ${cachedOrders.length} order(s) in local cache`;
+
   const customerMap = new Map<string, {
     orderCount: number;
     firstOrderDate: string;
@@ -34,7 +57,7 @@ export async function buildCrm(): Promise<void> {
     totalsByCurrency: Record<string, number>;
   }>();
 
-  for (const order of allOrders) {
+  for (const order of cachedOrders) {
     if (order.status === "CANCELLED") continue;
 
     const existing = customerMap.get(order.buyer_name);
@@ -60,12 +83,11 @@ export async function buildCrm(): Promise<void> {
     }
   }
 
-  logger.debug`CRM: ${customerMap.size} unique customer(s) computed`;
+  logger.debug`CRM phase 2: ${customerMap.size} unique customer(s) computed`;
 
   const now = new Date().toISOString();
   for (const [buyerName, data] of customerMap) {
-    const customer: Customer = { buyerName, ...data, updatedAt: now };
-    await saveCustomer(customer);
+    await saveCustomer({ buyerName, ...data, updatedAt: now });
   }
 
   await saveCrmMeta({ lastRefreshedAt: now });
