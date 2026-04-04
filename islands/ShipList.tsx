@@ -371,7 +371,7 @@ export default function ShipList(
                         #{order.order_id}
                       </a>
                     </div>
-                    <div class="text-base-content/60">
+                    <div class={exportable ? "text-base-content/60" : "text-neutral-content/60"}>
                       {order.total_count} ({order.unique_count} lots)
                     </div>
                     <div class="font-medium">
@@ -403,7 +403,7 @@ export default function ShipList(
                   <td>
                     <div class="space-y-1">
                       <div class="flex items-center gap-2">
-                        <span class="text-xs text-base-content/50 w-10">Email</span>
+                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>Email</span>
                         <input
                           type="email"
                           class="input input-sm w-full min-w-48"
@@ -420,7 +420,7 @@ export default function ShipList(
                         />
                       </div>
                       <div class="flex items-center gap-2">
-                        <span class="text-xs text-base-content/50 w-10">Phone</span>
+                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>Phone</span>
                         <input
                           type="tel"
                           class="input input-sm w-full min-w-36"
