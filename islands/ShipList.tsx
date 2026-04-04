@@ -352,7 +352,8 @@ export default function ShipList(
               <th>Shipping Method</th>
               <th>Ship To</th>
               <th>Recipient Info</th>
-              <th>Package</th>
+              <th>Package Type</th>
+              <th>Dimensions</th>
               <th>Weight (kg)</th>
               <th>Extra Cover ($)</th>
             </tr>
@@ -442,20 +443,19 @@ export default function ShipList(
                     ? (
                       <>
                         <td>
+                          <select
+                            class="select select-sm w-full min-w-40"
+                            value={selectedPackage.value[order.order_id]}
+                            onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
+                          >
+                            <option value="">Custom</option>
+                            {packageTypes.map((pt) => (
+                              <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
                           <div class="space-y-1">
-                            <div class="flex items-center gap-2">
-                              <span class="text-xs text-base-content/50 w-10">Type</span>
-                              <select
-                                class="select select-sm w-full min-w-40"
-                                value={selectedPackage.value[order.order_id]}
-                                onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
-                              >
-                                <option value="">Custom</option>
-                                {packageTypes.map((pt) => (
-                                  <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>
-                                ))}
-                              </select>
-                            </div>
                             <div class="flex items-center gap-2">
                               <span class="text-xs text-base-content/50 w-10">L (cm)</span>
                               <input
@@ -524,7 +524,7 @@ export default function ShipList(
                         </td>
                       </>
                     )
-                    : <td colSpan={3} />}
+                    : <td colSpan={4} />}
                 </tr>
               );
             })}
