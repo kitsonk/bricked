@@ -130,6 +130,40 @@ export default function ShipList(
     }
   }
 
+  async function exportManifest() {
+    const rows = orders.map((order) => ({
+      orderId: order.order_id,
+      buyerEmail: order.buyer_email,
+      countryCode: order.shipping?.address?.country_code ?? "",
+      address: addresses.value[order.order_id],
+      lengthCm: dimensions.value[order.order_id].l,
+      widthCm: dimensions.value[order.order_id].w,
+      heightCm: dimensions.value[order.order_id].h,
+      weightKg: weights.value[order.order_id],
+      extraCover: extraCover.value[order.order_id],
+    }));
+
+    const resp = await fetch("/api/ship-list/manifest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(rows),
+    });
+
+    if (!resp.ok) return;
+
+    const disposition = resp.headers.get("Content-Disposition") ?? "";
+    const filenameMatch = disposition.match(/filename="([^"]+)"/);
+    const filename = filenameMatch ? filenameMatch[1] : "auspost-manifest.csv";
+
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function saveAddress(e: Event) {
     e.preventDefault();
     const orderId = editingOrderId.value;
@@ -154,6 +188,12 @@ export default function ShipList(
 
   return (
     <div>
+      <div class="flex justify-end mb-4">
+        <button type="button" class="btn btn-primary btn-sm" onClick={exportManifest}>
+          <span class="iconify lucide--download size-4"></span>
+          Export Manifest
+        </button>
+      </div>
       <dialog ref={dialogRef} class="modal">
         <div class="modal-box max-w-md">
           <h3 class="text-lg font-bold mb-4">Edit Recipient Address</h3>

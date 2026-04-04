@@ -1,0 +1,89 @@
+import { stringify } from "@std/csv";
+import { define } from "@/utils/fresh.ts";
+import type { AusPostAddress } from "@/utils/types.ts";
+
+interface ManifestRow {
+  orderId: number;
+  buyerEmail: string;
+  countryCode: string;
+  address: AusPostAddress;
+  lengthCm: string;
+  widthCm: string;
+  heightCm: string;
+  weightKg: string;
+  extraCover: string;
+}
+
+const COLUMNS = [
+  "Additional Label Information 1",
+  "Send From Name",
+  "Send From Business Name",
+  "Send From Address Line 1",
+  "Send From Suburb",
+  "Send From State",
+  "Send From Postcode",
+  "Deliver To Name",
+  "Deliver To Address Line 1",
+  "Deliver To Address Line 2",
+  "Deliver To Address Line 3",
+  "Deliver To Suburb",
+  "Deliver To State",
+  "Deliver To Postcode",
+  "Deliver To Phone Number",
+  "Deliver To Email Address",
+  "Item Packaging Type",
+  "Item Delivery Service",
+  "Item Length",
+  "Item Width",
+  "Item Height",
+  "Item Weight",
+  "Extra Cover Amount",
+];
+
+export const handler = define.handlers({
+  async POST(ctx) {
+    const rows: ManifestRow[] = await ctx.req.json();
+
+    const auRows = rows.filter((r) => r.countryCode === "AU");
+
+    const data = auRows.map((r) => ({
+      "Additional Label Information 1": `#${r.orderId}`,
+      "Send From Name": "Simon Burrows",
+      "Send From Business Name": "Bayside Brickstore",
+      "Send From Address Line 1": "1/4 Plummer Court",
+      "Send From Suburb": "Mentone",
+      "Send From State": "VIC",
+      "Send From Postcode": "3194",
+      "Deliver To Name": r.address.recipientName,
+      "Deliver To Address Line 1": r.address.addressLine1,
+      "Deliver To Address Line 2": r.address.addressLine2,
+      "Deliver To Address Line 3": r.address.addressLine3,
+      "Deliver To Suburb": r.address.suburb,
+      "Deliver To State": r.address.state,
+      "Deliver To Postcode": r.address.postcode,
+      "Deliver To Phone Number": "",
+      "Deliver To Email Address": r.address.recipientEmail || r.buyerEmail,
+      "Item Packaging Type": "OWN_PACKAGING",
+      "Item Delivery Service": "PP",
+      "Item Length": r.lengthCm,
+      "Item Width": r.widthCm,
+      "Item Height": r.heightCm,
+      "Item Weight": r.weightKg,
+      "Extra Cover Amount": r.extraCover,
+    }));
+
+    const csv = stringify(data, { columns: COLUMNS });
+
+    const now = new Date();
+    const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${
+      String(now.getDate()).padStart(2, "0")
+    }`;
+
+    return new Response(csv, {
+      headers: {
+        "Content-Type": "text/csv",
+        "Content-Disposition": `attachment; filename="auspost-manifest-${date}.csv"`,
+      },
+    });
+  },
+});
