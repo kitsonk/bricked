@@ -11,6 +11,7 @@ function deriveAddress(order: BLOrder): AusPostAddress {
   return {
     recipientName: addr?.name.full || [addr?.name.first, addr?.name.last].filter(Boolean).join(" ") || "",
     recipientEmail: order.buyer_email || "",
+    recipientPhone: addr?.phone_number || "",
     addressLine1: addr?.address1 || "",
     addressLine2: addr?.address2 || "",
     addressLine3: "",
@@ -58,6 +59,7 @@ export const handler = define.handlers<{
         addresses[order.order_id] = {
           ...base,
           recipientEmail: base.recipientEmail || order.buyer_email || "",
+          recipientPhone: base.recipientPhone || order.shipping?.address?.phone_number || "",
         };
       });
 

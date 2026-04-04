@@ -56,6 +56,7 @@ export interface BLOrder {
     date_shipped: string;
     address: {
       name: { first: string; last: string; full: string };
+      phone_number: string;
       address1: string;
       address2: string;
       city: string;
@@ -133,6 +134,7 @@ export interface StoredNotification extends BLNotification {
 export interface AusPostAddress {
   recipientName: string;
   recipientEmail: string;
+  recipientPhone: string;
   addressLine1: string;
   addressLine2: string;
   addressLine3: string;

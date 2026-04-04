@@ -12,6 +12,7 @@ interface Dims {
 const EMPTY_ADDRESS: AusPostAddress = {
   recipientName: "",
   recipientEmail: "",
+  recipientPhone: "",
   addressLine1: "",
   addressLine2: "",
   addressLine3: "",
@@ -353,6 +354,7 @@ export default function ShipList(
               <th>Shipping Method</th>
               <th>Ship To</th>
               <th>Recipient Email</th>
+              <th>Recipient Phone</th>
               <th>Package Type</th>
               <th>L (cm)</th>
               <th>W (cm)</th>
@@ -413,6 +415,22 @@ export default function ShipList(
                           [order.order_id]: {
                             ...addresses.value[order.order_id],
                             recipientEmail: (e.target as HTMLInputElement).value,
+                          },
+                        };
+                      }}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="tel"
+                      class="input input-sm w-full min-w-36"
+                      value={addr?.recipientPhone ?? ""}
+                      onInput={(e) => {
+                        addresses.value = {
+                          ...addresses.value,
+                          [order.order_id]: {
+                            ...addresses.value[order.order_id],
+                            recipientPhone: (e.target as HTMLInputElement).value,
                           },
                         };
                       }}
@@ -496,7 +514,7 @@ export default function ShipList(
                         </td>
                       </>
                     )
-                    : <td colSpan={6}></td>}
+                    : <td colSpan={6} />}
                 </tr>
               );
             })}

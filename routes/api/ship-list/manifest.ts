@@ -61,7 +61,7 @@ export const handler = define.handlers({
       "Deliver To Suburb": r.address.suburb,
       "Deliver To State": r.address.state,
       "Deliver To Postcode": r.address.postcode,
-      "Deliver To Phone Number": "",
+      "Deliver To Phone Number": r.address.recipientPhone,
       "Deliver To Email Address": r.address.recipientEmail || r.buyerEmail,
       "Item Packaging Type": "OWN_PACKAGING",
       "Item Delivery Service": "PP",
