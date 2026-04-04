@@ -1,9 +1,7 @@
 import { useSignal } from "@preact/signals";
-import type { BLOrder, OrderStatus } from "@/utils/types.ts";
+import type { BLOrder } from "@/utils/types.ts";
 import { formatAmount, humanTime } from "@/utils/format.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
-import { ShipOrderDialog } from "@/components/ShipOrderDialog.tsx";
-import type { ShipFormData } from "@/components/ShipOrderDialog.tsx";
 
 const STATUS_ORDER: Record<string, number> = {
   PENDING: 0,
@@ -28,15 +26,10 @@ function sortOrders(orders: BLOrder[], dateSort: "asc" | "desc"): BLOrder[] {
 }
 
 export default function OrdersTable(
-  { orders, trackingMethodIds, dateSort }: { orders: BLOrder[]; trackingMethodIds: number[]; dateSort: "asc" | "desc" },
+  { orders, dateSort }: { orders: BLOrder[]; dateSort: "asc" | "desc" },
 ) {
-  const trackingMethodSet = new Set(trackingMethodIds);
   const localOrders = useSignal<BLOrder[]>(sortOrders(orders, dateSort));
   const selected = useSignal(new Set<number>());
-  const shippingOrder = useSignal<BLOrder | null>(null);
-  const shipError = useSignal<string | null>(null);
-  const shipLoading = useSignal(false);
-  const shipDialogLoading = useSignal<number | null>(null);
 
   function toggle(id: number) {
     const next = new Set(selected.value);
@@ -64,46 +57,6 @@ export default function OrdersTable(
     globalThis.location.href = `/ship-list?orders=${ids}`;
   }
 
-  async function openShipDialog(orderId: number) {
-    shipDialogLoading.value = orderId;
-    shipError.value = null;
-    try {
-      const resp = await fetch(`/api/orders/${orderId}`);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const order: BLOrder = await resp.json();
-      shippingOrder.value = order;
-    } catch (err) {
-      shipError.value = String(err);
-    } finally {
-      shipDialogLoading.value = null;
-    }
-  }
-
-  async function shipOrder(data: ShipFormData) {
-    const order = shippingOrder.value;
-    if (!order) return;
-    shipLoading.value = true;
-    shipError.value = null;
-    try {
-      const resp = await fetch(`/api/orders/${order.order_id}/ship`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const json = await resp.json();
-      if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
-      localOrders.value = sortOrders(
-        localOrders.value.map((o) => o.order_id === order.order_id ? { ...o, status: "SHIPPED" as OrderStatus } : o),
-        dateSort,
-      );
-      shippingOrder.value = null;
-    } catch (err) {
-      shipError.value = String(err);
-    } finally {
-      shipLoading.value = false;
-    }
-  }
-
   const allSelected = selected.value.size === localOrders.value.length && localOrders.value.length > 0;
   const someSelected = selected.value.size > 0;
 
@@ -119,21 +72,6 @@ export default function OrdersTable(
 
   return (
     <div>
-      {shipError.value && (
-        <div role="alert" class="alert alert-error mb-4">
-          <span class="iconify lucide--alert-circle size-5"></span>
-          <div>{shipError.value}</div>
-        </div>
-      )}
-
-      <ShipOrderDialog
-        order={shippingOrder.value}
-        hasTracking={trackingMethodSet.has(shippingOrder.value?.shipping?.method_id ?? -1)}
-        isOpen={shippingOrder.value !== null}
-        onConfirm={shipOrder}
-        onClose={() => (shippingOrder.value = null)}
-      />
-
       <div class="flex items-center justify-between mb-4">
         <p class="text-sm text-base-content/60">
           {localOrders.value.length} order{localOrders.value.length !== 1 ? "s" : ""}
@@ -227,19 +165,6 @@ export default function OrdersTable(
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div class="flex items-center gap-1">
-                      {order.status === "PACKED" && (
-                        <button
-                          type="button"
-                          class="btn btn-ghost btn-xs btn-square text-info"
-                          title="Ship order"
-                          disabled={shipDialogLoading.value === order.order_id || shipLoading.value}
-                          onClick={() => openShipDialog(order.order_id)}
-                        >
-                          {shipDialogLoading.value === order.order_id
-                            ? <span class="loading loading-spinner loading-xs"></span>
-                            : <span class="iconify lucide--truck size-3.5"></span>}
-                        </button>
-                      )}
                       {!order.drive_thru_sent && (
                         <a
                           href={`/drive-thru/${order.order_id}`}
