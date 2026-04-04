@@ -2,7 +2,7 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, getShipListAddress, listPackageTypes } from "@/utils/kv.ts";
+import { getCredentials, getShipListAddress, listPackageTypes, listShippingMethodEnrichments } from "@/utils/kv.ts";
 import type { AusPostAddress, BLOrder, PackageType } from "@/utils/types.ts";
 import ShipList from "@/islands/ShipList.tsx";
 
@@ -24,6 +24,7 @@ export const handler = define.handlers<{
   orders: BLOrder[];
   packageTypes: PackageType[];
   addresses: Record<number, AusPostAddress>;
+  trackingMethodIds: number[];
   error: string | null;
 }>({
   async GET(ctx) {
@@ -40,11 +41,16 @@ export const handler = define.handlers<{
 
     try {
       const client = new BricklinkClient(creds);
-      const [orders, packageTypes, savedAddresses] = await Promise.all([
+      const [orders, packageTypes, savedAddresses, enrichments] = await Promise.all([
         Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
         listPackageTypes(),
         Promise.all(orderIds.map((id) => getShipListAddress(id))),
+        listShippingMethodEnrichments(),
       ]);
+
+      const trackingMethodIds = [...enrichments.entries()]
+        .filter(([, e]) => e.hasTracking)
+        .map(([id]) => id);
 
       const addresses: Record<number, AusPostAddress> = {};
       orders.forEach((order, idx) => {
@@ -55,9 +61,9 @@ export const handler = define.handlers<{
         };
       });
 
-      return page({ orders, packageTypes, addresses, error: null });
+      return page({ orders, packageTypes, addresses, trackingMethodIds, error: null });
     } catch (err) {
-      return page({ orders: [], packageTypes: [], addresses: {}, error: String(err) });
+      return page({ orders: [], packageTypes: [], addresses: {}, trackingMethodIds: [], error: String(err) });
     }
   },
 });
@@ -92,7 +98,14 @@ export default define.page<typeof handler>(function ShipListPage({ data }) {
         </div>
       )}
 
-      {orders.length > 0 && <ShipList orders={orders} packageTypes={packageTypes} addresses={data.addresses} />}
+      {orders.length > 0 && (
+        <ShipList
+          orders={orders}
+          packageTypes={packageTypes}
+          addresses={data.addresses}
+          trackingMethodIds={data.trackingMethodIds}
+        />
+      )}
     </AppFrame>
   );
 });

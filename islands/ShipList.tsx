@@ -20,8 +20,10 @@ const EMPTY_ADDRESS: AusPostAddress = {
   postcode: "",
 };
 
-function isExportable(order: BLOrder): boolean {
-  return order.shipping?.address?.country_code === "AU";
+function isExportable(order: BLOrder, trackingMethodIds: Set<number>): boolean {
+  if (order.shipping?.address?.country_code !== "AU") return false;
+  if (!trackingMethodIds.has(order.shipping?.method_id)) return false;
+  return true;
 }
 
 function packageLabel(pt: PackageType): string {
@@ -30,12 +32,14 @@ function packageLabel(pt: PackageType): string {
 }
 
 export default function ShipList(
-  { orders, packageTypes, addresses: initialAddresses }: {
+  { orders, packageTypes, addresses: initialAddresses, trackingMethodIds }: {
     orders: BLOrder[];
     packageTypes: PackageType[];
     addresses: Record<number, AusPostAddress>;
+    trackingMethodIds: number[];
   },
 ) {
+  const trackingMethodSet = new Set(trackingMethodIds);
   const packageById = new Map(packageTypes.map((pt) => [pt.id, pt]));
 
   const selectedPackage = useSignal<Record<number, string>>(
@@ -136,7 +140,7 @@ export default function ShipList(
   }
 
   async function exportManifest() {
-    const rows = orders.filter(isExportable).map((order) => ({
+    const rows = orders.filter((o) => isExportable(o, trackingMethodSet)).map((order) => ({
       orderId: order.order_id,
       buyerEmail: order.buyer_email,
       countryCode: order.shipping?.address?.country_code ?? "",
@@ -346,7 +350,7 @@ export default function ShipList(
               const isCustom = selectedPackage.value[order.order_id] === "";
               const dims = dimensions.value[order.order_id];
               const addr = addresses.value[order.order_id];
-              const exportable = isExportable(order);
+              const exportable = isExportable(order, trackingMethodSet);
               return (
                 <tr key={order.order_id} class={!exportable ? "bg-neutral text-neutral-content" : ""}>
                   <td>
