@@ -1,5 +1,5 @@
 import { useRef } from "preact/hooks";
-import { useSignal } from "@preact/signals";
+import { useComputed, useSignal } from "@preact/signals";
 import type { AusPostAddress, BLOrder, PackageType } from "@/utils/types.ts";
 import { formatAmount } from "@/utils/format.ts";
 
@@ -139,6 +139,16 @@ export default function ShipList(
     }
   }
 
+  const exportReady = useComputed(() =>
+    orders
+      .filter((o) => isExportable(o, trackingMethodSet))
+      .every((order) => {
+        const dims = dimensions.value[order.order_id];
+        const weight = weights.value[order.order_id];
+        return dims.l && dims.w && dims.h && weight;
+      })
+  );
+
   async function exportManifest() {
     const rows = orders.filter((o) => isExportable(o, trackingMethodSet)).map((order) => ({
       orderId: order.order_id,
@@ -198,7 +208,13 @@ export default function ShipList(
   return (
     <div>
       <div class="flex justify-end mb-4">
-        <button type="button" class="btn btn-primary btn-sm" onClick={exportManifest}>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          disabled={!exportReady.value}
+          title={!exportReady.value ? "All exportable rows must have length, width, height and weight filled in" : undefined}
+          onClick={exportManifest}
+        >
           <span class="iconify lucide--download size-4"></span>
           Export Manifest
         </button>
