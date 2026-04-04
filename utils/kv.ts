@@ -21,20 +21,25 @@ export function getCredentials(): BricklinkCredentials | null {
   return { consumerKey, consumerSecret, tokenValue, tokenSecret };
 }
 
+let _kv: Deno.Kv | null = null;
+
+async function kv(): Promise<Deno.Kv> {
+  if (!_kv) _kv = await Deno.openKv();
+  return _kv;
+}
+
 // Notifications are stored under ["notifications", <iso-timestamp>, <id>] so
 // they naturally sort chronologically when listed.
 function notificationKey(receivedAt: string, id: string): Deno.KvKey {
   return ["notifications", receivedAt, id];
 }
 
-export async function saveNotification(notification: StoredNotification): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(notificationKey(notification.receivedAt, notification.id), notification);
+export async function saveNotification(notification: StoredNotification): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(notificationKey(notification.receivedAt, notification.id), notification);
 }
 
 export async function listNotifications(): Promise<StoredNotification[]> {
-  const kv = await Deno.openKv();
-  const entries = kv.list<StoredNotification>({ prefix: ["notifications"] });
+  const entries = (await kv()).list<StoredNotification>({ prefix: ["notifications"] });
   const results: StoredNotification[] = [];
   for await (const entry of entries) {
     results.push(entry.value);
@@ -49,8 +54,7 @@ function driveThruTemplateKey(id: string): Deno.KvKey {
 }
 
 export async function listDriveThruTemplates(): Promise<DriveThruTemplate[]> {
-  const kv = await Deno.openKv();
-  const entries = kv.list<DriveThruTemplate>({ prefix: ["drive_thru_templates"] });
+  const entries = (await kv()).list<DriveThruTemplate>({ prefix: ["drive_thru_templates"] });
   const results: DriveThruTemplate[] = [];
   for await (const entry of entries) {
     results.push(entry.value);
@@ -59,19 +63,16 @@ export async function listDriveThruTemplates(): Promise<DriveThruTemplate[]> {
 }
 
 export async function getDriveThruTemplate(id: string): Promise<DriveThruTemplate | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<DriveThruTemplate>(driveThruTemplateKey(id));
+  const result = await (await kv()).get<DriveThruTemplate>(driveThruTemplateKey(id));
   return result.value;
 }
 
-export async function saveDriveThruTemplate(template: DriveThruTemplate): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(driveThruTemplateKey(template.id), template);
+export async function saveDriveThruTemplate(template: DriveThruTemplate): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(driveThruTemplateKey(template.id), template);
 }
 
 export async function deleteDriveThruTemplate(id: string): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.delete(driveThruTemplateKey(id));
+  return (await kv()).delete(driveThruTemplateKey(id));
 }
 
 // Drive Thru Sent Records
@@ -80,20 +81,17 @@ function driveThruSentKey(orderId: number): Deno.KvKey {
   return ["drive_thru_sent", orderId];
 }
 
-export async function recordDriveThruSent(record: DriveThruSentRecord): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(driveThruSentKey(record.orderId), record);
+export async function recordDriveThruSent(record: DriveThruSentRecord): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(driveThruSentKey(record.orderId), record);
 }
 
 export async function getDriveThruSent(orderId: number): Promise<DriveThruSentRecord | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<DriveThruSentRecord>(driveThruSentKey(orderId));
+  const result = await (await kv()).get<DriveThruSentRecord>(driveThruSentKey(orderId));
   return result.value;
 }
 
 export async function listDriveThruSentOrderIds(): Promise<number[]> {
-  const kv = await Deno.openKv();
-  const entries = kv.list<DriveThruSentRecord>({ prefix: ["drive_thru_sent"] });
+  const entries = (await kv()).list<DriveThruSentRecord>({ prefix: ["drive_thru_sent"] });
   const ids: number[] = [];
   for await (const entry of entries) {
     ids.push(entry.value.orderId);
@@ -111,14 +109,12 @@ export interface ShippingMethodsCache {
 const SHIPPING_METHODS_CACHE_KEY: Deno.KvKey = ["shipping_methods_cache"];
 
 export async function getShippingMethodsCache(): Promise<ShippingMethodsCache | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<ShippingMethodsCache>(SHIPPING_METHODS_CACHE_KEY);
+  const result = await (await kv()).get<ShippingMethodsCache>(SHIPPING_METHODS_CACHE_KEY);
   return result.value;
 }
 
-export async function saveShippingMethodsCache(cache: ShippingMethodsCache): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(SHIPPING_METHODS_CACHE_KEY, cache);
+export async function saveShippingMethodsCache(cache: ShippingMethodsCache): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(SHIPPING_METHODS_CACHE_KEY, cache);
 }
 
 // Shipping Method Enrichment
@@ -128,27 +124,23 @@ function shippingMethodEnrichmentKey(methodId: number): Deno.KvKey {
 }
 
 export async function getShippingMethodEnrichment(methodId: number): Promise<ShippingMethodEnrichment | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<ShippingMethodEnrichment>(shippingMethodEnrichmentKey(methodId));
+  const result = await (await kv()).get<ShippingMethodEnrichment>(shippingMethodEnrichmentKey(methodId));
   return result.value;
 }
 
 export async function saveShippingMethodEnrichment(
   methodId: number,
   enrichment: ShippingMethodEnrichment,
-): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(shippingMethodEnrichmentKey(methodId), enrichment);
+): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(shippingMethodEnrichmentKey(methodId), enrichment);
 }
 
 export async function deleteShippingMethodEnrichment(methodId: number): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.delete(shippingMethodEnrichmentKey(methodId));
+  return (await kv()).delete(shippingMethodEnrichmentKey(methodId));
 }
 
 export async function listShippingMethodEnrichments(): Promise<Map<number, ShippingMethodEnrichment>> {
-  const kv = await Deno.openKv();
-  const entries = kv.list<ShippingMethodEnrichment>({ prefix: ["shipping_method_enrichment"] });
+  const entries = (await kv()).list<ShippingMethodEnrichment>({ prefix: ["shipping_method_enrichment"] });
   const map = new Map<number, ShippingMethodEnrichment>();
   for await (const entry of entries) {
     map.set(entry.key[1] as number, entry.value);
@@ -163,8 +155,7 @@ function packageTypeKey(id: string): Deno.KvKey {
 }
 
 export async function listPackageTypes(): Promise<PackageType[]> {
-  const kv = await Deno.openKv();
-  const entries = kv.list<PackageType>({ prefix: ["package_type"] });
+  const entries = (await kv()).list<PackageType>({ prefix: ["package_type"] });
   const results: PackageType[] = [];
   for await (const entry of entries) {
     results.push(entry.value);
@@ -173,19 +164,16 @@ export async function listPackageTypes(): Promise<PackageType[]> {
 }
 
 export async function getPackageType(id: string): Promise<PackageType | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<PackageType>(packageTypeKey(id));
+  const result = await (await kv()).get<PackageType>(packageTypeKey(id));
   return result.value;
 }
 
-export async function savePackageType(packageType: PackageType): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(packageTypeKey(packageType.id), packageType);
+export async function savePackageType(packageType: PackageType): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(packageTypeKey(packageType.id), packageType);
 }
 
 export async function deletePackageType(id: string): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.delete(packageTypeKey(id));
+  return (await kv()).delete(packageTypeKey(id));
 }
 
 // Ship List Addresses
@@ -195,14 +183,12 @@ function shipListAddressKey(orderId: number): Deno.KvKey {
 }
 
 export async function getShipListAddress(orderId: number): Promise<AusPostAddress | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<AusPostAddress>(shipListAddressKey(orderId));
+  const result = await (await kv()).get<AusPostAddress>(shipListAddressKey(orderId));
   return result.value;
 }
 
-export async function saveShipListAddress(orderId: number, address: AusPostAddress): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(shipListAddressKey(orderId), address);
+export async function saveShipListAddress(orderId: number, address: AusPostAddress): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(shipListAddressKey(orderId), address);
 }
 
 // Order Cache
@@ -215,15 +201,13 @@ function orderCacheKey(orderId: number): Deno.KvKey {
  * Persist a BrickLink order to the local cache.
  * Only call this for non-PURGED orders — callers are responsible for the guard.
  */
-export async function saveOrderCache(order: BLOrder): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(orderCacheKey(order.order_id), order);
+export async function saveOrderCache(order: BLOrder): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(orderCacheKey(order.order_id), order);
 }
 
 /** Return every order stored in the local cache. */
 export async function listCachedOrders(): Promise<BLOrder[]> {
-  const kv = await Deno.openKv();
-  const iter = kv.list<BLOrder>({ prefix: ["order_cache"] });
+  const iter = (await kv()).list<BLOrder>({ prefix: ["order_cache"] });
   const results: BLOrder[] = [];
   for await (const entry of iter) {
     results.push(entry.value);
@@ -237,9 +221,8 @@ function customerKey(buyerName: string): Deno.KvKey {
   return ["crm_customer", buyerName];
 }
 
-export async function saveCustomer(customer: Customer): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(customerKey(customer.buyerName), customer);
+export async function saveCustomer(customer: Customer): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(customerKey(customer.buyerName), customer);
 }
 
 export interface CustomerPage {
@@ -249,11 +232,11 @@ export interface CustomerPage {
 }
 
 export async function listCustomers(limit = 20, cursor?: string): Promise<CustomerPage> {
-  const kv = await Deno.openKv();
+  const db = await kv();
   const listOptions: Deno.KvListOptions = { limit };
   if (cursor) listOptions.cursor = cursor;
 
-  const iter = kv.list<Customer>({ prefix: ["crm_customer"] }, listOptions);
+  const iter = db.list<Customer>({ prefix: ["crm_customer"] }, listOptions);
   const results: Customer[] = [];
   for await (const entry of iter) {
     results.push(entry.value);
@@ -262,7 +245,7 @@ export async function listCustomers(limit = 20, cursor?: string): Promise<Custom
   // Peek one entry beyond the current page to determine whether a next page exists.
   let nextCursor: string | null = null;
   if (results.length === limit) {
-    const peekIter = kv.list<Customer>({ prefix: ["crm_customer"] }, { limit: 1, cursor: iter.cursor });
+    const peekIter = db.list<Customer>({ prefix: ["crm_customer"] }, { limit: 1, cursor: iter.cursor });
     const peek = await peekIter.next();
     if (!peek.done) {
       nextCursor = iter.cursor;
@@ -277,12 +260,10 @@ export async function listCustomers(limit = 20, cursor?: string): Promise<Custom
 const CRM_META_KEY: Deno.KvKey = ["crm_meta"];
 
 export async function getCrmMeta(): Promise<CrmMeta | null> {
-  const kv = await Deno.openKv();
-  const result = await kv.get<CrmMeta>(CRM_META_KEY);
+  const result = await (await kv()).get<CrmMeta>(CRM_META_KEY);
   return result.value;
 }
 
-export async function saveCrmMeta(meta: CrmMeta): Promise<void> {
-  const kv = await Deno.openKv();
-  await kv.set(CRM_META_KEY, meta);
+export async function saveCrmMeta(meta: CrmMeta): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(CRM_META_KEY, meta);
 }
