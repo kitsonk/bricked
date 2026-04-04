@@ -348,17 +348,12 @@ export default function ShipList(
         <table class="table">
           <thead>
             <tr>
-              <th>Order</th>
-              <th>Items</th>
-              <th class="text-right">Total</th>
+              <th>Order Info</th>
               <th>Shipping Method</th>
               <th>Ship To</th>
               <th>Recipient Email</th>
               <th>Recipient Phone</th>
-              <th>Package Type</th>
-              <th>L (cm)</th>
-              <th>W (cm)</th>
-              <th>H (cm)</th>
+              <th>Package</th>
               <th>Weight (kg)</th>
               <th>Extra Cover ($)</th>
             </tr>
@@ -371,16 +366,18 @@ export default function ShipList(
               const exportable = isExportable(order, trackingMethodSet);
               return (
                 <tr key={order.order_id} class={!exportable ? "bg-neutral text-neutral-content" : ""}>
-                  <td>
-                    <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
-                      #{order.order_id}
-                    </a>
-                  </td>
-                  <td class="text-sm">
-                    {order.total_count} <span class="text-base-content/50">({order.unique_count} lots)</span>
-                  </td>
-                  <td class="text-right font-medium text-sm">
-                    {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
+                  <td class="text-sm leading-snug">
+                    <div>
+                      <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
+                        #{order.order_id}
+                      </a>
+                    </div>
+                    <div class="text-base-content/60">
+                      {order.total_count} ({order.unique_count} lots)
+                    </div>
+                    <div class="font-medium">
+                      {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
+                    </div>
                   </td>
                   <td class="text-sm">{order.shipping?.method || "—"}</td>
                   <td>
@@ -440,49 +437,57 @@ export default function ShipList(
                     ? (
                       <>
                         <td>
-                          <select
-                            class="select select-sm w-full min-w-48"
-                            value={selectedPackage.value[order.order_id]}
-                            onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
-                          >
-                            <option value="">Custom</option>
-                            {packageTypes.map((pt) => (
-                              <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            class="input input-sm w-20"
-                            step="0.1"
-                            min="0"
-                            disabled={!isCustom}
-                            value={dims.l}
-                            onInput={(e) => setDim(order.order_id, "l", (e.target as HTMLInputElement).value)}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            class="input input-sm w-20"
-                            step="0.1"
-                            min="0"
-                            disabled={!isCustom}
-                            value={dims.w}
-                            onInput={(e) => setDim(order.order_id, "w", (e.target as HTMLInputElement).value)}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            class="input input-sm w-20"
-                            step="0.1"
-                            min="0"
-                            disabled={!isCustom}
-                            value={dims.h}
-                            onInput={(e) => setDim(order.order_id, "h", (e.target as HTMLInputElement).value)}
-                          />
+                          <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs text-base-content/50 w-10">Type</span>
+                              <select
+                                class="select select-sm w-full min-w-40"
+                                value={selectedPackage.value[order.order_id]}
+                                onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
+                              >
+                                <option value="">Custom</option>
+                                {packageTypes.map((pt) => (
+                                  <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs text-base-content/50 w-10">L (cm)</span>
+                              <input
+                                type="number"
+                                class="input input-sm w-24"
+                                step="0.1"
+                                min="0"
+                                disabled={!isCustom}
+                                value={dims.l}
+                                onInput={(e) => setDim(order.order_id, "l", (e.target as HTMLInputElement).value)}
+                              />
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs text-base-content/50 w-10">W (cm)</span>
+                              <input
+                                type="number"
+                                class="input input-sm w-24"
+                                step="0.1"
+                                min="0"
+                                disabled={!isCustom}
+                                value={dims.w}
+                                onInput={(e) => setDim(order.order_id, "w", (e.target as HTMLInputElement).value)}
+                              />
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs text-base-content/50 w-10">H (cm)</span>
+                              <input
+                                type="number"
+                                class="input input-sm w-24"
+                                step="0.1"
+                                min="0"
+                                disabled={!isCustom}
+                                value={dims.h}
+                                onInput={(e) => setDim(order.order_id, "h", (e.target as HTMLInputElement).value)}
+                              />
+                            </div>
+                          </div>
                         </td>
                         <td>
                           <input
@@ -514,7 +519,7 @@ export default function ShipList(
                         </td>
                       </>
                     )
-                    : <td colSpan={6} />}
+                    : <td colSpan={3} />}
                 </tr>
               );
             })}
