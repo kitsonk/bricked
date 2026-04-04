@@ -45,6 +45,10 @@ export default function ShipList(
     Object.fromEntries(orders.map((o) => [o.order_id, ""])),
   );
 
+  const extraCover = useSignal<Record<number, string>>(
+    Object.fromEntries(orders.map((o) => [o.order_id, "0.00"])),
+  );
+
   const addresses = useSignal<Record<number, AusPostAddress>>(initialAddresses);
   const editingOrderId = useSignal<number | null>(null);
   const editingCountryCode = useSignal<string>("");
@@ -288,6 +292,7 @@ export default function ShipList(
               <th>W (cm)</th>
               <th>H (cm)</th>
               <th>Weight (kg)</th>
+              <th>Extra Cover ($)</th>
             </tr>
           </thead>
           <tbody>
@@ -396,6 +401,20 @@ export default function ShipList(
                       onInput={(e) =>
                         weights.value = {
                           ...weights.value,
+                          [order.order_id]: (e.target as HTMLInputElement).value,
+                        }}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      class="input input-sm w-24"
+                      step="0.01"
+                      min="0"
+                      value={extraCover.value[order.order_id]}
+                      onInput={(e) =>
+                        extraCover.value = {
+                          ...extraCover.value,
                           [order.order_id]: (e.target as HTMLInputElement).value,
                         }}
                     />
