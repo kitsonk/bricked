@@ -178,6 +178,16 @@ export interface DriveThruTemplate {
   updatedAt: string;
 }
 
+export interface BLOrderMessage {
+  subject: string;
+  body: string;
+  from: string;
+  to: string;
+  dateSent: string;
+  /** True if the message was sent by the store owner (seller). */
+  from_me: boolean;
+}
+
 export interface DriveThruSentRecord {
   orderId: number;
   templateId: string | null;
