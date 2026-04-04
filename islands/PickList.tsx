@@ -67,6 +67,10 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
   const pickedCount = picked.value.size;
   const buyerByOrderId = new Map(orders.map((o) => [o.orderId, o.buyerName]));
 
+  const allPacked = orders.length > 0 &&
+    orders.every((o) => o.status === "PACKED" || packedOrderIds.value.has(o.orderId));
+  const shipListHref = `/ship-list?orders=${orders.map((o) => o.orderId).join(",")}`;
+
   return (
     <div>
       <div class="flex items-center justify-between mb-6">
@@ -88,6 +92,15 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
             <span class="iconify lucide--printer size-4"></span>
             Print
           </button>
+          <a
+            href={shipListHref}
+            class={`btn btn-primary btn-sm ${!allPacked ? "btn-disabled" : ""}`}
+            aria-disabled={!allPacked}
+            title={!allPacked ? "All orders must be Packed before preparing to ship" : undefined}
+          >
+            <span class="iconify lucide--truck size-4"></span>
+            Prepare to Ship
+          </a>
         </div>
       </div>
 
