@@ -9,6 +9,7 @@ interface Props {
   nextCursor: string | null;
   currentCursor: string | null;
   history: string[];
+  buyerFilter: string | null;
   lastRefreshedAt: string | null;
 }
 
@@ -24,10 +25,47 @@ function pageUrl(cursor: string | null, history: string[]): string {
 }
 
 export default function CustomersTable(
-  { initialCustomers, nextCursor, currentCursor, history, lastRefreshedAt }: Props,
+  { initialCustomers, nextCursor, currentCursor, history, buyerFilter, lastRefreshedAt }: Props,
 ) {
   const refreshing = useSignal(false);
   const refreshError = useSignal<string | null>(null);
+
+  // Typeahead state
+  const buyerQuery = useSignal(buyerFilter ?? "");
+  const suggestions = useSignal<string[]>([]);
+  const showSuggestions = useSignal(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function selectBuyer(name: string) {
+    showSuggestions.value = false;
+    globalThis.location.assign(`/customers?buyer=${encodeURIComponent(name)}`);
+  }
+
+  async function onBuyerInput(e: Event) {
+    const value = (e.target as HTMLInputElement).value;
+    buyerQuery.value = value;
+    if (!value) {
+      suggestions.value = [];
+      showSuggestions.value = false;
+      globalThis.location.assign("/customers");
+      return;
+    }
+    try {
+      const resp = await fetch(`/api/crm/buyers?q=${encodeURIComponent(value)}`);
+      suggestions.value = await resp.json() as string[];
+      showSuggestions.value = true;
+    } catch {
+      suggestions.value = [];
+    }
+  }
+
+  function onBuyerKeyDown(e: KeyboardEvent) {
+    if (e.key === "Enter" && suggestions.value.length === 1) {
+      selectBuyer(suggestions.value[0]);
+    } else if (e.key === "Escape") {
+      showSuggestions.value = false;
+    }
+  }
 
   const importDialogRef = useRef<HTMLDialogElement>(null);
   const importFile = useSignal<File | null>(null);
@@ -84,6 +122,8 @@ export default function CustomersTable(
     }
   }
 
+  const isEmpty = initialCustomers.length === 0 && !hasPrev && !buyerFilter;
+
   return (
     <div>
       <div class="flex items-center justify-between mb-6">
@@ -134,7 +174,7 @@ export default function CustomersTable(
         </div>
       )}
 
-      {initialCustomers.length === 0 && !hasPrev
+      {isEmpty
         ? (
           <div class="border border-base-content/10 rounded-box p-8 text-center text-base-content/50">
             No customer data yet. Click <strong>Update</strong> to build the CRM from your order history.
@@ -142,6 +182,42 @@ export default function CustomersTable(
         )
         : (
           <>
+            <div class="relative mb-4 max-w-xs">
+              <input
+                ref={inputRef}
+                type="text"
+                class="input input-bordered input-sm w-full"
+                placeholder="Filter by buyer…"
+                value={buyerQuery.value}
+                onInput={onBuyerInput}
+                onKeyDown={onBuyerKeyDown}
+                onFocus={() => {
+                  showSuggestions.value = true;
+                }}
+                onBlur={() => {
+                  // Delay hiding so click on a suggestion registers first.
+                  setTimeout(() => {
+                    showSuggestions.value = false;
+                  }, 150);
+                }}
+              />
+              {showSuggestions.value && suggestions.value.length > 0 && (
+                <ul class="absolute z-10 mt-1 w-full bg-base-100 border border-base-content/10 rounded-box shadow-lg max-h-60 overflow-y-auto">
+                  {suggestions.value.map((name) => (
+                    <li key={name}>
+                      <button
+                        type="button"
+                        class="w-full text-left px-3 py-1.5 text-sm hover:bg-base-200"
+                        onMouseDown={() => selectBuyer(name)}
+                      >
+                        {name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             <div class="border border-base-content/10 rounded-box overflow-x-auto">
               <table class="table table-zebra">
                 <thead>
@@ -154,39 +230,45 @@ export default function CustomersTable(
                   </tr>
                 </thead>
                 <tbody>
-                  {initialCustomers.map((c) => (
-                    <tr key={c.buyerName}>
-                      <td>
-                        <a
-                          class="link font-medium"
-                          href={`/customers/${encodeURIComponent(c.buyerName)}`}
-                        >
-                          {c.buyerName}
-                        </a>
-                      </td>
-                      <td class="text-right tabular-nums">{c.orderCount}</td>
-                      <td class="text-sm text-base-content/70">
-                        {new Date(c.firstOrderDate).toLocaleDateString()}
-                      </td>
-                      <td class="text-sm">
-                        <span title={new Date(c.lastOrderDate).toLocaleDateString()}>
-                          {humanTime(c.lastOrderDate)}
-                        </span>
-                      </td>
-                      <td class="text-sm tabular-nums">
-                        {Object.entries(c.totalsByCurrency).map(([currency, total]) => (
-                          <div key={currency}>
-                            {currency} {formatAmount(total.toFixed(4))}
-                          </div>
-                        ))}
-                      </td>
-                    </tr>
-                  ))}
+                  {initialCustomers.length === 0
+                    ? (
+                      <tr>
+                        <td colspan={5} class="text-center text-base-content/50 py-8">No matching customer.</td>
+                      </tr>
+                    )
+                    : initialCustomers.map((c) => (
+                      <tr key={c.buyerName}>
+                        <td>
+                          <a
+                            class="link font-medium"
+                            href={`/customers/${encodeURIComponent(c.buyerName)}`}
+                          >
+                            {c.buyerName}
+                          </a>
+                        </td>
+                        <td class="text-right tabular-nums">{c.orderCount}</td>
+                        <td class="text-sm text-base-content/70">
+                          {new Date(c.firstOrderDate).toLocaleDateString()}
+                        </td>
+                        <td class="text-sm">
+                          <span title={new Date(c.lastOrderDate).toLocaleDateString()}>
+                            {humanTime(c.lastOrderDate)}
+                          </span>
+                        </td>
+                        <td class="text-sm tabular-nums">
+                          {Object.entries(c.totalsByCurrency).map(([currency, total]) => (
+                            <div key={currency}>
+                              {currency} {formatAmount(total.toFixed(4))}
+                            </div>
+                          ))}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
 
-            {(hasPrev || nextUrl) && (
+            {!buyerFilter && (hasPrev || nextUrl) && (
               <div class="flex justify-between items-center mt-4">
                 <div>
                   {hasPrev && (

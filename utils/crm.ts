@@ -1,5 +1,12 @@
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, listCachedOrders, saveCrmMeta, saveCustomer, saveOrderCache } from "@/utils/kv.ts";
+import {
+  getCredentials,
+  listCachedOrders,
+  saveBuyerIndex,
+  saveCrmMeta,
+  saveCustomer,
+  saveOrderCache,
+} from "@/utils/kv.ts";
 import { FILED_STATUSES } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
 
@@ -90,6 +97,7 @@ export async function buildCrm(): Promise<void> {
     await saveCustomer({ buyerName, ...data, updatedAt: now });
   }
 
+  await saveBuyerIndex([...customerMap.keys()]);
   await saveCrmMeta({ lastRefreshedAt: now });
   logger.info`CRM refresh complete: ${customerMap.size} customer(s) saved`;
 }

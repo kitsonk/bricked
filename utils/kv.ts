@@ -233,6 +233,11 @@ export async function saveCustomer(customer: Customer): Promise<Deno.KvCommitRes
   return (await kv()).set(customerKey(customer.buyerName), customer);
 }
 
+export async function getCustomer(buyerName: string): Promise<Customer | null> {
+  const result = await (await kv()).get<Customer>(customerKey(buyerName));
+  return result.value;
+}
+
 export interface CustomerPage {
   customers: Customer[];
   /** Opaque KV cursor for the next page, or null if this is the last page. */
@@ -261,6 +266,21 @@ export async function listCustomers(limit = 20, cursor?: string): Promise<Custom
   }
 
   return { customers: results, nextCursor };
+}
+
+// Buyer Index
+
+const BUYER_INDEX_KEY: Deno.KvKey = ["crm_buyer_index"];
+
+/** Persist the sorted list of all known buyer names for use in filter UIs. */
+export async function saveBuyerIndex(buyers: string[]): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(BUYER_INDEX_KEY, [...buyers].sort((a, b) => a.localeCompare(b)));
+}
+
+/** Return the sorted list of all known buyer names, or an empty array if not yet built. */
+export async function getBuyerIndex(): Promise<string[]> {
+  const result = await (await kv()).get<string[]>(BUYER_INDEX_KEY);
+  return result.value ?? [];
 }
 
 // CRM Metadata

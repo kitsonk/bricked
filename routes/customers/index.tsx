@@ -1,7 +1,7 @@
 import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
-import { getCredentials, getCrmMeta, listCustomers } from "@/utils/kv.ts";
+import { getCredentials, getCrmMeta, getCustomer, listCustomers } from "@/utils/kv.ts";
 import type { Customer } from "@/utils/types.ts";
 import CustomersTable from "@/islands/CustomersTable.tsx";
 
@@ -12,6 +12,7 @@ export const handler = define.handlers<{
   nextCursor: string | null;
   currentCursor: string | null;
   history: string[];
+  buyerFilter: string | null;
   lastRefreshedAt: string | null;
 }>({
   async GET(ctx) {
@@ -19,19 +20,34 @@ export const handler = define.handlers<{
     if (!creds) {
       return ctx.redirect("/environment");
     }
+
+    const buyerParam = ctx.url.searchParams.get("buyer");
     const cursor = ctx.url.searchParams.get("cursor") ?? undefined;
     const history = ctx.url.searchParams.getAll("history");
 
-    const [{ customers, nextCursor }, meta] = await Promise.all([
-      listCustomers(PAGE_SIZE, cursor),
-      getCrmMeta(),
-    ]);
+    const meta = await getCrmMeta();
+
+    // When a buyer filter is active, return just that one record.
+    if (buyerParam) {
+      const customer = await getCustomer(buyerParam);
+      return page({
+        customers: customer ? [customer] : [],
+        nextCursor: null,
+        currentCursor: null,
+        history: [],
+        buyerFilter: buyerParam,
+        lastRefreshedAt: meta?.lastRefreshedAt ?? null,
+      });
+    }
+
+    const { customers, nextCursor } = await listCustomers(PAGE_SIZE, cursor);
 
     return page({
       customers,
       nextCursor,
       currentCursor: cursor ?? null,
       history,
+      buyerFilter: null,
       lastRefreshedAt: meta?.lastRefreshedAt ?? null,
     });
   },
@@ -45,6 +61,7 @@ export default define.page<typeof handler>(function Customers({ data }) {
         nextCursor={data.nextCursor}
         currentCursor={data.currentCursor}
         history={data.history}
+        buyerFilter={data.buyerFilter}
         lastRefreshedAt={data.lastRefreshedAt}
       />
     </AppFrame>
