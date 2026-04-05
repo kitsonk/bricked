@@ -1,5 +1,6 @@
 import type { ComponentChildren } from "preact";
 
+import SidebarPersist from "@/islands/SidebarPersist.tsx";
 import { Footer } from "./Footer.tsx";
 import { Sidebar } from "./Sidebar.tsx";
 import { Topbar } from "./Topbar.tsx";
@@ -20,6 +21,7 @@ export function AppFrame({ children }: { children: ComponentChildren }) {
           id="layout-sidebar-hover-trigger"
           type="checkbox"
         />
+        <SidebarPersist />
         <div class="bg-base-300 h-screen w-1" id="layout-sidebar-hover"></div>
         <div class="overflow-hidden" id="layout-sidebar">
           <Sidebar />
