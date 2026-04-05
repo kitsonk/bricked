@@ -6,15 +6,10 @@
     "jsr:@deno/loader@~0.3.10": "0.3.14",
     "jsr:@deno/loader@~0.3.2": "0.3.14",
     "jsr:@fresh/build-id@1": "1.0.1",
-    "jsr:@fresh/core@2": "2.2.0",
-    "jsr:@fresh/core@2.2.0": "2.2.0",
-    "jsr:@fresh/core@^2.2.0": "2.2.0",
+    "jsr:@fresh/core@2": "2.2.2",
+    "jsr:@fresh/core@^2.2.0": "2.2.2",
     "jsr:@fresh/plugin-vite@^1.0.8": "1.0.8",
-    "jsr:@logtape/logtape@^2.0.4": "2.0.4",
-    "jsr:@std/assert@*": "1.0.19",
-    "jsr:@std/assert@1.0.19": "1.0.19",
     "jsr:@std/bytes@^1.0.6": "1.0.6",
-    "jsr:@std/csv@^1.0.6": "1.0.6",
     "jsr:@std/dotenv@~0.225.5": "0.225.6",
     "jsr:@std/encoding@^1.0.10": "1.0.10",
     "jsr:@std/fmt@^1.0.7": "1.0.9",
@@ -23,7 +18,6 @@
     "jsr:@std/html@^1.0.5": "1.0.5",
     "jsr:@std/http@^1.0.21": "1.0.25",
     "jsr:@std/internal@^1.0.12": "1.0.12",
-    "jsr:@std/json@^1.0.2": "1.0.3",
     "jsr:@std/jsonc@^1.0.2": "1.0.2",
     "jsr:@std/media-types@^1.1.0": "1.1.0",
     "jsr:@std/path@1": "1.1.4",
@@ -31,30 +25,12 @@
     "jsr:@std/path@^1.1.2": "1.1.4",
     "jsr:@std/path@^1.1.4": "1.1.4",
     "jsr:@std/semver@^1.0.6": "1.0.8",
-    "jsr:@std/streams@^1.0.9": "1.0.17",
     "jsr:@std/uuid@^1.0.9": "1.1.0",
-    "npm:@babel/core@^7.28.0": "7.29.0",
-    "npm:@babel/preset-react@^7.27.1": "7.28.5_@babel+core@7.29.0",
-    "npm:@iconify-json/lucide@^1.2.98": "1.2.98",
     "npm:@iconify/tailwind4@^1.2.3": "1.2.3_tailwindcss@4.2.2",
-    "npm:@mjackson/node-fetch-server@0.7": "0.7.0",
-    "npm:@opentelemetry/api@^1.9.0": "1.9.0",
-    "npm:@preact/signals@^2.2.1": "2.8.2_preact@10.29.0",
-    "npm:@preact/signals@^2.5.0": "2.8.2_preact@10.29.0",
-    "npm:@prefresh/vite@^2.4.8": "2.4.12_preact@10.29.0_vite@7.3.1",
     "npm:@tailwindcss/vite@^4.1.12": "4.2.2_vite@7.3.1",
     "npm:daisyui@^5.5.19": "5.5.19",
-    "npm:esbuild-wasm@~0.25.11": "0.25.12",
-    "npm:esbuild@0.25.7": "0.25.7",
-    "npm:esbuild@~0.25.5": "0.25.12",
-    "npm:preact-render-to-string@^6.6.3": "6.6.6_preact@10.29.0",
-    "npm:preact@^10.27.0": "10.29.0",
-    "npm:preact@^10.27.2": "10.29.0",
-    "npm:rollup@^4.50.0": "4.59.0",
     "npm:tailwindcss-motion@^1.1.1": "1.1.1_tailwindcss@4.2.2",
-    "npm:tailwindcss@^4.1.10": "4.2.2",
-    "npm:vite@^7.1.3": "7.3.1",
-    "npm:vite@^7.1.4": "7.3.1"
+    "npm:tailwindcss@^4.1.10": "4.2.2"
   },
   "jsr": {
     "@blaze/human-readable-timestamp@1.0.0": {
@@ -64,8 +40,7 @@
       "integrity": "df629467913adc1f960149fdfa3a3430ba8c20381c310fba096db244e6c3c9f6",
       "dependencies": [
         "jsr:@deno/loader@~0.3.10",
-        "jsr:@std/path@^1.1.1",
-        "npm:esbuild@~0.25.5"
+        "jsr:@std/path@^1.1.1"
       ]
     },
     "@deno/loader@0.3.14": {
@@ -77,8 +52,8 @@
         "jsr:@std/encoding"
       ]
     },
-    "@fresh/core@2.2.0": {
-      "integrity": "b3c00f82288a2c4c8ec85e4abb67b080b366ec5971860f2f2898eb281ea1a80f",
+    "@fresh/core@2.2.2": {
+      "integrity": "c34873df58457720f7b915a65fef6fe5cd7215f237cf4d1064d1925b320de96c",
       "dependencies": [
         "jsr:@deno/esbuild-plugin",
         "jsr:@fresh/build-id",
@@ -91,14 +66,7 @@
         "jsr:@std/media-types",
         "jsr:@std/path@^1.1.2",
         "jsr:@std/semver",
-        "jsr:@std/uuid",
-        "npm:@opentelemetry/api",
-        "npm:@preact/signals@^2.2.1",
-        "npm:esbuild-wasm",
-        "npm:esbuild@0.25.7",
-        "npm:preact-render-to-string",
-        "npm:preact@^10.27.0",
-        "npm:preact@^10.27.2"
+        "jsr:@std/uuid"
       ]
     },
     "@fresh/plugin-vite@1.0.8": {
@@ -109,32 +77,11 @@
         "jsr:@fresh/core@^2.2.0",
         "jsr:@std/dotenv",
         "jsr:@std/fmt@^1.0.7",
-        "jsr:@std/path@1",
-        "npm:@babel/core",
-        "npm:@babel/preset-react",
-        "npm:@mjackson/node-fetch-server",
-        "npm:@prefresh/vite",
-        "npm:rollup",
-        "npm:vite@^7.1.4"
-      ]
-    },
-    "@logtape/logtape@2.0.4": {
-      "integrity": "d4b6e85d82954f3d58014d85e4c0f93d6a836181ef4fbb4a852da7ed47979acb"
-    },
-    "@std/assert@1.0.19": {
-      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
-      "dependencies": [
-        "jsr:@std/internal"
+        "jsr:@std/path@1"
       ]
     },
     "@std/bytes@1.0.6": {
       "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
-    },
-    "@std/csv@1.0.6": {
-      "integrity": "52ef0e62799a0028d278fa04762f17f9bd263fad9a8e7f98c14fbd371d62d9fd",
-      "dependencies": [
-        "jsr:@std/streams"
-      ]
     },
     "@std/dotenv@0.225.6": {
       "integrity": "1d6f9db72f565bd26790fa034c26e45ecb260b5245417be76c2279e5734c421b"
@@ -163,14 +110,8 @@
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
     },
-    "@std/json@1.0.3": {
-      "integrity": "97d5710996293a027b7aa5f0d1f4fa29f246f269e6b5597e08807613f37d426c"
-    },
     "@std/jsonc@1.0.2": {
-      "integrity": "909605dae3af22bd75b1cbda8d64a32cf1fd2cf6efa3f9e224aba6d22c0f44c7",
-      "dependencies": [
-        "jsr:@std/json"
-      ]
+      "integrity": "909605dae3af22bd75b1cbda8d64a32cf1fd2cf6efa3f9e224aba6d22c0f44c7"
     },
     "@std/media-types@1.1.0": {
       "integrity": "c9d093f0c05c3512932b330e3cc1fe1d627b301db33a4c2c2185c02471d6eaa4"
@@ -183,12 +124,6 @@
     },
     "@std/semver@1.0.8": {
       "integrity": "dc830e8b8b6a380c895d53fbfd1258dc253704ca57bbe1629ac65fd7830179b7"
-    },
-    "@std/streams@1.0.17": {
-      "integrity": "7859f3d9deed83cf4b41f19223d4a67661b3d3819e9fc117698f493bf5992140",
-      "dependencies": [
-        "jsr:@std/bytes"
-      ]
     },
     "@std/uuid@1.1.0": {
       "integrity": "6268db2ccf172849c9be80763354ca305d49ef4af41fe995623d44fcc3f7457c",
@@ -1657,16 +1592,16 @@
   "workspace": {
     "dependencies": [
       "jsr:@blaze/human-readable-timestamp@1",
-      "jsr:@fresh/core@^2.2.0",
+      "jsr:@fresh/core@^2.2.2",
       "jsr:@fresh/plugin-vite@^1.0.8",
-      "jsr:@logtape/logtape@^2.0.4",
+      "jsr:@logtape/logtape@^2.0.5",
       "jsr:@std/csv@^1.0.6",
-      "npm:@iconify-json/lucide@^1.2.98",
+      "npm:@iconify-json/lucide@^1.2.101",
       "npm:@iconify/tailwind4@^1.2.3",
-      "npm:@preact/signals@^2.5.0",
+      "npm:@preact/signals@^2.9.0",
       "npm:@tailwindcss/vite@^4.1.12",
       "npm:daisyui@^5.5.19",
-      "npm:preact@^10.27.2",
+      "npm:preact@^10.19.1",
       "npm:tailwindcss-motion@^1.1.1",
       "npm:tailwindcss@^4.1.10",
       "npm:vite@^7.1.3"
