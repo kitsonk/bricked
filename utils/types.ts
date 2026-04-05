@@ -34,6 +34,33 @@ export const FILED_STATUSES: OrderStatus[] = [
   "CANCELLED",
 ];
 
+/**
+ * The shape returned by GET /orders (the list endpoint).
+ * This is a subset of the full order — use BLOrder for the detail endpoint.
+ */
+export interface BLOrderSummary {
+  order_id: number;
+  date_ordered: string;
+  seller_name: string;
+  store_name: string;
+  buyer_name: string;
+  total_count: number;
+  unique_count: number;
+  status: OrderStatus;
+  payment: {
+    method: string;
+    status: string;
+    date_paid: string;
+    currency_code: string;
+  };
+  cost: {
+    currency_code: string;
+    subtotal: string;
+    grand_total: string;
+  };
+}
+
+/** The full order shape returned by GET /orders/{orderId}. */
 export interface BLOrder {
   order_id: number;
   date_ordered: string;

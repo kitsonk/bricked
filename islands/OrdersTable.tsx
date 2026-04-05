@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import type { BLOrder } from "@/utils/types.ts";
+import type { BLOrderSummary } from "@/utils/types.ts";
 import { formatAmount, humanTime } from "@/utils/format.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 
@@ -16,7 +16,7 @@ const STATUS_ORDER: Record<string, number> = {
   CANCELLED: 9,
 };
 
-function sortOrders(orders: BLOrder[], dateSort: "asc" | "desc"): BLOrder[] {
+function sortOrders(orders: BLOrderSummary[], dateSort: "asc" | "desc"): BLOrderSummary[] {
   return [...orders].sort((a, b) => {
     const statusDiff = (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
     if (statusDiff !== 0) return statusDiff;
@@ -26,10 +26,15 @@ function sortOrders(orders: BLOrder[], dateSort: "asc" | "desc"): BLOrder[] {
 }
 
 export default function OrdersTable(
-  { orders, dateSort }: { orders: BLOrder[]; dateSort: "asc" | "desc" },
+  { orders, sentOrderIds, dateSort }: {
+    orders: BLOrderSummary[];
+    sentOrderIds: number[];
+    dateSort: "asc" | "desc";
+  },
 ) {
-  const localOrders = useSignal<BLOrder[]>(sortOrders(orders, dateSort));
+  const localOrders = useSignal<BLOrderSummary[]>(sortOrders(orders, dateSort));
   const selected = useSignal(new Set<number>());
+  const sentSet = new Set(sentOrderIds);
 
   function toggle(id: number) {
     const next = new Set(selected.value);
@@ -149,10 +154,7 @@ export default function OrdersTable(
                       #{order.order_id}
                     </a>
                   </td>
-                  <td>
-                    <div class="font-medium">{order.buyer_name}</div>
-                    <div class="text-xs text-base-content/50">{order.buyer_email}</div>
-                  </td>
+                  <td class="font-medium">{order.buyer_name}</td>
                   <td class="text-sm">{humanTime(order.date_ordered)}</td>
                   <td>
                     <StatusBadge status={order.status} />
@@ -161,11 +163,11 @@ export default function OrdersTable(
                     {order.total_count} <span class="text-base-content/50">({order.unique_count} lots)</span>
                   </td>
                   <td class="text-right font-medium">
-                    {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
+                    {order.cost.currency_code} {formatAmount(order.cost.grand_total)}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div class="flex items-center gap-1">
-                      {!order.drive_thru_sent && (
+                      {!sentSet.has(order.order_id) && (
                         <a
                           href={`/drive-thru/${order.order_id}`}
                           class={`btn btn-ghost btn-xs btn-square ${

@@ -2,8 +2,8 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials } from "@/utils/kv.ts";
-import type { BLOrder } from "@/utils/types.ts";
+import { getCredentials, listDriveThruSentOrderIds } from "@/utils/kv.ts";
+import type { BLOrderSummary } from "@/utils/types.ts";
 import { FILED_STATUSES } from "@/utils/types.ts";
 import OrdersTable from "@/islands/OrdersTable.tsx";
 import OrdersFilterTabs from "@/islands/OrdersFilterTabs.tsx";
@@ -12,7 +12,8 @@ import { getLogger } from "@/utils/log.ts";
 const logger = getLogger(["bricked", "routes", "orders"]);
 
 export const handler = define.handlers<{
-  orders: BLOrder[];
+  orders: BLOrderSummary[];
+  sentOrderIds: number[];
   filter: "unfiled" | "filed";
   dateSort: "asc" | "desc";
   error: string | null;
@@ -26,12 +27,15 @@ export const handler = define.handlers<{
     const dateSort = ctx.url.searchParams.get("sort") === "desc" ? "desc" : "asc";
     try {
       const client = new BricklinkClient(creds);
-      const orders = await client.getOrders("in", filter === "filed", filter === "filed" ? FILED_STATUSES : undefined);
+      const [orders, sentOrderIds] = await Promise.all([
+        client.getOrders("in", filter === "filed", filter === "filed" ? FILED_STATUSES : undefined),
+        listDriveThruSentOrderIds(),
+      ]);
       logger.debug`Orders page: ${orders.length} order(s)`;
-      return page({ orders, filter, dateSort, error: null });
+      return page({ orders, sentOrderIds, filter, dateSort, error: null });
     } catch (err) {
       logger.error`Failed to load orders: ${err}`;
-      return page({ orders: [], filter, dateSort, error: String(err) });
+      return page({ orders: [], sentOrderIds: [], filter, dateSort, error: String(err) });
     }
   },
 });
@@ -60,7 +64,7 @@ export default define.page<typeof handler>(function Orders({ data }) {
             </div>
           </div>
         )}
-        <OrdersTable orders={data.orders} dateSort={dateSort} />
+        <OrdersTable orders={data.orders} sentOrderIds={data.sentOrderIds} dateSort={dateSort} />
       </div>
     </AppFrame>
   );

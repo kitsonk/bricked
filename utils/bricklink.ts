@@ -3,6 +3,7 @@ import type {
   BLOrder,
   BLOrderItem,
   BLOrderMessage,
+  BLOrderSummary,
   BLShippingMethod,
   BricklinkCredentials,
 } from "@/utils/types.ts";
@@ -48,12 +49,12 @@ export class BricklinkClient {
     return body.data;
   }
 
-  async getOrders(direction: "in" | "out" = "in", filed = false, statuses?: string[]): Promise<BLOrder[]> {
+  async getOrders(direction: "in" | "out" = "in", filed = false, statuses?: string[]): Promise<BLOrderSummary[]> {
     const query: Record<string, string> = { direction };
     if (filed) query.filed = "true";
     if (statuses?.length) query.status = statuses.join(",");
     logger.debug`getOrders direction=${direction} filed=${filed} statuses=${statuses?.join(",") ?? "(none)"}`;
-    const data = await this.get<BLOrder[] | null>("/orders", query);
+    const data = await this.get<BLOrderSummary[] | null>("/orders", query);
     const orders = data ?? [];
     logger.debug`getOrders returned ${orders.length} order(s)`;
     return orders;
