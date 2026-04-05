@@ -156,7 +156,14 @@ export default function CustomersTable(
                 <tbody>
                   {initialCustomers.map((c) => (
                     <tr key={c.buyerName}>
-                      <td class="font-medium">{c.buyerName}</td>
+                      <td>
+                        <a
+                          class="link font-medium"
+                          href={`/customers/${encodeURIComponent(c.buyerName)}`}
+                        >
+                          {c.buyerName}
+                        </a>
+                      </td>
                       <td class="text-right tabular-nums">{c.orderCount}</td>
                       <td class="text-sm text-base-content/70">
                         {new Date(c.firstOrderDate).toLocaleDateString()}

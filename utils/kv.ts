@@ -215,6 +215,14 @@ export async function listCachedOrders(): Promise<BLOrderSummary[]> {
   return results;
 }
 
+/** Return all cached orders for a specific buyer, sorted newest first. */
+export async function listCachedOrdersByBuyer(buyerName: string): Promise<BLOrderSummary[]> {
+  const all = await listCachedOrders();
+  return all
+    .filter((o) => o.buyer_name === buyerName)
+    .sort((a, b) => b.date_ordered.localeCompare(a.date_ordered));
+}
+
 // CRM Customers
 
 function customerKey(buyerName: string): Deno.KvKey {

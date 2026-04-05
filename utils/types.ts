@@ -277,3 +277,13 @@ export interface Customer {
 export interface CrmMeta {
   lastRefreshedAt: string;
 }
+
+/** Rating summary for a BrickLink member, from GET /members/{username}/ratings. */
+export interface BLMemberRating {
+  user_name: string;
+  rating: {
+    PRAISE: number;
+    NEUTRAL: number;
+    COMPLAINT: number;
+  };
+}

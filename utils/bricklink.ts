@@ -1,4 +1,5 @@
 import type {
+  BLMemberRating,
   BLNotification,
   BLOrder,
   BLOrderItem,
@@ -121,6 +122,10 @@ export class BricklinkClient {
     if (body.meta.code !== 200) {
       throw new Error(`BrickLink API error ${body.meta.code}: ${body.meta.description}`);
     }
+  }
+
+  getMemberRating(username: string): Promise<BLMemberRating> {
+    return this.get<BLMemberRating>(`/members/${encodeURIComponent(username)}/ratings`);
   }
 
   async sendDriveThru(orderId: number): Promise<void> {
