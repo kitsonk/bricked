@@ -5,18 +5,28 @@ import { listPackageTypes } from "@/utils/kv.ts";
 import type { PackageType } from "@/utils/types.ts";
 import PackageTypes from "@/islands/PackageTypes.tsx";
 
-export const handler = define.handlers<{ packageTypes: PackageType[] }>({
+export type PackageTypesData = { packageTypes: PackageType[] };
+
+export const handler = define.handlers<PackageTypesData>({
   async GET() {
     const packageTypes = await listPackageTypes();
     return page({ packageTypes });
   },
 });
 
+export function PackageTypesContent({ data }: { data: PackageTypesData }) {
+  return (
+    <>
+      <h1 class="text-2xl font-bold mb-6">Package Types</h1>
+      <PackageTypes initialItems={data.packageTypes} />
+    </>
+  );
+}
+
 export default define.page<typeof handler>(function PackageTypesPage({ data }) {
   return (
     <AppFrame>
-      <h1 class="text-2xl font-bold mb-6">Package Types</h1>
-      <PackageTypes initialItems={data.packageTypes} />
+      <PackageTypesContent data={data} />
     </AppFrame>
   );
 });

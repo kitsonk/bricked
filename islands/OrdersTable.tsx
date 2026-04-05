@@ -136,9 +136,12 @@ export default function OrdersTable(
                 <tr
                   key={order.order_id}
                   class={`cursor-pointer transition-colors ${isSelected ? "bg-primary/5" : ""}`}
-                  onClick={() => toggle(order.order_id)}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest("a, input, button")) return;
+                    toggle(order.order_id);
+                  }}
                 >
-                  <td onClick={(e) => e.stopPropagation()}>
+                  <td>
                     <input
                       type="checkbox"
                       class="checkbox checkbox-sm"
@@ -148,11 +151,7 @@ export default function OrdersTable(
                     />
                   </td>
                   <td>
-                    <a
-                      class="link font-mono font-medium"
-                      href={`/orders/${order.order_id}`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
                       #{order.order_id}
                     </a>
                   </td>
@@ -177,7 +176,7 @@ export default function OrdersTable(
                   <td class="text-right font-medium">
                     {order.cost.currency_code} {formatAmount(order.cost.grand_total)}
                   </td>
-                  <td onClick={(e) => e.stopPropagation()}>
+                  <td>
                     <div class="flex items-center gap-1">
                       {!sentSet.has(order.order_id) && (
                         <a
@@ -186,7 +185,6 @@ export default function OrdersTable(
                             order.status === "SHIPPED" ? "text-info" : "text-base-content/40"
                           }`}
                           title="Send Drive Thru"
-                          onClick={(e) => e.stopPropagation()}
                         >
                           <span class="iconify lucide--send size-3.5"></span>
                         </a>

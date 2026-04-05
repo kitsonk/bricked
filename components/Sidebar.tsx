@@ -1,8 +1,8 @@
 function MenuItem(
-  { icon, label, href }: { icon: string; label: string; href: string },
+  { icon, label, href, fPartial }: { icon: string; label: string; href: string; fPartial?: string },
 ) {
   return (
-    <a class="menu-item" href={href}>
+    <a class="menu-item" href={href} {...(fPartial ? { "f-partial": fPartial } : {})}>
       <span class={`iconify lucide--${icon} size-4`}></span>
       <span class="grow">{label}</span>
     </a>
@@ -30,16 +30,26 @@ export function Sidebar() {
         </label>
         <p class="menu-label mt-2 px-2.5">Processing</p>
         <div class="mt-2">
-          <MenuItem icon="house" label="Home" href="/" />
-          <MenuItem icon="shopping-bag" label="Orders" href="/orders" />
-          <MenuItem icon="users" label="Customers" href="/customers" />
+          <MenuItem icon="house" label="Home" href="/orders" fPartial="/partials/orders" />
+          <MenuItem icon="shopping-bag" label="Orders" href="/orders" fPartial="/partials/orders" />
+          <MenuItem icon="users" label="Customers" href="/customers" fPartial="/partials/customers" />
         </div>
         <p class="menu-label mt-4 px-2.5">Settings</p>
         <div class="mt-2">
-          <MenuItem icon="settings" label="Environment" href="/environment" />
-          <MenuItem icon="truck" label="Shipping Methods" href="/shipping-methods" />
-          <MenuItem icon="package" label="Package Types" href="/package-types" />
-          <MenuItem icon="send" label="Drive Thru Templates" href="/drive-thru/templates" />
+          <MenuItem icon="settings" label="Environment" href="/environment" fPartial="/partials/environment" />
+          <MenuItem
+            icon="truck"
+            label="Shipping Methods"
+            href="/shipping-methods"
+            fPartial="/partials/shipping-methods"
+          />
+          <MenuItem icon="package" label="Package Types" href="/package-types" fPartial="/partials/package-types" />
+          <MenuItem
+            icon="send"
+            label="Drive Thru Templates"
+            href="/drive-thru/templates"
+            fPartial="/partials/drive-thru/templates"
+          />
         </div>
       </div>
     </div>

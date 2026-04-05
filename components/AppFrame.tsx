@@ -1,4 +1,5 @@
 import type { ComponentChildren } from "preact";
+import { Partial } from "fresh/runtime";
 
 import SidebarPersist from "@/islands/SidebarPersist.tsx";
 import { Footer } from "./Footer.tsx";
@@ -7,7 +8,7 @@ import { Topbar } from "./Topbar.tsx";
 
 export function AppFrame({ children }: { children: ComponentChildren }) {
   return (
-    <div class="size-full">
+    <div class="size-full" f-client-nav>
       <div class="flex">
         <input
           aria-label="Toggle layout sidebar"
@@ -36,7 +37,11 @@ export function AppFrame({ children }: { children: ComponentChildren }) {
             </div>
           </div>
           <div id="layout-content">
-            <div class="p-3 sm:p-6">{children}</div>
+            <div class="p-3 sm:p-6">
+              <Partial name="main">
+                {children}
+              </Partial>
+            </div>
           </div>
           <div class="px-4 py-1">
             <div class="h-full">

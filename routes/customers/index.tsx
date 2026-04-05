@@ -7,14 +7,16 @@ import CustomersTable from "@/islands/CustomersTable.tsx";
 
 const PAGE_SIZE = 20;
 
-export const handler = define.handlers<{
+export type CustomersData = {
   customers: Customer[];
   nextCursor: string | null;
   currentCursor: string | null;
   history: string[];
   buyerFilter: string | null;
   lastRefreshedAt: string | null;
-}>({
+};
+
+export const handler = define.handlers<CustomersData>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
@@ -53,17 +55,23 @@ export const handler = define.handlers<{
   },
 });
 
+export function CustomersContent({ data }: { data: CustomersData }) {
+  return (
+    <CustomersTable
+      initialCustomers={data.customers}
+      nextCursor={data.nextCursor}
+      currentCursor={data.currentCursor}
+      history={data.history}
+      buyerFilter={data.buyerFilter}
+      lastRefreshedAt={data.lastRefreshedAt}
+    />
+  );
+}
+
 export default define.page<typeof handler>(function Customers({ data }) {
   return (
     <AppFrame>
-      <CustomersTable
-        initialCustomers={data.customers}
-        nextCursor={data.nextCursor}
-        currentCursor={data.currentCursor}
-        history={data.history}
-        buyerFilter={data.buyerFilter}
-        lastRefreshedAt={data.lastRefreshedAt}
-      />
+      <CustomersContent data={data} />
     </AppFrame>
   );
 });

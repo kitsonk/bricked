@@ -27,13 +27,14 @@ There are no tests currently.
 - **Vite** as the bundler/dev server (via `fresh-plugin-vite`)
 
 **Routing:** Fresh file-based routing under `routes/`. API routes live in `routes/api/`. The `_app.tsx` is the root
-layout wrapper.
+layout wrapper. Partial routes live in `routes/partials/` — see the Partials section below.
 
 **Islands:** Interactive client-side components go in `islands/` — Fresh's island architecture hydrates only these
 components on the client.
 
 **Layout:** `components/AppFrame.tsx` is the main layout wrapper containing the sidebar, topbar, and footer. Pages use
-this component to get the standard app chrome.
+this component to get the standard app chrome. It has `f-client-nav` enabled and wraps content in
+`<Partial name="main">`, enabling SPA-style navigation without full page reloads.
 
 **Styling:** Tailwind CSS v4 + DaisyUI v5 + Lucide icons (via Iconify). Custom CSS modules live in `assets/core/` and
 are imported via `assets/styles.css`. The `@/` alias maps to the project root.
@@ -49,6 +50,32 @@ are imported via `assets/styles.css`. The `@/` alias maps to the project root.
 **BrickLink API:** `utils/bricklink.ts` implements OAuth 1.0a signing via the Web Crypto API. Credentials (consumer
 key/secret, token/secret) are entered via `/settings` and stored in KV. The `remarks` field on order items is used as
 the storage location for pick list generation.
+
+## Partials
+
+The app uses Fresh v2 partials for SPA-like navigation. `AppFrame` has `f-client-nav` on its root element and wraps page
+content in `<Partial name="main">`. Clicking any internal link swaps only the content region without reloading the page
+shell (sidebar, topbar, footer). Direct URL navigation (deep linking) still works — the full page is served.
+
+**Page route pattern** — every page route that has a corresponding partial must:
+
+1. Export a named data type (e.g. `export type OrdersData = { ... }`)
+2. Export a named content component (e.g. `export function OrdersContent({ data }: { data: OrdersData }) { ... }`)
+3. Wrap that component in `<AppFrame>` in the default export
+
+**Partial route pattern** — `routes/partials/<same-path>.tsx`:
+
+- `export { handler }` re-exported from the full route (share handler, no duplication)
+- `export const config: RouteConfig = { skipAppWrapper: true, skipInheritedLayouts: true }`
+- Default export renders `<Partial name="main"><XContent data={data} /></Partial>`
+- Import `Partial` from `"fresh/runtime"` and `RouteConfig` from `"fresh"`
+
+**Sidebar links** — `components/Sidebar.tsx` `MenuItem` accepts an `fPartial` prop that renders as the `f-partial`
+attribute, telling Fresh to fetch from the lean partial route instead of the full page on in-app navigation.
+
+**Links inside islands** — do NOT use `e.stopPropagation()` on `<a>` tags, as this prevents clicks from bubbling up to
+the `f-client-nav` listener. Instead, guard row-click handlers with
+`if ((e.target as HTMLElement).closest("a, input, button")) return;`
 
 ## Key Conventions
 

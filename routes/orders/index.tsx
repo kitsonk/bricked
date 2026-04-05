@@ -16,14 +16,16 @@ import { getLogger } from "@/utils/log.ts";
 
 const logger = getLogger(["bricked", "routes", "orders"]);
 
-export const handler = define.handlers<{
+export type OrdersData = {
   orders: BLOrderSummary[];
   sentOrderIds: number[];
   messageCounts: Record<number, number>;
   filter: "unfiled" | "filed";
   dateSort: "asc" | "desc";
   error: string | null;
-}>({
+};
+
+export const handler = define.handlers<OrdersData>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) {
@@ -64,11 +66,11 @@ export const handler = define.handlers<{
   },
 });
 
-export default define.page<typeof handler>(function Orders({ data }) {
+export function OrdersContent({ data }: { data: OrdersData }) {
   const { filter, dateSort } = data;
   const refreshHref = `/orders${filter === "filed" ? `?filter=filed&sort=${dateSort}` : ""}`;
   return (
-    <AppFrame>
+    <>
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold">Orders</h1>
         <a href={refreshHref} class="btn btn-ghost btn-sm">
@@ -95,6 +97,14 @@ export default define.page<typeof handler>(function Orders({ data }) {
           dateSort={dateSort}
         />
       </div>
+    </>
+  );
+}
+
+export default define.page<typeof handler>(function Orders({ data }) {
+  return (
+    <AppFrame>
+      <OrdersContent data={data} />
     </AppFrame>
   );
 });
