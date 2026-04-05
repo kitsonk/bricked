@@ -2,7 +2,12 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, listCachedOrdersByBuyer } from "@/utils/kv.ts";
+import {
+  getCredentials,
+  getOrderMessageCountCache,
+  listCachedOrdersByBuyer,
+  saveOrderMessageCountCache,
+} from "@/utils/kv.ts";
 import type { BLMemberRating, BLOrderSummary } from "@/utils/types.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 import { formatAmount, humanTime } from "@/utils/format.ts";
@@ -11,6 +16,7 @@ export const handler = define.handlers<{
   username: string;
   rating: BLMemberRating | null;
   orders: BLOrderSummary[];
+  messageCounts: Record<number, number>;
   ratingError: string | null;
 }>({
   async GET(ctx) {
@@ -28,17 +34,34 @@ export const handler = define.handlers<{
       listCachedOrdersByBuyer(username),
     ]);
 
+    const counts = await Promise.all(
+      orders.map(async (o) => {
+        const cached = await getOrderMessageCountCache(o.order_id);
+        if (cached !== null) return [o.order_id, cached] as const;
+        try {
+          const msgs = await client.getOrderMessages(o.order_id);
+          const count = msgs.length;
+          await saveOrderMessageCountCache(o.order_id, count);
+          return [o.order_id, count] as const;
+        } catch {
+          return [o.order_id, 0] as const;
+        }
+      }),
+    );
+    const messageCounts = Object.fromEntries(counts);
+
     return page({
       username,
       rating: ratingResult.ok ? ratingResult.value : null,
       orders,
+      messageCounts,
       ratingError: ratingResult.ok ? null : ratingResult.error,
     });
   },
 });
 
 export default define.page<typeof handler>(function CustomerDetail({ data }) {
-  const { username, rating, orders, ratingError } = data;
+  const { username, rating, orders, messageCounts, ratingError } = data;
   const total = rating ? rating.rating.PRAISE + rating.rating.NEUTRAL + rating.rating.COMPLAINT : 0;
 
   return (
@@ -112,6 +135,7 @@ export default define.page<typeof handler>(function CustomerDetail({ data }) {
                 <thead>
                   <tr>
                     <th>Order</th>
+                    <th></th>
                     <th>Date</th>
                     <th>Status</th>
                     <th>Items</th>
@@ -125,6 +149,14 @@ export default define.page<typeof handler>(function CustomerDetail({ data }) {
                         <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
                           #{order.order_id}
                         </a>
+                      </td>
+                      <td class="text-sm">
+                        {(messageCounts[order.order_id] ?? 0) > 0 && (
+                          <span class="flex items-center gap-1 text-primary">
+                            <span class="iconify lucide--message-circle size-4"></span>
+                            {messageCounts[order.order_id]}
+                          </span>
+                        )}
                       </td>
                       <td class="text-sm">
                         <span title={new Date(order.date_ordered).toLocaleDateString()}>

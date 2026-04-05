@@ -2,7 +2,12 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, listDriveThruSentOrderIds } from "@/utils/kv.ts";
+import {
+  getCredentials,
+  getOrderMessageCountCache,
+  listDriveThruSentOrderIds,
+  saveOrderMessageCountCache,
+} from "@/utils/kv.ts";
 import type { BLOrderSummary } from "@/utils/types.ts";
 import { FILED_STATUSES } from "@/utils/types.ts";
 import OrdersTable from "@/islands/OrdersTable.tsx";
@@ -14,6 +19,7 @@ const logger = getLogger(["bricked", "routes", "orders"]);
 export const handler = define.handlers<{
   orders: BLOrderSummary[];
   sentOrderIds: number[];
+  messageCounts: Record<number, number>;
   filter: "unfiled" | "filed";
   dateSort: "asc" | "desc";
   error: string | null;
@@ -32,10 +38,28 @@ export const handler = define.handlers<{
         listDriveThruSentOrderIds(),
       ]);
       logger.debug`Orders page: ${orders.length} order(s)`;
-      return page({ orders, sentOrderIds, filter, dateSort, error: null });
+      let messageCounts: Record<number, number> = {};
+      if (filter === "unfiled") {
+        const counts = await Promise.all(
+          orders.map(async (o) => {
+            const cached = await getOrderMessageCountCache(o.order_id);
+            if (cached !== null) return [o.order_id, cached] as const;
+            try {
+              const msgs = await client.getOrderMessages(o.order_id);
+              const count = msgs.length;
+              await saveOrderMessageCountCache(o.order_id, count);
+              return [o.order_id, count] as const;
+            } catch {
+              return [o.order_id, 0] as const;
+            }
+          }),
+        );
+        messageCounts = Object.fromEntries(counts);
+      }
+      return page({ orders, sentOrderIds, messageCounts, filter, dateSort, error: null });
     } catch (err) {
       logger.error`Failed to load orders: ${err}`;
-      return page({ orders: [], sentOrderIds: [], filter, dateSort, error: String(err) });
+      return page({ orders: [], sentOrderIds: [], messageCounts: {}, filter, dateSort, error: String(err) });
     }
   },
 });
@@ -64,7 +88,12 @@ export default define.page<typeof handler>(function Orders({ data }) {
             </div>
           </div>
         )}
-        <OrdersTable orders={data.orders} sentOrderIds={data.sentOrderIds} dateSort={dateSort} />
+        <OrdersTable
+          orders={data.orders}
+          sentOrderIds={data.sentOrderIds}
+          messageCounts={data.filter === "unfiled" ? data.messageCounts : undefined}
+          dateSort={dateSort}
+        />
       </div>
     </AppFrame>
   );

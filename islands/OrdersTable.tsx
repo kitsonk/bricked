@@ -26,9 +26,10 @@ function sortOrders(orders: BLOrderSummary[], dateSort: "asc" | "desc"): BLOrder
 }
 
 export default function OrdersTable(
-  { orders, sentOrderIds, dateSort }: {
+  { orders, sentOrderIds, messageCounts, dateSort }: {
     orders: BLOrderSummary[];
     sentOrderIds: number[];
+    messageCounts?: Record<number, number>;
     dateSort: "asc" | "desc";
   },
 ) {
@@ -119,6 +120,7 @@ export default function OrdersTable(
                 />
               </th>
               <th>Order</th>
+              {messageCounts && <th></th>}
               <th>Buyer</th>
               <th>Created</th>
               <th>Status</th>
@@ -154,6 +156,16 @@ export default function OrdersTable(
                       #{order.order_id}
                     </a>
                   </td>
+                  {messageCounts && (
+                    <td class="text-sm">
+                      {(messageCounts[order.order_id] ?? 0) > 0 && (
+                        <span class="flex items-center gap-1 text-primary">
+                          <span class="iconify lucide--message-circle size-4"></span>
+                          {messageCounts[order.order_id]}
+                        </span>
+                      )}
+                    </td>
+                  )}
                   <td class="font-medium">{order.buyer_name}</td>
                   <td class="text-sm">{humanTime(order.date_ordered)}</td>
                   <td>

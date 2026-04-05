@@ -283,6 +283,21 @@ export async function getBuyerIndex(): Promise<string[]> {
   return result.value ?? [];
 }
 
+// Order Message Count Cache
+
+function orderMessageCountCacheKey(orderId: number): Deno.KvKey {
+  return ["order_message_count_cache", orderId];
+}
+
+export async function getOrderMessageCountCache(orderId: number): Promise<number | null> {
+  const result = await (await kv()).get<number>(orderMessageCountCacheKey(orderId));
+  return result.value;
+}
+
+export async function saveOrderMessageCountCache(orderId: number, count: number): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(orderMessageCountCacheKey(orderId), count, { expireIn: 60_000 });
+}
+
 // CRM Metadata
 
 const CRM_META_KEY: Deno.KvKey = ["crm_meta"];
