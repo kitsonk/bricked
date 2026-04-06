@@ -51,6 +51,10 @@ export function Sidebar() {
             fPartial="/partials/drive-thru/templates"
           />
         </div>
+        <p class="menu-label mt-4 px-2.5">Admin</p>
+        <div class="mt-2">
+          <MenuItem icon="scroll" label="Logs" href="/admin/logs" fPartial="/partials/admin/logs" />
+        </div>
       </div>
     </div>
   );
