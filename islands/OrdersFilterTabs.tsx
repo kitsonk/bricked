@@ -1,28 +1,24 @@
 export default function OrdersFilterTabs({ filter }: { filter: "unfiled" | "filed" }) {
   return (
     <div role="tablist" class="tabs tabs-border">
-      <button
+      <a
         role="tab"
-        type="button"
+        href="/orders"
+        {...{ "f-partial": "/partials/orders" }}
         class={`tab${filter === "unfiled" ? " tab-active" : ""}`}
         aria-selected={filter === "unfiled"}
-        onClick={() => {
-          globalThis.location.href = "/orders";
-        }}
       >
         Unfiled
-      </button>
-      <button
+      </a>
+      <a
         role="tab"
-        type="button"
+        href="/orders?filter=filed&sort=desc"
+        {...{ "f-partial": "/partials/orders" }}
         class={`tab${filter === "filed" ? " tab-active" : ""}`}
         aria-selected={filter === "filed"}
-        onClick={() => {
-          globalThis.location.href = "/orders?filter=filed&sort=desc";
-        }}
       >
         Filed
-      </button>
+      </a>
     </div>
   );
 }

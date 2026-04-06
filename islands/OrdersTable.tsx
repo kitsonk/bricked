@@ -53,18 +53,9 @@ export default function OrdersTable(
       : new Set(localOrders.value.map((o) => o.order_id));
   }
 
-  function generatePickList() {
-    const ids = [...selected.value].join(",");
-    globalThis.location.href = `/pick-list?orders=${ids}`;
-  }
-
-  function prepareToShip() {
-    const ids = [...selected.value].join(",");
-    globalThis.location.href = `/ship-list?orders=${ids}`;
-  }
-
   const allSelected = selected.value.size === localOrders.value.length && localOrders.value.length > 0;
   const someSelected = selected.value.size > 0;
+  const selectedIds = [...selected.value].join(",");
 
   if (localOrders.value.length === 0) {
     return (
@@ -83,26 +74,26 @@ export default function OrdersTable(
           {localOrders.value.length} order{localOrders.value.length !== 1 ? "s" : ""}
         </p>
         <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="btn btn-primary btn-sm"
-            disabled={!someSelected}
-            onClick={generatePickList}
+          <a
+            href={`/pick-list?orders=${selectedIds}`}
+            class={`btn btn-primary btn-sm${!someSelected ? " btn-disabled" : ""}`}
+            aria-disabled={!someSelected}
+            tabIndex={someSelected ? undefined : -1}
           >
             <span class="iconify lucide--package size-4"></span>
             Generate Pick List
             {someSelected && <span class="badge badge-sm badge-primary-content ml-1">{selected.value.size}</span>}
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary btn-sm"
-            disabled={!someSelected}
-            onClick={prepareToShip}
+          </a>
+          <a
+            href={`/ship-list?orders=${selectedIds}`}
+            class={`btn btn-primary btn-sm${!someSelected ? " btn-disabled" : ""}`}
+            aria-disabled={!someSelected}
+            tabIndex={someSelected ? undefined : -1}
           >
             <span class="iconify lucide--truck size-4"></span>
             Prepare to Ship
             {someSelected && <span class="badge badge-sm badge-primary-content ml-1">{selected.value.size}</span>}
-          </button>
+          </a>
         </div>
       </div>
 
