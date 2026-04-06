@@ -1,4 +1,7 @@
 import { configure, getConsoleSink, getLogger } from "@logtape/logtape";
+import { getKvSink } from "@kitsonk/logtape-kv-sink";
+
+import { kv } from "./kv.ts";
 
 const logger = getLogger("bricked");
 
@@ -19,9 +22,9 @@ globalThis.addEventListener("error", (event) => {
 const lowestLevel = (Deno.env.get("LOG_LEVEL") ?? "debug") as "debug" | "info" | "warning" | "error" | "fatal";
 
 await configure({
-  sinks: { console: getConsoleSink() },
+  sinks: { console: getConsoleSink(), kv: getKvSink(kv()) },
   loggers: [
-    { category: "bricked", lowestLevel, sinks: ["console"] },
+    { category: "bricked", lowestLevel, sinks: ["console", "kv"] },
     // Log meta information at a lower level to avoid spamming the console.
     { category: ["logtape", "meta"], lowestLevel: "warning", sinks: ["console"] },
   ],
