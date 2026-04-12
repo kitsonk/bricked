@@ -56,7 +56,7 @@ export default function ShipList(
   );
 
   const extraCover = useSignal<Record<number, string>>(
-    Object.fromEntries(orders.map((o) => [o.order_id, "0.00"])),
+    Object.fromEntries(orders.map((o) => [o.order_id, "0"])),
   );
 
   const addresses = useSignal<Record<number, AusPostAddress>>(initialAddresses);
@@ -159,7 +159,7 @@ export default function ShipList(
       lengthCm: dimensions.value[order.order_id].l,
       widthCm: dimensions.value[order.order_id].w,
       heightCm: dimensions.value[order.order_id].h,
-      weightKg: weights.value[order.order_id],
+      weightKg: (parseFloat(weights.value[order.order_id]) / 1000).toString(),
       extraCover: extraCover.value[order.order_id],
     }));
 
@@ -356,7 +356,7 @@ export default function ShipList(
               <th>Recipient Info</th>
               <th>Package Type</th>
               <th>Dimensions</th>
-              <th>Weight (kg)</th>
+              <th>Weight (g)</th>
               <th>Extra Cover ($)</th>
             </tr>
           </thead>
@@ -502,7 +502,7 @@ export default function ShipList(
                           <input
                             type="number"
                             class="input input-sm w-24"
-                            step="0.001"
+                            step="1"
                             min="0"
                             value={weights.value[order.order_id]}
                             onInput={(e) =>
@@ -516,7 +516,7 @@ export default function ShipList(
                           <input
                             type="number"
                             class="input input-sm w-24"
-                            step="0.01"
+                            step="100"
                             min="0"
                             value={extraCover.value[order.order_id]}
                             onInput={(e) =>
