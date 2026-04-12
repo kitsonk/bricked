@@ -61,7 +61,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
   const byLocation = groupBy(items, (item) => item.location);
   const totalPieces = items.reduce((sum, i) => sum + i.quantity, 0);
   const pickedCount = picked.value.size;
-  const buyerByOrderId = new Map(orders.map((o) => [o.orderId, o.buyerName]));
+  const nameByOrderId = new Map(orders.map((o) => [o.orderId, o.shippingName || o.buyerName]));
 
   const allPacked = orders.length > 0 &&
     orders.every((o) => o.status === "PACKED" || packedOrderIds.value.has(o.orderId));
@@ -234,7 +234,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                         </td>
                         <td class="text-right font-bold text-lg">{item.quantity}</td>
                         <td class="text-xs text-base-content/50 print:hidden">
-                          {item.orderIds.map((id) => `#${id} (${buyerByOrderId.get(id) ?? ""})`).join(", ")}
+                          {item.orderIds.map((id) => `#${id} (${nameByOrderId.get(id) ?? ""})`).join(", ")}
                         </td>
                       </tr>
                     );
