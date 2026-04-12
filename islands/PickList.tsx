@@ -233,8 +233,13 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                           <ConditionBadge condition={item.condition} />
                         </td>
                         <td class="text-right font-bold text-lg">{item.quantity}</td>
-                        <td class="text-xs text-base-content/50 print:hidden">
-                          {item.orderIds.map((id) => `#${id} (${nameByOrderId.get(id) ?? ""})`).join(", ")}
+                        <td class="text-xs print:hidden">
+                          {item.orderIds.map((id) => (
+                            <div key={id}>
+                              <div>{nameByOrderId.get(id) ?? ""}</div>
+                              <div class="text-base-content/40 font-mono">#{id}</div>
+                            </div>
+                          ))}
                         </td>
                       </tr>
                     );
