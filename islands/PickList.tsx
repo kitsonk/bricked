@@ -1,8 +1,8 @@
 import { useSignal } from "@preact/signals";
 import type { PickListItem, PickListOrder } from "@/utils/types.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
-import { StatusBadge } from "@/components/StatusBadge.tsx";
-import { bricklinkItemImageUrl, humanTime } from "@/utils/format.ts";
+import { bricklinkItemImageUrl } from "@/utils/format.ts";
+import { itemKey, OrderCard } from "@/components/OrderCard.tsx";
 
 function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   const map = new Map<string, T[]>();
@@ -15,17 +15,11 @@ function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   return map;
 }
 
-const PACKABLE_STATUSES = ["PENDING", "UPDATED", "PROCESSING", "READY", "PAID"];
-
 export default function PickList({ items, orders }: { items: PickListItem[]; orders: PickListOrder[] }) {
   const picked = useSignal(new Set<string>());
   const packedOrderIds = useSignal(new Set<number>());
   const packingOrderId = useSignal<number | null>(null);
   const packError = useSignal<string | null>(null);
-
-  function itemKey(item: PickListItem) {
-    return `${item.itemNo}|${item.colorId}|${item.condition}|${item.location}`;
-  }
 
   function togglePicked(key: string) {
     const next = new Set(picked.value);
@@ -130,68 +124,17 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
 
       {orders.length > 0 && (
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 print:hidden">
-          {orders.map((order) => {
-            const orderItems = items.filter((i) => i.orderIds.includes(order.orderId));
-            const totalLots = orderItems.length;
-            const totalOrderPieces = orderItems.reduce((sum, i) => sum + (i.orderQuantities[order.orderId] ?? 0), 0);
-            const pickedLots = orderItems.filter((i) => picked.value.has(itemKey(i))).length;
-            const pickedPieces = orderItems.reduce(
-              (sum, i) => picked.value.has(itemKey(i)) ? sum + (i.orderQuantities[order.orderId] ?? 0) : sum,
-              0,
-            );
-            const done = pickedLots === totalLots && totalLots > 0;
-            const isPacked = packedOrderIds.value.has(order.orderId);
-            const canPack = done && !isPacked && PACKABLE_STATUSES.includes(order.status);
-            const isPacking = packingOrderId.value === order.orderId;
-            return (
-              <div key={order.orderId} class="card border">
-                <div class="card-body p-4 gap-2">
-                  <div class="flex items-start justify-between gap-2">
-                    <div>
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-sm font-medium">{order.buyerName}</span>
-                        {order.shippingName && <span class="text-sm text-base-content/50">({order.shippingName})</span>}
-                      </div>
-                      <div class="flex items-center gap-2 mt-0.5">
-                        <span class="text-xs text-base-content/40 font-mono">#{order.orderId}</span>
-                        <StatusBadge status={order.status} size="xs" />
-                      </div>
-                      {order.shippingMethod && (
-                        <div class="text-xs text-base-content/50 mt-0.5">{order.shippingMethod}</div>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      class={`btn btn-xs shrink-0 ${isPacked ? "btn-ghost" : "btn-primary"}`}
-                      disabled={isPacking || (!canPack && !isPacked)}
-                      onClick={() => !isPacked && packOrder(order.orderId)}
-                    >
-                      {isPacking && <span class="loading loading-spinner loading-xs"></span>}
-                      {isPacked ? "Ship..." : "Packed"}
-                    </button>
-                  </div>
-                  <div class="flex gap-4 mt-1 text-sm">
-                    <span class="text-base-content/50">Ordered {humanTime(order.dateOrdered)}</span>
-                    <span>
-                      <span class={`font-semibold ${done ? "text-success" : ""}`}>{pickedLots}</span>
-                      <span class="text-base-content/50">/{totalLots} lots</span>
-                    </span>
-                    <span>
-                      <span class={`font-semibold ${done ? "text-success" : ""}`}>{pickedPieces}</span>
-                      <span class="text-base-content/50">/{totalOrderPieces} pieces</span>
-                    </span>
-                  </div>
-                  {totalLots > 0 && (
-                    <progress
-                      class={`progress w-full ${done ? "progress-success" : "progress-primary"}`}
-                      value={pickedLots}
-                      max={totalLots}
-                    />
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {orders.map((order) => (
+            <OrderCard
+              key={order.orderId}
+              order={order}
+              items={items}
+              picked={picked.value}
+              packedOrderIds={packedOrderIds.value}
+              packingOrderId={packingOrderId.value}
+              onPack={packOrder}
+            />
+          ))}
         </div>
       )}
 
