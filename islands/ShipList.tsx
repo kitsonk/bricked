@@ -251,7 +251,7 @@ export default function ShipList(
                 class="input input-sm w-full"
                 required
                 value={formAddress.value.recipientName}
-                onInput={(e) => updateForm("recipientName", (e.target as HTMLInputElement).value)}
+                onInput={(e) => updateForm("recipientName", e.currentTarget.value)}
               />
             </fieldset>
             <fieldset class="fieldset mb-3">
@@ -261,7 +261,7 @@ export default function ShipList(
                 class="input input-sm w-full"
                 required
                 value={formAddress.value.addressLine1}
-                onInput={(e) => updateForm("addressLine1", (e.target as HTMLInputElement).value)}
+                onInput={(e) => updateForm("addressLine1", e.currentTarget.value)}
               />
             </fieldset>
             <fieldset class="fieldset mb-3">
@@ -270,7 +270,7 @@ export default function ShipList(
                 type="text"
                 class="input input-sm w-full"
                 value={formAddress.value.addressLine2}
-                onInput={(e) => updateForm("addressLine2", (e.target as HTMLInputElement).value)}
+                onInput={(e) => updateForm("addressLine2", e.currentTarget.value)}
               />
             </fieldset>
             <fieldset class="fieldset mb-3">
@@ -279,7 +279,7 @@ export default function ShipList(
                 type="text"
                 class="input input-sm w-full"
                 value={formAddress.value.addressLine3}
-                onInput={(e) => updateForm("addressLine3", (e.target as HTMLInputElement).value)}
+                onInput={(e) => updateForm("addressLine3", e.currentTarget.value)}
               />
             </fieldset>
             <div class="grid grid-cols-3 gap-3 mb-3">
@@ -290,7 +290,7 @@ export default function ShipList(
                   class="input input-sm w-full"
                   required
                   value={formAddress.value.suburb}
-                  onInput={(e) => updateForm("suburb", (e.target as HTMLInputElement).value)}
+                  onInput={(e) => updateForm("suburb", e.currentTarget.value)}
                 />
               </fieldset>
               <fieldset class="fieldset">
@@ -300,7 +300,7 @@ export default function ShipList(
                   class="input input-sm w-full"
                   required
                   value={formAddress.value.state}
-                  onInput={(e) => updateForm("state", (e.target as HTMLInputElement).value)}
+                  onInput={(e) => updateForm("state", e.currentTarget.value)}
                 />
               </fieldset>
               <fieldset class="fieldset">
@@ -310,7 +310,7 @@ export default function ShipList(
                   class="input input-sm w-full"
                   required
                   value={formAddress.value.postcode}
-                  onInput={(e) => updateForm("postcode", (e.target as HTMLInputElement).value)}
+                  onInput={(e) => updateForm("postcode", e.currentTarget.value)}
                 />
               </fieldset>
             </div>
@@ -418,7 +418,7 @@ export default function ShipList(
                               ...addresses.value,
                               [order.order_id]: {
                                 ...addresses.value[order.order_id],
-                                recipientEmail: (e.target as HTMLInputElement).value,
+                                recipientEmail: e.currentTarget.value,
                               },
                             };
                           }}
@@ -437,7 +437,7 @@ export default function ShipList(
                               ...addresses.value,
                               [order.order_id]: {
                                 ...addresses.value[order.order_id],
-                                recipientPhone: (e.target as HTMLInputElement).value,
+                                recipientPhone: e.currentTarget.value,
                               },
                             };
                           }}
@@ -452,7 +452,7 @@ export default function ShipList(
                           <select
                             class="select select-sm w-full min-w-40"
                             value={selectedPackage.value[order.order_id]}
-                            onChange={(e) => setPackage(order.order_id, (e.target as HTMLSelectElement).value)}
+                            onChange={(e) => setPackage(order.order_id, e.currentTarget.value)}
                           >
                             <option value="">Custom</option>
                             {packageTypes.map((pt) => <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>)}
@@ -469,7 +469,7 @@ export default function ShipList(
                                 min="0"
                                 disabled={!isCustom}
                                 value={dims.l}
-                                onInput={(e) => setDim(order.order_id, "l", (e.target as HTMLInputElement).value)}
+                                onInput={(e) => setDim(order.order_id, "l", e.currentTarget.value)}
                               />
                             </div>
                             <div class="flex items-center gap-2">
@@ -481,7 +481,7 @@ export default function ShipList(
                                 min="0"
                                 disabled={!isCustom}
                                 value={dims.w}
-                                onInput={(e) => setDim(order.order_id, "w", (e.target as HTMLInputElement).value)}
+                                onInput={(e) => setDim(order.order_id, "w", e.currentTarget.value)}
                               />
                             </div>
                             <div class="flex items-center gap-2">
@@ -493,7 +493,7 @@ export default function ShipList(
                                 min="0"
                                 disabled={!isCustom}
                                 value={dims.h}
-                                onInput={(e) => setDim(order.order_id, "h", (e.target as HTMLInputElement).value)}
+                                onInput={(e) => setDim(order.order_id, "h", e.currentTarget.value)}
                               />
                             </div>
                           </div>
@@ -508,7 +508,7 @@ export default function ShipList(
                             onInput={(e) =>
                               weights.value = {
                                 ...weights.value,
-                                [order.order_id]: (e.target as HTMLInputElement).value,
+                                [order.order_id]: e.currentTarget.value,
                               }}
                           />
                         </td>
@@ -522,7 +522,7 @@ export default function ShipList(
                             onInput={(e) =>
                               extraCover.value = {
                                 ...extraCover.value,
-                                [order.order_id]: (e.target as HTMLInputElement).value,
+                                [order.order_id]: e.currentTarget.value,
                               }}
                           />
                         </td>

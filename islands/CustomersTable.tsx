@@ -1,3 +1,4 @@
+import { type TargetedEvent } from "preact";
 import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import type { Customer } from "@/utils/types.ts";
@@ -41,8 +42,8 @@ export default function CustomersTable(
     globalThis.location.assign(`/customers?buyer=${encodeURIComponent(name)}`);
   }
 
-  async function onBuyerInput(e: Event) {
-    const value = (e.target as HTMLInputElement).value;
+  async function onBuyerInput(e: TargetedEvent<HTMLInputElement>) {
+    const value = e.currentTarget.value;
     buyerQuery.value = value;
     if (!value) {
       suggestions.value = [];
@@ -311,7 +312,7 @@ export default function CustomersTable(
                   accept=".csv"
                   class="file-input file-input-bordered w-full mb-4"
                   onChange={(e) => {
-                    const files = (e.target as HTMLInputElement).files;
+                    const files = e.currentTarget.files;
                     importFile.value = files?.[0] ?? null;
                   }}
                   required

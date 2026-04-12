@@ -164,7 +164,7 @@ export default function PackageTypes({ initialItems }: { initialItems: PackageTy
                 placeholder="Small box"
                 required
                 value={formLabel.value}
-                onInput={(e) => (formLabel.value = (e.target as HTMLInputElement).value)}
+                onInput={(e) => (formLabel.value = e.currentTarget.value)}
               />
             </fieldset>
             <div class="grid grid-cols-3 gap-3 mb-4">
@@ -178,7 +178,7 @@ export default function PackageTypes({ initialItems }: { initialItems: PackageTy
                   min="0.1"
                   step="0.1"
                   value={formLength.value}
-                  onInput={(e) => (formLength.value = (e.target as HTMLInputElement).value)}
+                  onInput={(e) => (formLength.value = e.currentTarget.value)}
                 />
               </fieldset>
               <fieldset class="fieldset">
@@ -191,7 +191,7 @@ export default function PackageTypes({ initialItems }: { initialItems: PackageTy
                   min="0.1"
                   step="0.1"
                   value={formWidth.value}
-                  onInput={(e) => (formWidth.value = (e.target as HTMLInputElement).value)}
+                  onInput={(e) => (formWidth.value = e.currentTarget.value)}
                 />
               </fieldset>
               <fieldset class="fieldset">
@@ -204,7 +204,7 @@ export default function PackageTypes({ initialItems }: { initialItems: PackageTy
                   min="0.1"
                   step="0.1"
                   value={formHeight.value}
-                  onInput={(e) => (formHeight.value = (e.target as HTMLInputElement).value)}
+                  onInput={(e) => (formHeight.value = e.currentTarget.value)}
                 />
               </fieldset>
             </div>

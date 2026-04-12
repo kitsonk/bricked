@@ -72,7 +72,7 @@ export function ShipOrderDialog({ order, hasTracking, isOpen, onConfirm, onClose
             type="date"
             class="input w-full"
             value={dateShipped.value}
-            onInput={(e) => (dateShipped.value = (e.target as HTMLInputElement).value)}
+            onInput={(e) => (dateShipped.value = e.currentTarget.value)}
           />
         </fieldset>
 
@@ -85,7 +85,7 @@ export function ShipOrderDialog({ order, hasTracking, isOpen, onConfirm, onClose
                 class="input w-full"
                 placeholder="Enter tracking number"
                 value={trackingNo.value}
-                onInput={(e) => (trackingNo.value = (e.target as HTMLInputElement).value)}
+                onInput={(e) => (trackingNo.value = e.currentTarget.value)}
               />
             </fieldset>
             <fieldset class="fieldset mb-3">
@@ -95,7 +95,7 @@ export function ShipOrderDialog({ order, hasTracking, isOpen, onConfirm, onClose
                 class="input w-full"
                 placeholder="https://..."
                 value={trackingLink.value}
-                onInput={(e) => (trackingLink.value = (e.target as HTMLInputElement).value)}
+                onInput={(e) => (trackingLink.value = e.currentTarget.value)}
               />
             </fieldset>
           </>

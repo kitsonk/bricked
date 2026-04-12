@@ -189,7 +189,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                               class="size-10 object-contain shrink-0"
                               loading="lazy"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = "none";
+                                e.currentTarget.style.display = "none";
                               }}
                             />
                             <div>

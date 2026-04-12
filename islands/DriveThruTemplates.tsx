@@ -175,7 +175,7 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
               class="input w-full"
               placeholder="e.g. Welcome Message"
               value={formName.value}
-              onInput={(e) => (formName.value = (e.target as HTMLInputElement).value)}
+              onInput={(e) => (formName.value = e.currentTarget.value)}
             />
           </fieldset>
 
@@ -186,7 +186,7 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
               class="textarea w-full h-40"
               placeholder="Hi {{buyer_name}}, thank you for your order #{{order_id}}!"
               value={formBody.value}
-              onInput={(e) => (formBody.value = (e.target as HTMLTextAreaElement).value)}
+              onInput={(e) => (formBody.value = e.currentTarget.value)}
             />
             <p class="label text-xs flex flex-wrap gap-x-1">
               <span class="text-base-content/60">Variables:</span>

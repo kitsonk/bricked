@@ -82,7 +82,7 @@ export default function DriveThruSend({
               <select
                 class="select w-full"
                 value={selectedId.value}
-                onChange={(e) => (selectedId.value = (e.target as HTMLSelectElement).value)}
+                onChange={(e) => (selectedId.value = e.currentTarget.value)}
               >
                 {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
