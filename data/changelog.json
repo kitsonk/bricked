@@ -1,0 +1,198 @@
+[
+  {
+    "hash": "1ecefe8",
+    "subject": "Treat BrickLink 204 response as success in updateOrderStatus",
+    "body": "The BrickLink API returns HTTP 204 (no content) on a successful order status update. Previously this caused a JSON parse failure or a spurious API error; now it returns early as a success."
+  },
+  {
+    "hash": "9088d98",
+    "subject": "Update ShipList weight input to grams and extra cover to multiples of 100",
+    "body": "Weight is now entered in grams and converted to kg on export. Extra cover steps in multiples of 100 with no decimal places."
+  },
+  {
+    "hash": "fb4890e",
+    "subject": "Reformat pick list order column to show shipping name above order number"
+  },
+  {
+    "hash": "adb5333",
+    "subject": "Show shipping name instead of buyer username in pick list order column",
+    "body": "Falls back to buyerName if shippingName is absent."
+  },
+  {
+    "hash": "1ee6bc8",
+    "subject": "Add part image popup dialog to pick list and order detail",
+    "body": "Clicking a thumbnail opens a modal showing the full-size image, part number, name, lot description, color, and a link to the BrickLink catalog entry. Extracted the order items table into OrderItemsTable island so it can hold interactive state."
+  },
+  {
+    "hash": "4905fdf",
+    "subject": "Replace e.target type coercions with e.currentTarget in event handlers"
+  },
+  {
+    "hash": "9261379",
+    "subject": "Extract OrderCard into components/OrderCard.tsx"
+  },
+  {
+    "hash": "f887866",
+    "subject": "Replace programmatic location.href navigation with anchor tags",
+    "body": "Allows f-client-nav to intercept all navigation in OrdersTable and OrdersFilterTabs instead of triggering full page reloads."
+  },
+  {
+    "hash": "c9e1b39",
+    "subject": "Add admin logs page for viewing KV-stored log records",
+    "body": "Adds /admin/logs route using listLogRecords() from logtape-kv-sink, rendering entries in a paginated table with cursor-based navigation. Includes sidebar Admin section with Logs link and scroll icon."
+  },
+  {
+    "hash": "91c9ce7",
+    "subject": "Add Fresh v2 partials for SPA-like navigation between pages",
+    "body": "Sidebar links now swap only the main content region without reloading the page shell. Deep linking still works via full-page SSR. Fixes stopPropagation on order table links so partial nav is not blocked."
+  },
+  {
+    "hash": "8ff2da8",
+    "subject": "Persist sidebar collapsed state to localStorage across page navigations"
+  },
+  {
+    "hash": "4b4faba",
+    "subject": "Add message count column to orders and customer order history tables",
+    "body": "Fetches BrickLink order message counts and displays a chat bubble icon with count next to each order that has messages. Results are cached in Deno KV with a 60-second TTL to avoid hammering the API on every page load."
+  },
+  {
+    "hash": "7cef197",
+    "subject": "Add buyer typeahead filter to customers page",
+    "body": "Adds a text input with live suggestions fetched from /api/crm/buyers?q=, backed by a KV buyer index built during CRM refresh. Selecting a buyer filters to that customer via server-side lookup. Pagination is hidden while a filter is active."
+  },
+  {
+    "hash": "947b5f8",
+    "subject": "Add customer detail page with member rating and order history",
+    "body": "Adds /customers/{username} detail page showing the BrickLink member rating (PRAISE/NEUTRAL/COMPLAINT with percentages) and a full order history table drawn from the local order cache. Rating fetch failures are shown as a warning rather than a hard error.\n\nIntroduces BLMemberRating type matching the actual API wire format. Adds getMemberRating() to BricklinkClient and listCachedOrdersByBuyer() to kv.ts. Converts routes/customers.tsx to routes/customers/index.tsx to support nested routing, and links buyer names in the customers table to the detail page."
+  },
+  {
+    "hash": "e0fa855",
+    "subject": "Add CSV import for backfilling purged order history in CRM",
+    "body": "Adds POST /api/crm/import which accepts a multipart CSV file and maps rows (order_id, buyer_name, date_ordered, value) into BLOrderSummary records in the order cache. Returns a summary of imported/skipped/error counts with per-row error details.\n\nAdds an Import CSV button to the Customers page that opens a dialog with a file picker and displays the import result summary inline."
+  },
+  {
+    "hash": "518e268",
+    "subject": "Add BLOrderSummary type for GET /orders list response",
+    "body": "Introduces BLOrderSummary to accurately represent the smaller payload returned by the orders list endpoint, distinct from the full BLOrder shape returned by the detail endpoint. getOrders() now returns BLOrderSummary[], the order cache stores summaries, and crm.ts aggregates from them."
+  },
+  {
+    "hash": "2619345",
+    "subject": "Lazy-memoize Deno KV instance and return commit results from writes",
+    "body": "Opens Deno KV at most once per process via a module-level singleton. Write functions now return Promise<Deno.KvCommitResult> by returning the KV promise directly rather than awaiting it, removing the redundant suspend point."
+  },
+  {
+    "hash": "1429780",
+    "subject": "Preserve order history in local cache to survive BrickLink purges",
+    "body": "Introduces a local order cache in Deno KV. The CRM refresh is now two phases: first sync live API orders into the cache (skipping PURGED entries to protect the last known-good data), then aggregate customer records from the full cache so history beyond BrickLink's 6-month window is retained."
+  },
+  {
+    "hash": "929038d",
+    "subject": "Add order messages section to order detail page",
+    "body": "Fetches messages from BrickLink API and displays them as chat bubbles in a tabbed layout alongside Order Items. Buyer messages are chat-start (primary), seller messages are chat-end (secondary), sorted ascending by date. Messages tab only appears when messages exist."
+  },
+  {
+    "hash": "9ffd2b8",
+    "subject": "Add CRM customer aggregation with paginated customers page",
+    "body": "Aggregates all inbound BrickLink orders by buyer_name (excluding cancelled) into a Deno KV-backed CRM. Tracks order count, first/last order date, and spend totals per currency. Customers page at /customers supports KV cursor-based pagination with Prev/Next navigation. An Update button triggers a manual refresh; a Deno cron job runs the same refresh automatically at midnight daily."
+  },
+  {
+    "hash": "4c56533",
+    "subject": "Split Package column into Package Type and Dimensions in ship list"
+  },
+  {
+    "hash": "5e0a91f",
+    "subject": "Fix text colours for non-exportable rows in ship list"
+  },
+  {
+    "hash": "0416c94",
+    "subject": "Remove ship order button and dialog from orders table"
+  },
+  {
+    "hash": "1db4b61",
+    "subject": "Add Prepare to Ship button to pick list, enabled when all orders are packed"
+  },
+  {
+    "hash": "a669a29",
+    "subject": "Consolidate recipient email and phone into Recipient Info column in ship list"
+  },
+  {
+    "hash": "f8545d1",
+    "subject": "Consolidate ship list table columns into Order Info and Package"
+  },
+  {
+    "hash": "22bcb76",
+    "subject": "Add recipient phone number to ship list and AusPost manifest export"
+  },
+  {
+    "hash": "ef5973f",
+    "subject": "Disable Export Manifest button until all exportable rows have required fields"
+  },
+  {
+    "hash": "8d3b589",
+    "subject": "Exclude non-tracking shipping methods from exportable rows in ship list"
+  },
+  {
+    "hash": "ba11abe",
+    "subject": "Hide packaging fields for non-exportable rows in ship list"
+  },
+  {
+    "hash": "6feaa31",
+    "subject": "Move Drive Thru Templates to Settings section in sidebar"
+  },
+  {
+    "hash": "d4d9dda",
+    "subject": "Rename Navigation section to Processing in sidebar"
+  },
+  {
+    "hash": "eac04d4",
+    "subject": "Move Shipping Methods to Settings section in sidebar"
+  },
+  {
+    "hash": "25ec167",
+    "subject": "Add order total column to ship list table"
+  },
+  {
+    "hash": "f856b67",
+    "subject": "Add Export Manifest button to ship list generating dated AusPost CSV"
+  },
+  {
+    "hash": "8c8ff9c",
+    "subject": "Strike through non-AU orders in ship list as they won't be exported"
+  },
+  {
+    "hash": "b3378f7",
+    "subject": "Add extra cover amount field to ship list table"
+  },
+  {
+    "hash": "89bf1da",
+    "subject": "Add weight field to ship list table"
+  },
+  {
+    "hash": "05f1053",
+    "subject": "Add recipient email column to ship list, pre-populated from buyer_email"
+  },
+  {
+    "hash": "68980f1",
+    "subject": "Add AU address verification to ship list edit dialog via AddressFinder"
+  },
+  {
+    "hash": "1810303",
+    "subject": "Add address line 3 field to AusPost address in ship list"
+  },
+  {
+    "hash": "29a5dc5",
+    "subject": "Replace buyer/ordered columns with item count in ship list table"
+  },
+  {
+    "hash": "3b4a260",
+    "subject": "Add editable AusPost address mapping to ship list with KV persistence"
+  },
+  {
+    "hash": "cf86d3d",
+    "subject": "Format shipping address as multi-line label in ship list"
+  },
+  {
+    "hash": "bc9928e",
+    "subject": "Remove status column from ship list table"
+  }
+]
