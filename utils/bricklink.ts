@@ -93,6 +93,7 @@ export class BricklinkClient {
       headers: { Authorization: auth, "Content-Type": "application/json" },
       body: JSON.stringify({ field: "status", value: status }),
     });
+    if (resp.status === 204) return;
     if (!resp.ok) {
       const text = await resp.text();
       throw new Error(`BrickLink HTTP ${resp.status}: ${text}`);
