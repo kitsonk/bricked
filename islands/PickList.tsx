@@ -3,6 +3,7 @@ import type { PickListItem, PickListOrder } from "@/utils/types.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 import { bricklinkItemImageUrl } from "@/utils/format.ts";
 import { itemKey, OrderCard } from "@/components/OrderCard.tsx";
+import { type PartDialogItem, PartImageDialog } from "@/components/PartImageDialog.tsx";
 
 function groupBy<T>(items: T[], keyFn: (item: T) => string): Map<string, T[]> {
   const map = new Map<string, T[]>();
@@ -20,6 +21,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
   const packedOrderIds = useSignal(new Set<number>());
   const packingOrderId = useSignal<number | null>(null);
   const packError = useSignal<string | null>(null);
+  const dialogItem = useSignal<PartDialogItem | null>(null);
 
   function togglePicked(key: string) {
     const next = new Set(picked.value);
@@ -183,15 +185,32 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                         </td>
                         <td>
                           <div class="flex items-center gap-3">
-                            <img
-                              src={bricklinkItemImageUrl(item.itemType, item.itemNo, item.colorId)}
-                              alt={item.itemName}
-                              class="size-10 object-contain shrink-0"
-                              loading="lazy"
-                              onError={(e) => {
-                                e.currentTarget.style.display = "none";
+                            <button
+                              type="button"
+                              class="shrink-0 cursor-zoom-in"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                dialogItem.value = {
+                                  itemNo: item.itemNo,
+                                  itemName: item.itemName,
+                                  itemType: item.itemType,
+                                  colorId: item.colorId,
+                                  colorName: item.colorName,
+                                  description: item.description,
+                                };
                               }}
-                            />
+                              aria-label={`View image for ${item.itemName}`}
+                            >
+                              <img
+                                src={bricklinkItemImageUrl(item.itemType, item.itemNo, item.colorId)}
+                                alt={item.itemName}
+                                class="size-10 object-contain"
+                                loading="lazy"
+                                onError={(e) => {
+                                  e.currentTarget.parentElement!.style.display = "none";
+                                }}
+                              />
+                            </button>
                             <div>
                               <a
                                 href={`https://www.bricklink.com/v2/catalog/catalogitem.page?P=${item.itemNo}`}
@@ -226,6 +245,8 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
           })}
         </table>
       </div>
+
+      <PartImageDialog item={dialogItem.value} onClose={() => (dialogItem.value = null)} />
     </div>
   );
 }

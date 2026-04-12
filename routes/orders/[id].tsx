@@ -4,12 +4,11 @@ import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials, getShippingMethodEnrichment } from "@/utils/kv.ts";
 import type { BLOrder, BLOrderItem, BLOrderMessage } from "@/utils/types.ts";
-import { decodeHtml } from "@/utils/html.ts";
-import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 import { OrderMessageBubble } from "@/components/OrderMessageBubble.tsx";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
-import { bricklinkItemImageUrl, formatAmount, humanTime } from "@/utils/format.ts";
+import { formatAmount, humanTime } from "@/utils/format.ts";
 import OrderShipButton from "@/islands/OrderShipButton.tsx";
+import OrderItemsTable from "@/islands/OrderItemsTable.tsx";
 
 export const handler = define.handlers<{
   order: BLOrder | null;
@@ -172,69 +171,11 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
         <div class="tabs tabs-border">
           <input type="radio" name="order_tabs" class="tab" aria-label="Order Items" checked />
           <div class="tab-content border-base-300 bg-base-100">
-            <div class="flex justify-end p-4">
-              <a href={`/pick-list?orders=${order?.order_id}`} class="btn btn-primary btn-sm">
-                <span class="iconify lucide--package size-4"></span>
-                Pick List for This Order
-              </a>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="table table-zebra table-sm">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Color</th>
-                    <th>Cond.</th>
-                    <th class="text-right">Qty</th>
-                    <th>Location</th>
-                    <th class="text-right">Unit Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item: BLOrderItem) => (
-                    <tr key={item.order_item_no}>
-                      <td>
-                        <div class="flex items-center gap-3">
-                          <img
-                            src={bricklinkItemImageUrl(item.item.type, item.item.no, item.color_id)}
-                            alt={decodeHtml(item.item.name)}
-                            class="size-10 object-contain shrink-0"
-                            loading="lazy"
-                          />
-                          <div>
-                            <a
-                              href={`https://www.bricklink.com/v2/catalog/catalogitem.page?P=${item.item.no}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              class="font-medium link link-hover"
-                            >
-                              {decodeHtml(item.item.name)}
-                            </a>
-                            <div class="text-xs text-base-content/50 font-mono">{item.item.no}</div>
-                            {item.description && (
-                              <div class="text-xs text-base-content/50 whitespace-normal">{item.description}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td class="text-sm">{item.color_name}</td>
-                      <td>
-                        <ConditionBadge condition={item.new_or_used} />
-                      </td>
-                      <td class="text-right font-bold">{item.quantity}</td>
-                      <td>
-                        {item.remarks
-                          ? <span class="font-mono text-sm text-primary">{item.remarks}</span>
-                          : <span class="text-base-content/30 text-xs">—</span>}
-                      </td>
-                      <td class="text-right text-sm font-mono">
-                        {order?.disp_cost.currency_code} {formatAmount(item.disp_unit_price)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <OrderItemsTable
+              orderId={order!.order_id}
+              items={items}
+              currencyCode={order!.disp_cost.currency_code}
+            />
           </div>
 
           {messages.length > 0 && (
