@@ -12,10 +12,10 @@ export const handler = define.handlers<InventoryData>({
 
 export function InventoryContent(_: { data: InventoryData }) {
   return (
-    <div class="p-6">
-      <h1 class="text-2xl font-semibold">Inventory</h1>
-      <p class="text-base-content/60 mt-2">Coming soon.</p>
-    </div>
+    <>
+      <h1 class="text-2xl font-bold mb-6">Inventory</h1>
+      <p class="text-base-content/60">Coming soon.</p>
+    </>
   );
 }
 
