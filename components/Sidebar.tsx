@@ -28,10 +28,11 @@ export function Sidebar() {
           <span class="iconify lucide--panel-left-dashed absolute size-4.5 opacity-0 transition-all duration-300 group-has-[[id=layout-sidebar-hover-trigger]:checked]/html:opacity-100">
           </span>
         </label>
-        <p class="menu-label mt-2 px-2.5">Processing</p>
+        <p class="menu-label mt-2 px-2.5">Workflow</p>
         <div class="mt-2">
           <MenuItem icon="house" label="Home" href="/orders" fPartial="/partials/orders" />
           <MenuItem icon="shopping-bag" label="Orders" href="/orders" fPartial="/partials/orders" />
+          <MenuItem icon="warehouse" label="Inventory" href="/inventory" fPartial="/partials/inventory" />
           <MenuItem icon="users" label="Customers" href="/customers" fPartial="/partials/customers" />
         </div>
         <p class="menu-label mt-4 px-2.5">Settings</p>
