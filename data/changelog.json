@@ -1,5 +1,10 @@
 [
   {
+    "hash": "0dd7de3",
+    "subject": "Optimise @source inline to only include dynamically interpolated icons",
+    "body": "Reduced the icon pragma from 35 entries to 9 — only the icons passed dynamically via the Sidebar MenuItem icon prop. Statically referenced icons are detected automatically by Tailwind's scanner. Also removed 9 icons that were unused entirely."
+  },
+  {
     "hash": "1ecefe8",
     "subject": "Treat BrickLink 204 response as success in updateOrderStatus",
     "body": "The BrickLink API returns HTTP 204 (no content) on a successful order status update. Previously this caused a JSON parse failure or a spurious API error; now it returns early as a success."
