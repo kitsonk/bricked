@@ -86,5 +86,7 @@ the `f-client-nav` listener. Instead, guard row-click handlers with
 - **Fresh v2 data passing:** Use `page(data)` imported from `"fresh"` to pass data from a handler to the page component.
   Do NOT use `ctx.render(data)` — in Fresh v2, `ctx.render()` takes a `VNode`, not arbitrary data. Pattern: handler
   calls `return page({ ... })`, page is defined as `define.page<typeof handler>(({ data }) => ...)`.
-- **Lucide icons:** New icons must be added to the `@source inline(...)` list in `assets/styles.css` or they will not be
-  included in the CSS bundle.
+- **Lucide icons:** Icons used as static class strings (e.g. `class="iconify lucide--home"`) are detected automatically
+  by Tailwind's scanner — no extra config needed. Only icons interpolated dynamically (e.g. `lucide--${icon}`) must be
+  added to the `@source inline(...)` list in `assets/styles.css`. Currently that list covers only the icons passed via
+  the `icon` prop in `components/Sidebar.tsx`.
