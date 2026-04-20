@@ -25,6 +25,7 @@
     "@kitsonk/logtape-kv-sink": "jsr:@kitsonk/logtape-kv-sink@^0.1.1",
     "@std/csv": "jsr:@std/csv@^1.0.6",
     "@blaze/human-readable-timestamp": "jsr:@blaze/human-readable-timestamp@^1.0.0",
+    "@libs/xml": "jsr:@libs/xml@^7",
     "@logtape/logtape": "jsr:@logtape/logtape@^2.0.5",
     "daisyui": "npm:daisyui@^5.5.19",
     "fresh": "jsr:@fresh/core@^2.2.2",

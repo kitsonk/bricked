@@ -13,6 +13,7 @@
     "jsr:@fresh/plugin-vite@^1.0.8": "1.0.8",
     "jsr:@kitsonk/kv-toolbox@0.30": "0.30.0",
     "jsr:@kitsonk/logtape-kv-sink@~0.1.1": "0.1.1",
+    "jsr:@libs/xml@7": "7.0.4",
     "jsr:@logtape/logtape@2": "2.0.5",
     "jsr:@logtape/logtape@^2.0.5": "2.0.5",
     "jsr:@std/assert@1": "1.0.19",
@@ -151,6 +152,9 @@
         "jsr:@kitsonk/kv-toolbox",
         "jsr:@logtape/logtape@2"
       ]
+    },
+    "@libs/xml@7.0.4": {
+      "integrity": "eed219cf6258a0b28b60c094c89563a1cd63a023ac515517d6b74a99873d6c02"
     },
     "@logtape/logtape@2.0.5": {
       "integrity": "604d2121ed4ffb7aad35b47e729e2298d0cd7a7ddf1cb4171d27a61fa7d840a5"
@@ -1697,6 +1701,7 @@
       "jsr:@fresh/core@^2.2.2",
       "jsr:@fresh/plugin-vite@^1.0.8",
       "jsr:@kitsonk/logtape-kv-sink@~0.1.1",
+      "jsr:@libs/xml@7",
       "jsr:@logtape/logtape@^2.0.5",
       "jsr:@std/csv@^1.0.6",
       "npm:@iconify-json/lucide@^1.2.101",
