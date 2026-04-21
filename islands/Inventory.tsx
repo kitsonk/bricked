@@ -1,4 +1,5 @@
 import { useSignal } from "@preact/signals";
+import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 
 type ItemType = "S" | "P" | "M" | "B" | "G" | "C" | "I" | "O";
 type Condition = "N" | "U";
@@ -13,6 +14,19 @@ type PendingItem = {
   DESCRIPTION: string;
   REMARKS: string;
 };
+
+type MarketplaceItem = {
+  strStorename: string;
+  n4SellerFeedbackScore: number;
+  n4Qty: number;
+  mInvSalePrice: string;
+  codeNew: string;
+  strDesc: string;
+};
+
+function formatPrice(raw: string): string {
+  return raw.startsWith("AU ") ? raw.slice(3) : raw;
+}
 
 const ITEM_TYPES: { value: ItemType; label: string }[] = [
   { value: "S", label: "Set" },
@@ -39,6 +53,10 @@ export default function Inventory() {
   const pending = useSignal<PendingItem[]>([]);
   const copying = useSignal(false);
   const copyError = useSignal<string | null>(null);
+
+  const marketplaceItems = useSignal<MarketplaceItem[] | null>(null);
+  const marketplaceLoading = useSignal(false);
+  const marketplaceError = useSignal<string | null>(null);
 
   function addItem(e: Event) {
     e.preventDefault();
@@ -89,6 +107,24 @@ export default function Inventory() {
     }
   }
 
+  async function fetchMarketplace() {
+    const id = itemId.value.trim();
+    if (!id) return;
+    marketplaceLoading.value = true;
+    marketplaceError.value = null;
+    marketplaceItems.value = null;
+    try {
+      const resp = await fetch(`/api/marketplace?itemid=${encodeURIComponent(id)}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
+      marketplaceItems.value = json.list ?? [];
+    } catch (err) {
+      marketplaceError.value = String(err);
+    } finally {
+      marketplaceLoading.value = false;
+    }
+  }
+
   return (
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
       <div class="space-y-8">
@@ -110,14 +146,27 @@ export default function Inventory() {
                 </fieldset>
                 <fieldset class="fieldset">
                   <legend class="fieldset-legend">Item ID</legend>
-                  <input
-                    type="text"
-                    class="input w-full"
-                    placeholder="e.g. 10255"
-                    required
-                    value={itemId.value}
-                    onInput={(e) => (itemId.value = e.currentTarget.value)}
-                  />
+                  <div class="join w-full">
+                    <input
+                      type="text"
+                      class="input join-item w-full"
+                      placeholder="e.g. 10255"
+                      required
+                      value={itemId.value}
+                      onInput={(e) => (itemId.value = e.currentTarget.value)}
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-primary join-item"
+                      title="Look up item"
+                      disabled={marketplaceLoading.value || !itemId.value.trim()}
+                      onClick={fetchMarketplace}
+                    >
+                      {marketplaceLoading.value
+                        ? <span class="loading loading-spinner loading-xs"></span>
+                        : <span class="iconify lucide--search size-4"></span>}
+                    </button>
+                  </div>
                 </fieldset>
               </div>
               <div class="grid grid-cols-3 gap-3 mb-3">
@@ -292,10 +341,63 @@ export default function Inventory() {
 
         <section>
           <h2 class="text-lg font-semibold mb-4">Marketplace Items</h2>
-          <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-            <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
-            <p class="text-sm">Marketplace items matching the item ID will appear here.</p>
-          </div>
+          {marketplaceError.value && (
+            <div role="alert" class="alert alert-error mb-4">
+              <span class="iconify lucide--alert-circle size-5"></span>
+              <div>{marketplaceError.value}</div>
+            </div>
+          )}
+          {marketplaceLoading.value
+            ? (
+              <div class="flex justify-center py-10">
+                <span class="loading loading-spinner loading-md"></span>
+              </div>
+            )
+            : marketplaceItems.value === null
+            ? (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
+                <p class="text-sm">Enter an item ID and click search to load marketplace listings.</p>
+              </div>
+            )
+            : marketplaceItems.value.length === 0
+            ? (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
+                <p class="text-sm">No marketplace listings found.</p>
+              </div>
+            )
+            : (
+              <div class="overflow-x-auto rounded-box border border-base-content/10">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Store</th>
+                      <th class="text-right">Qty</th>
+                      <th class="text-right">Price</th>
+                      <th>Condition</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {marketplaceItems.value.map((item, i) => (
+                      <tr key={i}>
+                        <td class="font-medium">
+                          {item.strStorename}{" "}
+                          <span class="text-base-content/50 font-normal text-sm">({item.n4SellerFeedbackScore})</span>
+                        </td>
+                        <td class="text-right font-mono">{item.n4Qty}</td>
+                        <td class="text-right font-mono">{formatPrice(item.mInvSalePrice)}</td>
+                        <td>
+                          <ConditionBadge condition={item.codeNew as "N" | "U"} />
+                        </td>
+                        <td class="text-base-content/70 text-sm">{item.strDesc}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
         </section>
       </div>
     </div>

@@ -287,3 +287,42 @@ export interface BLMemberRating {
     COMPLAINT: number;
   };
 }
+
+/** A single item returned within a BrickLink catalog search result. */
+export interface BricklinkSearchItem {
+  idItem: number;
+  typeItem: string;
+  strItemNo: string;
+  strItemName: string;
+  idColor: number;
+  idColorImg: number;
+  cItemImgTypeS: string;
+  bHasLargeImg: boolean;
+  n4NewQty: number;
+  n4NewSellerCnt: number;
+  mNewMinPrice: string;
+  mNewMaxPrice: string;
+  n4UsedQty: number;
+  n4UsedSellerCnt: number;
+  mUsedMinPrice: string;
+  mUsedMaxPrice: string;
+  strCategory: string;
+  strPCC: string | null;
+}
+
+/** Full response from the BrickLink catalog search API. */
+export interface BricklinkSearchResult {
+  result: {
+    typeList: Array<{
+      type: string;
+      count: number;
+      items: BricklinkSearchItem[];
+    }>;
+    nCustomItemCnt: number;
+  };
+  returnCode: number;
+  returnMessage: string;
+  errorTicket: number;
+  procssingTime: number;
+  strRefNo: string;
+}

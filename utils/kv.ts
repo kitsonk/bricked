@@ -3,6 +3,7 @@ import type {
   BLOrderSummary,
   BLShippingMethod,
   BricklinkCredentials,
+  BricklinkSearchResult,
   CrmMeta,
   Customer,
   DriveThruSentRecord,
@@ -309,4 +310,22 @@ export async function getCrmMeta(): Promise<CrmMeta | null> {
 
 export async function saveCrmMeta(meta: CrmMeta): Promise<Deno.KvCommitResult> {
   return (await kv()).set(CRM_META_KEY, meta);
+}
+
+// BrickLink Catalog Search Cache
+
+function bricklinkItemSearchKey(itemId: string): Deno.KvKey {
+  return ["bricklink_item_search", itemId.toLowerCase()];
+}
+
+export async function getBricklinkItemSearch(itemId: string): Promise<BricklinkSearchResult | null> {
+  const result = await (await kv()).get<BricklinkSearchResult>(bricklinkItemSearchKey(itemId));
+  return result.value;
+}
+
+export async function saveBricklinkItemSearch(
+  itemId: string,
+  result: BricklinkSearchResult,
+): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(bricklinkItemSearchKey(itemId), result);
 }
