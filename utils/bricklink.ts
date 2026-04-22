@@ -1,4 +1,5 @@
 import type {
+  BLColor,
   BLMemberRating,
   BLNotification,
   BLOrder,
@@ -123,6 +124,10 @@ export class BricklinkClient {
     if (body.meta.code !== 200) {
       throw new Error(`BrickLink API error ${body.meta.code}: ${body.meta.description}`);
     }
+  }
+
+  getColors(): Promise<BLColor[]> {
+    return this.get<BLColor[]>("/colors");
   }
 
   getMemberRating(username: string): Promise<BLMemberRating> {

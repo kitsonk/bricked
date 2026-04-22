@@ -288,6 +288,20 @@ export interface BLMemberRating {
   };
 }
 
+/** A BrickLink color entry from GET /colors. */
+export interface BLColor {
+  color_id: number;
+  color_name: string;
+  color_code: string;
+  color_type: string;
+}
+
+/** Metadata about the cached color list. */
+export interface ColorsMeta {
+  lastRefreshedAt: string;
+  count: number;
+}
+
 /** A single item returned within a BrickLink catalog search result. */
 export interface BricklinkSearchItem {
   idItem: number;

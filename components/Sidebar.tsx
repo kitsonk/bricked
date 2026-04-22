@@ -45,6 +45,7 @@ export function Sidebar() {
             fPartial="/partials/shipping-methods"
           />
           <MenuItem icon="package" label="Package Types" href="/package-types" fPartial="/partials/package-types" />
+          <MenuItem icon="palette" label="Colors" href="/colors" fPartial="/partials/colors" />
           <MenuItem
             icon="send"
             label="Drive Thru Templates"

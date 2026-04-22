@@ -1,9 +1,11 @@
 import type {
   AusPostAddress,
+  BLColor,
   BLOrderSummary,
   BLShippingMethod,
   BricklinkCredentials,
   BricklinkSearchResult,
+  ColorsMeta,
   CrmMeta,
   Customer,
   DriveThruSentRecord,
@@ -310,6 +312,41 @@ export async function getCrmMeta(): Promise<CrmMeta | null> {
 
 export async function saveCrmMeta(meta: CrmMeta): Promise<Deno.KvCommitResult> {
   return (await kv()).set(CRM_META_KEY, meta);
+}
+
+// BrickLink Colors Cache
+
+function colorKey(colorId: number): Deno.KvKey {
+  return ["color", colorId];
+}
+
+const COLORS_META_KEY: Deno.KvKey = ["colors_meta"];
+
+export async function getColorsMeta(): Promise<ColorsMeta | null> {
+  const result = await (await kv()).get<ColorsMeta>(COLORS_META_KEY);
+  return result.value;
+}
+
+export async function saveColorsMeta(meta: ColorsMeta): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(COLORS_META_KEY, meta);
+}
+
+export async function saveColor(color: BLColor): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(colorKey(color.color_id), color);
+}
+
+export async function getColor(colorId: number): Promise<BLColor | null> {
+  const result = await (await kv()).get<BLColor>(colorKey(colorId));
+  return result.value;
+}
+
+export async function listColors(): Promise<BLColor[]> {
+  const entries = (await kv()).list<BLColor>({ prefix: ["color"] });
+  const results: BLColor[] = [];
+  for await (const entry of entries) {
+    results.push(entry.value);
+  }
+  return results.sort((a, b) => a.color_id - b.color_id);
 }
 
 // BrickLink Catalog Search Cache
