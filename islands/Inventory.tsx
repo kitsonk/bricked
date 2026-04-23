@@ -513,9 +513,9 @@ export default function Inventory() {
                 </div>
               )
               : (
-                <div class="overflow-x-auto rounded-box border border-base-content/10">
+                <div class="overflow-x-auto overflow-y-auto max-h-96 rounded-box border border-base-content/10">
                   <table class="table table-sm">
-                    <thead>
+                    <thead class="sticky top-0 bg-base-100">
                       <tr>
                         <th class="text-right">Qty</th>
                         <th class="text-right">Price</th>
