@@ -75,6 +75,7 @@ export default function Inventory() {
   const selectedColorId = useSignal<number | null>(null); // null = All
   const catalogItem = useSignal<CatalogItem | null>(null);
   const colorImageUrl = useSignal<string | null>(null); // overrides catalogItem.image_url for a specific color
+  const partCount = useSignal<number | null>(null);
 
   // Color select is only useful when the item has more than one real color.
   // A single color with ID 0 means the item is colorless.
@@ -116,6 +117,7 @@ export default function Inventory() {
     marketplaceItems.value = null;
     catalogItem.value = null;
     colorImageUrl.value = null;
+    partCount.value = null;
   }
 
   function removeItem(id: string) {
@@ -156,6 +158,7 @@ export default function Inventory() {
     selectedColorId.value = null;
     catalogItem.value = null;
     colorImageUrl.value = null;
+    partCount.value = null;
     try {
       const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(itemType.value)}`;
       const resp = await fetch(url);
@@ -164,6 +167,7 @@ export default function Inventory() {
       marketplaceItems.value = json.list ?? [];
       itemColors.value = json.colors ?? [];
       catalogItem.value = json.catalogItem ?? null;
+      partCount.value = json.partCount ?? null;
     } catch (err) {
       marketplaceError.value = String(err);
     } finally {
@@ -444,6 +448,7 @@ export default function Inventory() {
                     )}
                   </div>
                   <p class="text-sm text-base-content/70">{catalogItem.value.year_released}</p>
+                  {partCount.value !== null && <p class="text-sm text-base-content/70">{partCount.value} parts</p>}
                 </div>
               </div>
             )

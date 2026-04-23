@@ -1,7 +1,7 @@
 import { define } from "@/utils/fresh.ts";
 import { getBricklinkItemSearch, getColor, getCredentials, saveBricklinkItemSearch } from "@/utils/kv.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import type { BLCatalogItem, BricklinkSearchResult } from "@/utils/types.ts";
+import type { BLCatalogItem, BLSubsetEntry, BricklinkSearchResult } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
 
 const logger = getLogger(["bricked", "marketplace"]);
@@ -82,16 +82,23 @@ export const handler = define.handlers({
         })
       : Promise.resolve(null);
 
+    const subsetsPromise: Promise<BLSubsetEntry[]> = isInitial && client &&
+        (itemtype === "S" || itemtype === "M")
+      ? client.getSubsets(itemtype, itemid).catch(() => [])
+      : Promise.resolve([]);
+
     let marketplaceResp: Response;
     let colors: { color_id: number; color_name: string }[];
     let catalogItem: BLCatalogItem | null;
     let imageUrl: string | null;
+    let subsets: BLSubsetEntry[];
     try {
-      [marketplaceResp, colors, catalogItem, imageUrl] = await Promise.all([
+      [marketplaceResp, colors, catalogItem, imageUrl, subsets] = await Promise.all([
         fetch(marketplaceUrl),
         colorsPromise,
         catalogItemPromise,
         imageUrlPromise,
+        subsetsPromise,
       ]);
     } catch (err) {
       return Response.json({ error: String(err) }, { status: 502 });
@@ -100,6 +107,7 @@ export const handler = define.handlers({
       return Response.json({ error: `Upstream HTTP ${marketplaceResp.status}` }, { status: 502 });
     }
 
-    return Response.json({ ...await marketplaceResp.json(), colors, catalogItem, imageUrl });
+    const partCount = subsets.length > 0 ? subsets.length : null;
+    return Response.json({ ...await marketplaceResp.json(), colors, catalogItem, imageUrl, partCount });
   },
 });

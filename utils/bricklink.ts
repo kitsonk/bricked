@@ -10,6 +10,7 @@ import type {
   BLOrderMessage,
   BLOrderSummary,
   BLShippingMethod,
+  BLSubsetEntry,
   BricklinkCredentials,
 } from "@/utils/types.ts";
 import { buildOAuthHeader } from "@/utils/oauth.ts";
@@ -159,6 +160,11 @@ export class BricklinkClient {
     return this.get<BLItemImage>(
       `/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/images/${colorId}`,
     );
+  }
+
+  getSubsets(itemType: string, itemNo: string): Promise<BLSubsetEntry[]> {
+    const apiType = ITEM_TYPE_API[itemType] ?? itemType;
+    return this.get<BLSubsetEntry[]>(`/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/subsets`);
   }
 
   getMemberRating(username: string): Promise<BLMemberRating> {

@@ -328,6 +328,19 @@ export interface BLItemColor extends BLColor {
   };
 }
 
+/** One entry in the array returned by GET /items/{type}/{no}/subsets. */
+export interface BLSubsetEntry {
+  match_no: number;
+  entries: {
+    item: { no: string; name: string; type: string; category_id: number };
+    color_id: number;
+    quantity: number;
+    is_alternate: boolean;
+    extra_quantity: number;
+    is_counterpart: boolean;
+  }[];
+}
+
 /** Metadata about the cached color list. */
 export interface ColorsMeta {
   lastRefreshedAt: string;
