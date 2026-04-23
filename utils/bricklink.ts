@@ -1,5 +1,6 @@
 import type {
   BLColor,
+  BLItemColor,
   BLMemberRating,
   BLNotification,
   BLOrder,
@@ -13,6 +14,17 @@ import { buildOAuthHeader } from "@/utils/oauth.ts";
 import { getLogger } from "@/utils/log.ts";
 
 const BASE_URL = "https://api.bricklink.com/api/store/v1";
+
+const ITEM_TYPE_API: Record<string, string> = {
+  S: "SET",
+  P: "PART",
+  M: "MINIFIG",
+  B: "BOOK",
+  G: "GEAR",
+  C: "CATALOG",
+  I: "INSTRUCTION",
+  O: "ORIGINAL_BOX",
+};
 const logger = getLogger(["bricked", "bricklink"]);
 
 interface BLResponse<T> {
@@ -128,6 +140,11 @@ export class BricklinkClient {
 
   getColors(): Promise<BLColor[]> {
     return this.get<BLColor[]>("/colors");
+  }
+
+  getItemColors(itemType: string, itemNo: string): Promise<BLItemColor[]> {
+    const apiType = ITEM_TYPE_API[itemType] ?? itemType;
+    return this.get<BLItemColor[]>(`/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/colors`);
   }
 
   getMemberRating(username: string): Promise<BLMemberRating> {

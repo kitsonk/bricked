@@ -296,6 +296,16 @@ export interface BLColor {
   color_type: string;
 }
 
+/** A color known to exist for a specific item, from GET /items/{type}/{no}/colors. */
+export interface BLItemColor extends BLColor {
+  quantity: {
+    in_store: number;
+    in_cart: number;
+    wanted: number;
+    for_sale: number;
+  };
+}
+
 /** Metadata about the cached color list. */
 export interface ColorsMeta {
   lastRefreshedAt: string;

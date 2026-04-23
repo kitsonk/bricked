@@ -8,6 +8,8 @@ type PendingItem = {
   id: string;
   ITEMTYPE: ItemType;
   ITEMID: string;
+  COLOR?: number;
+  COLOR_NAME?: string; // display only — stripped before XML
   PRICE: number;
   QTY: number;
   CONDITION: Condition;
@@ -22,6 +24,11 @@ type MarketplaceItem = {
   mInvSalePrice: string;
   codeNew: string;
   strDesc: string;
+};
+
+type ItemColor = {
+  color_id: number;
+  color_name: string;
 };
 
 function formatPrice(raw: string): string {
@@ -57,15 +64,32 @@ export default function Inventory() {
   const marketplaceItems = useSignal<MarketplaceItem[] | null>(null);
   const marketplaceLoading = useSignal(false);
   const marketplaceError = useSignal<string | null>(null);
+  const itemColors = useSignal<ItemColor[]>([]);
+  const selectedColorId = useSignal<number | null>(null); // null = All
+
+  // Color select is only useful when the item has more than one real color.
+  // A single color with ID 0 means the item is colorless.
+  function isColorSelectEnabled(): boolean {
+    const colors = itemColors.value;
+    if (colors.length === 0) return false;
+    if (colors.length === 1 && colors[0].color_id === 0) return false;
+    return true;
+  }
 
   function addItem(e: Event) {
     e.preventDefault();
+    const colorId = selectedColorId.value;
+    const hasColor = colorId !== null && colorId !== 0;
     pending.value = [
       ...pending.value,
       {
         id: crypto.randomUUID(),
         ITEMTYPE: itemType.value,
         ITEMID: itemId.value.trim(),
+        ...(hasColor && {
+          COLOR: colorId,
+          COLOR_NAME: itemColors.value.find((c) => c.color_id === colorId)?.color_name,
+        }),
         PRICE: parseFloat(parseFloat(price.value).toFixed(2)),
         QTY: parseInt(qty.value, 10),
         CONDITION: condition.value,
@@ -78,6 +102,9 @@ export default function Inventory() {
     qty.value = "";
     description.value = "";
     remarks.value = "";
+    itemColors.value = [];
+    selectedColorId.value = null;
+    marketplaceItems.value = null;
   }
 
   function removeItem(id: string) {
@@ -90,7 +117,7 @@ export default function Inventory() {
     try {
       const payload = {
         INVENTORY: {
-          ITEM: pending.value.map(({ id: _id, ...item }) => item),
+          ITEM: pending.value.map(({ id: _id, COLOR_NAME: _cn, ...item }) => item),
         },
       };
       const resp = await fetch("/api/xml", {
@@ -107,14 +134,42 @@ export default function Inventory() {
     }
   }
 
+  // Initial item lookup — fetches marketplace listings and item colors together.
   async function fetchMarketplace() {
     const id = itemId.value.trim();
     if (!id) return;
     marketplaceLoading.value = true;
     marketplaceError.value = null;
     marketplaceItems.value = null;
+    itemColors.value = [];
+    selectedColorId.value = null;
     try {
-      const resp = await fetch(`/api/marketplace?itemid=${encodeURIComponent(id)}`);
+      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(itemType.value)}`;
+      const resp = await fetch(url);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
+      marketplaceItems.value = json.list ?? [];
+      itemColors.value = json.colors ?? [];
+    } catch (err) {
+      marketplaceError.value = String(err);
+    } finally {
+      marketplaceLoading.value = false;
+    }
+  }
+
+  // Re-fetches marketplace listings for a specific color. Skips the color lookup.
+  async function refreshMarketplace(colorId: number | null) {
+    const id = itemId.value.trim();
+    if (!id) return;
+    marketplaceLoading.value = true;
+    marketplaceError.value = null;
+    marketplaceItems.value = null;
+    try {
+      const colorParam = colorId !== null ? String(colorId) : "all";
+      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
+        encodeURIComponent(itemType.value)
+      }&colorid=${colorParam}`;
+      const resp = await fetch(url);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
@@ -132,7 +187,7 @@ export default function Inventory() {
           <h2 class="text-lg font-semibold mb-4">Add Item</h2>
           <div class="border border-base-content/10 rounded-box p-4">
             <form onSubmit={addItem}>
-              <div class="grid grid-cols-2 gap-3 mb-3">
+              <div class="grid grid-cols-3 gap-3 mb-3">
                 <fieldset class="fieldset">
                   <legend class="fieldset-legend">Item Type</legend>
                   <select
@@ -167,6 +222,25 @@ export default function Inventory() {
                         : <span class="iconify lucide--search size-4"></span>}
                     </button>
                   </div>
+                </fieldset>
+                <fieldset class="fieldset">
+                  <legend class="fieldset-legend">Color</legend>
+                  <select
+                    class="select w-full"
+                    disabled={!isColorSelectEnabled()}
+                    value={selectedColorId.value === null ? "all" : String(selectedColorId.value)}
+                    onChange={(e) => {
+                      const val = e.currentTarget.value;
+                      const colorId = val === "all" ? null : parseInt(val, 10);
+                      selectedColorId.value = colorId;
+                      refreshMarketplace(colorId);
+                    }}
+                  >
+                    <option value="all">All</option>
+                    {itemColors.value
+                      .filter((c) => c.color_id !== 0)
+                      .map((c) => <option key={c.color_id} value={String(c.color_id)}>{c.color_name}</option>)}
+                  </select>
                 </fieldset>
               </div>
               <div class="grid grid-cols-3 gap-3 mb-3">
@@ -293,6 +367,7 @@ export default function Inventory() {
                     <tr>
                       <th>Type</th>
                       <th>Item ID</th>
+                      <th>Color</th>
                       <th class="text-right">Price</th>
                       <th class="text-right">Qty</th>
                       <th>Condition</th>
@@ -306,6 +381,9 @@ export default function Inventory() {
                       <tr key={item.id}>
                         <td>{TYPE_LABELS[item.ITEMTYPE]}</td>
                         <td class="font-mono">{item.ITEMID}</td>
+                        <td class="text-sm">
+                          {item.COLOR_NAME ?? (item.COLOR !== undefined ? String(item.COLOR) : "—")}
+                        </td>
                         <td class="text-right font-mono">{item.PRICE.toFixed(2)}</td>
                         <td class="text-right font-mono">{item.QTY}</td>
                         <td>{item.CONDITION === "N" ? "New" : "Used"}</td>
