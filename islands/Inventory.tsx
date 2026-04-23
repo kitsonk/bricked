@@ -1,4 +1,5 @@
 import { useSignal } from "@preact/signals";
+import { useRef } from "preact/hooks";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 
 type ItemType = "S" | "P" | "M" | "B" | "G" | "C" | "I" | "O";
@@ -76,6 +77,7 @@ export default function Inventory() {
   const catalogItem = useSignal<CatalogItem | null>(null);
   const colorImageUrl = useSignal<string | null>(null); // overrides catalogItem.image_url for a specific color
   const partCount = useSignal<number | null>(null);
+  const imageDialogRef = useRef<HTMLDialogElement>(null);
 
   // Color select is only useful when the item has more than one real color.
   // A single color with ID 0 means the item is colorless.
@@ -202,333 +204,364 @@ export default function Inventory() {
   }
 
   return (
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-      <div class="space-y-8">
-        <section>
-          <h2 class="text-lg font-semibold mb-4">Add Item</h2>
-          <div class="border border-base-content/10 rounded-box p-4">
-            <form onSubmit={addItem}>
-              <div class="grid grid-cols-3 gap-3 mb-3">
-                <fieldset class="fieldset">
-                  <legend class="fieldset-legend">Item Type</legend>
-                  <select
-                    class="select w-full"
-                    required
-                    value={itemType.value}
-                    onChange={(e) => (itemType.value = e.currentTarget.value as ItemType)}
-                  >
-                    {ITEM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </fieldset>
-                <fieldset class="fieldset">
-                  <legend class="fieldset-legend">Item ID</legend>
-                  <div class="join w-full">
-                    <input
-                      type="text"
-                      class="input join-item w-full"
-                      placeholder="e.g. 10255"
+    <>
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+        <div class="space-y-8">
+          <section>
+            <h2 class="text-lg font-semibold mb-4">Add Item</h2>
+            <div class="border border-base-content/10 rounded-box p-4">
+              <form onSubmit={addItem}>
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                  <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Item Type</legend>
+                    <select
+                      class="select w-full"
                       required
-                      value={itemId.value}
-                      onInput={(e) => (itemId.value = e.currentTarget.value)}
-                    />
-                    <button
-                      type="button"
-                      class="btn btn-primary join-item"
-                      title="Look up item"
-                      disabled={marketplaceLoading.value || !itemId.value.trim()}
-                      onClick={fetchMarketplace}
+                      value={itemType.value}
+                      onChange={(e) => (itemType.value = e.currentTarget.value as ItemType)}
                     >
-                      {marketplaceLoading.value
-                        ? <span class="loading loading-spinner loading-xs"></span>
-                        : <span class="iconify lucide--search size-4"></span>}
-                    </button>
-                  </div>
-                </fieldset>
-                <fieldset class="fieldset">
-                  <legend class="fieldset-legend">Color</legend>
-                  <select
-                    class="select w-full"
-                    disabled={!isColorSelectEnabled()}
-                    value={selectedColorId.value === null ? "all" : String(selectedColorId.value)}
-                    onChange={(e) => {
-                      const val = e.currentTarget.value;
-                      const colorId = val === "all" ? null : parseInt(val, 10);
-                      selectedColorId.value = colorId;
-                      refreshMarketplace(colorId);
-                    }}
-                  >
-                    <option value="all">All</option>
-                    {itemColors.value
-                      .filter((c) => c.color_id !== 0)
-                      .map((c) => <option key={c.color_id} value={String(c.color_id)}>{c.color_name}</option>)}
-                  </select>
-                </fieldset>
-              </div>
-              <div class="grid grid-cols-3 gap-3 mb-3">
-                <fieldset class="fieldset">
-                  <legend class="fieldset-legend">Price</legend>
+                      {ITEM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                  </fieldset>
+                  <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Item ID</legend>
+                    <div class="join w-full">
+                      <input
+                        type="text"
+                        class="input join-item w-full"
+                        placeholder="e.g. 10255"
+                        required
+                        value={itemId.value}
+                        onInput={(e) => (itemId.value = e.currentTarget.value)}
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-primary join-item"
+                        title="Look up item"
+                        disabled={marketplaceLoading.value || !itemId.value.trim()}
+                        onClick={fetchMarketplace}
+                      >
+                        {marketplaceLoading.value
+                          ? <span class="loading loading-spinner loading-xs"></span>
+                          : <span class="iconify lucide--search size-4"></span>}
+                      </button>
+                    </div>
+                  </fieldset>
+                  <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Color</legend>
+                    <select
+                      class="select w-full"
+                      disabled={!isColorSelectEnabled()}
+                      value={selectedColorId.value === null ? "all" : String(selectedColorId.value)}
+                      onChange={(e) => {
+                        const val = e.currentTarget.value;
+                        const colorId = val === "all" ? null : parseInt(val, 10);
+                        selectedColorId.value = colorId;
+                        refreshMarketplace(colorId);
+                      }}
+                    >
+                      <option value="all">All</option>
+                      {itemColors.value
+                        .filter((c) => c.color_id !== 0)
+                        .map((c) => <option key={c.color_id} value={String(c.color_id)}>{c.color_name}</option>)}
+                    </select>
+                  </fieldset>
+                </div>
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                  <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Price</legend>
+                    <input
+                      type="number"
+                      class="input w-full"
+                      placeholder="0.00"
+                      required
+                      min="0"
+                      step="0.01"
+                      value={price.value}
+                      onInput={(e) => (price.value = e.currentTarget.value)}
+                    />
+                  </fieldset>
+                  <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Qty</legend>
+                    <input
+                      type="number"
+                      class="input w-full"
+                      placeholder="1"
+                      required
+                      min="1"
+                      step="1"
+                      value={qty.value}
+                      onInput={(e) => (qty.value = e.currentTarget.value)}
+                    />
+                  </fieldset>
+                  <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Condition</legend>
+                    <select
+                      class="select w-full"
+                      required
+                      value={condition.value}
+                      onChange={(e) => (condition.value = e.currentTarget.value as Condition)}
+                    >
+                      <option value="N">New</option>
+                      <option value="U">Used</option>
+                    </select>
+                  </fieldset>
+                </div>
+                <fieldset class="fieldset mb-3">
+                  <legend class="fieldset-legend">Description</legend>
                   <input
-                    type="number"
+                    type="text"
                     class="input w-full"
-                    placeholder="0.00"
-                    required
-                    min="0"
-                    step="0.01"
-                    value={price.value}
-                    onInput={(e) => (price.value = e.currentTarget.value)}
+                    placeholder="Optional"
+                    maxLength={255}
+                    value={description.value}
+                    onInput={(e) => (description.value = e.currentTarget.value)}
                   />
                 </fieldset>
-                <fieldset class="fieldset">
-                  <legend class="fieldset-legend">Qty</legend>
+                <fieldset class="fieldset mb-4">
+                  <legend class="fieldset-legend">Remarks</legend>
                   <input
-                    type="number"
+                    type="text"
                     class="input w-full"
-                    placeholder="1"
-                    required
-                    min="1"
-                    step="1"
-                    value={qty.value}
-                    onInput={(e) => (qty.value = e.currentTarget.value)}
+                    placeholder="Optional"
+                    value={remarks.value}
+                    onInput={(e) => (remarks.value = e.currentTarget.value)}
                   />
                 </fieldset>
-                <fieldset class="fieldset">
-                  <legend class="fieldset-legend">Condition</legend>
-                  <select
-                    class="select w-full"
-                    required
-                    value={condition.value}
-                    onChange={(e) => (condition.value = e.currentTarget.value as Condition)}
-                  >
-                    <option value="N">New</option>
-                    <option value="U">Used</option>
-                  </select>
-                </fieldset>
-              </div>
-              <fieldset class="fieldset mb-3">
-                <legend class="fieldset-legend">Description</legend>
-                <input
-                  type="text"
-                  class="input w-full"
-                  placeholder="Optional"
-                  maxLength={255}
-                  value={description.value}
-                  onInput={(e) => (description.value = e.currentTarget.value)}
-                />
-              </fieldset>
-              <fieldset class="fieldset mb-4">
-                <legend class="fieldset-legend">Remarks</legend>
-                <input
-                  type="text"
-                  class="input w-full"
-                  placeholder="Optional"
-                  value={remarks.value}
-                  onInput={(e) => (remarks.value = e.currentTarget.value)}
-                />
-              </fieldset>
-              <div class="flex justify-end">
-                <button type="submit" class="btn btn-primary btn-sm">
-                  <span class="iconify lucide--plus size-4"></span>
-                  Add Item
+                <div class="flex justify-end">
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <span class="iconify lucide--plus size-4"></span>
+                    Add Item
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold">
+                Pending Items
+                {pending.value.length > 0 &&
+                  <span class="badge badge-neutral badge-sm ml-2">{pending.value.length}</span>}
+              </h2>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline"
+                  disabled={pending.value.length === 0 || copying.value}
+                  onClick={copyXml}
+                >
+                  {copying.value
+                    ? <span class="loading loading-spinner loading-xs"></span>
+                    : <span class="iconify lucide--clipboard size-4"></span>}
+                  Copy XML
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-ghost text-error"
+                  disabled={pending.value.length === 0}
+                  onClick={() => {
+                    pending.value = [];
+                    copyError.value = null;
+                  }}
+                >
+                  <span class="iconify lucide--rotate-ccw size-4"></span>
+                  Reset
                 </button>
               </div>
-            </form>
-          </div>
-        </section>
-
-        <section>
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold">
-              Pending Items
-              {pending.value.length > 0 &&
-                <span class="badge badge-neutral badge-sm ml-2">{pending.value.length}</span>}
-            </h2>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline"
-                disabled={pending.value.length === 0 || copying.value}
-                onClick={copyXml}
-              >
-                {copying.value
-                  ? <span class="loading loading-spinner loading-xs"></span>
-                  : <span class="iconify lucide--clipboard size-4"></span>}
-                Copy XML
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-ghost text-error"
-                disabled={pending.value.length === 0}
-                onClick={() => {
-                  pending.value = [];
-                  copyError.value = null;
-                }}
-              >
-                <span class="iconify lucide--rotate-ccw size-4"></span>
-                Reset
-              </button>
             </div>
-          </div>
-          {copyError.value && (
-            <div role="alert" class="alert alert-error mb-4">
-              <span class="iconify lucide--alert-circle size-5"></span>
-              <div>{copyError.value}</div>
-            </div>
-          )}
-          {pending.value.length === 0
-            ? (
-              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                <span class="iconify lucide--inbox size-10 mb-2"></span>
-                <p class="text-sm">No pending items. Add items above.</p>
-              </div>
-            )
-            : (
-              <div class="overflow-x-auto rounded-box border border-base-content/10">
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Item ID</th>
-                      <th>Color</th>
-                      <th class="text-right">Price</th>
-                      <th class="text-right">Qty</th>
-                      <th>Condition</th>
-                      <th>Description</th>
-                      <th>Remarks</th>
-                      <th class="w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pending.value.map((item) => (
-                      <tr key={item.id}>
-                        <td>{TYPE_LABELS[item.ITEMTYPE]}</td>
-                        <td class="font-mono">{item.ITEMID}</td>
-                        <td class="text-sm">
-                          {item.COLOR_NAME ?? (item.COLOR !== undefined ? String(item.COLOR) : "—")}
-                        </td>
-                        <td class="text-right font-mono">{item.PRICE.toFixed(2)}</td>
-                        <td class="text-right font-mono">{item.QTY}</td>
-                        <td>{item.CONDITION === "N" ? "New" : "Used"}</td>
-                        <td class="text-base-content/70 text-sm max-w-48 truncate">{item.DESCRIPTION || "—"}</td>
-                        <td class="text-base-content/70 text-sm max-w-48 truncate">{item.REMARKS || "—"}</td>
-                        <td>
-                          <button
-                            type="button"
-                            class="btn btn-ghost btn-xs btn-square text-error"
-                            title="Remove"
-                            onClick={() => removeItem(item.id)}
-                          >
-                            <span class="iconify lucide--trash-2 size-3.5"></span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {copyError.value && (
+              <div role="alert" class="alert alert-error mb-4">
+                <span class="iconify lucide--alert-circle size-5"></span>
+                <div>{copyError.value}</div>
               </div>
             )}
-        </section>
-      </div>
-
-      <div class="space-y-8">
-        <section>
-          <h2 class="text-lg font-semibold mb-4">Item Overview</h2>
-          {catalogItem.value
-            ? (
-              <div class="border border-base-content/10 rounded-box p-4 flex gap-4 items-start">
-                <img
-                  src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
-                  alt={catalogItem.value.name}
-                  class="w-24 h-24 object-contain rounded-box bg-base-200 shrink-0"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-start gap-2 mb-1">
-                    <h3 class="font-semibold text-base">{catalogItem.value.name}</h3>
-                    {catalogItem.value.is_obsolete && (
-                      <span class="badge badge-warning badge-sm shrink-0 mt-0.5">Obsolete</span>
-                    )}
-                  </div>
-                  <p class="text-sm text-base-content/70">{catalogItem.value.year_released}</p>
-                  {partCount.value !== null && <p class="text-sm text-base-content/70">{partCount.value} parts</p>}
+            {pending.value.length === 0
+              ? (
+                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                  <span class="iconify lucide--inbox size-10 mb-2"></span>
+                  <p class="text-sm">No pending items. Add items above.</p>
                 </div>
-              </div>
-            )
-            : (
-              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                <span class="iconify lucide--package size-10 mb-2"></span>
-                <p class="text-sm">Item details will appear here after a lookup.</p>
-              </div>
-            )}
-        </section>
-
-        <section>
-          <h2 class="text-lg font-semibold mb-4">Store Items</h2>
-          <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-            <span class="iconify lucide--store size-10 mb-2"></span>
-            <p class="text-sm">Store items matching the item ID will appear here.</p>
-          </div>
-        </section>
-
-        <section>
-          <h2 class="text-lg font-semibold mb-4">Marketplace Items</h2>
-          {marketplaceError.value && (
-            <div role="alert" class="alert alert-error mb-4">
-              <span class="iconify lucide--alert-circle size-5"></span>
-              <div>{marketplaceError.value}</div>
-            </div>
-          )}
-          {marketplaceLoading.value
-            ? (
-              <div class="flex justify-center py-10">
-                <span class="loading loading-spinner loading-md"></span>
-              </div>
-            )
-            : marketplaceItems.value === null
-            ? (
-              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
-                <p class="text-sm">Enter an item ID and click search to load marketplace listings.</p>
-              </div>
-            )
-            : marketplaceItems.value.length === 0
-            ? (
-              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
-                <p class="text-sm">No marketplace listings found.</p>
-              </div>
-            )
-            : (
-              <div class="overflow-x-auto rounded-box border border-base-content/10">
-                <table class="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Store</th>
-                      <th class="text-right">Qty</th>
-                      <th class="text-right">Price</th>
-                      <th>Condition</th>
-                      <th>Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {marketplaceItems.value.map((item, i) => (
-                      <tr key={i}>
-                        <td class="font-medium">
-                          {item.strStorename}{" "}
-                          <span class="text-base-content/50 font-normal text-sm">({item.n4SellerFeedbackScore})</span>
-                        </td>
-                        <td class="text-right font-mono">{item.n4Qty}</td>
-                        <td class="text-right font-mono">{formatPrice(item.mInvSalePrice)}</td>
-                        <td>
-                          <ConditionBadge condition={item.codeNew as "N" | "U"} />
-                        </td>
-                        <td class="text-base-content/70 text-sm">{item.strDesc}</td>
+              )
+              : (
+                <div class="overflow-x-auto rounded-box border border-base-content/10">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Item ID</th>
+                        <th>Color</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-right">Qty</th>
+                        <th>Condition</th>
+                        <th>Description</th>
+                        <th>Remarks</th>
+                        <th class="w-10"></th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {pending.value.map((item) => (
+                        <tr key={item.id}>
+                          <td>{TYPE_LABELS[item.ITEMTYPE]}</td>
+                          <td class="font-mono">{item.ITEMID}</td>
+                          <td class="text-sm">
+                            {item.COLOR_NAME ?? (item.COLOR !== undefined ? String(item.COLOR) : "—")}
+                          </td>
+                          <td class="text-right font-mono">{item.PRICE.toFixed(2)}</td>
+                          <td class="text-right font-mono">{item.QTY}</td>
+                          <td>{item.CONDITION === "N" ? "New" : "Used"}</td>
+                          <td class="text-base-content/70 text-sm max-w-48 truncate">{item.DESCRIPTION || "—"}</td>
+                          <td class="text-base-content/70 text-sm max-w-48 truncate">{item.REMARKS || "—"}</td>
+                          <td>
+                            <button
+                              type="button"
+                              class="btn btn-ghost btn-xs btn-square text-error"
+                              title="Remove"
+                              onClick={() => removeItem(item.id)}
+                            >
+                              <span class="iconify lucide--trash-2 size-3.5"></span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+          </section>
+        </div>
+
+        <div class="space-y-8">
+          <section>
+            <h2 class="text-lg font-semibold mb-4">Item Overview</h2>
+            {catalogItem.value
+              ? (
+                <div class="border border-base-content/10 rounded-box p-4 flex gap-4 items-start">
+                  <button
+                    type="button"
+                    class="relative group cursor-zoom-in shrink-0"
+                    onClick={() => imageDialogRef.current?.showModal()}
+                    aria-label="View full image"
+                  >
+                    <img
+                      src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
+                      alt={catalogItem.value.name}
+                      class="w-24 h-24 object-contain rounded-box bg-base-200"
+                    />
+                    <div class="absolute inset-0 rounded-box bg-base-content/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span class="iconify lucide--zoom-in size-6 text-base-100"></span>
+                    </div>
+                  </button>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-start gap-2 mb-1">
+                      <h3 class="font-semibold text-base">{catalogItem.value.name}</h3>
+                      {catalogItem.value.is_obsolete && (
+                        <span class="badge badge-warning badge-sm shrink-0 mt-0.5">Obsolete</span>
+                      )}
+                    </div>
+                    <p class="text-sm text-base-content/70">{catalogItem.value.year_released}</p>
+                    {partCount.value !== null && <p class="text-sm text-base-content/70">{partCount.value} parts</p>}
+                  </div>
+                </div>
+              )
+              : (
+                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                  <span class="iconify lucide--package size-10 mb-2"></span>
+                  <p class="text-sm">Item details will appear here after a lookup.</p>
+                </div>
+              )}
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold mb-4">Store Items</h2>
+            <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+              <span class="iconify lucide--store size-10 mb-2"></span>
+              <p class="text-sm">Store items matching the item ID will appear here.</p>
+            </div>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold mb-4">Marketplace Items</h2>
+            {marketplaceError.value && (
+              <div role="alert" class="alert alert-error mb-4">
+                <span class="iconify lucide--alert-circle size-5"></span>
+                <div>{marketplaceError.value}</div>
               </div>
             )}
-        </section>
+            {marketplaceLoading.value
+              ? (
+                <div class="flex justify-center py-10">
+                  <span class="loading loading-spinner loading-md"></span>
+                </div>
+              )
+              : marketplaceItems.value === null
+              ? (
+                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                  <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
+                  <p class="text-sm">Enter an item ID and click search to load marketplace listings.</p>
+                </div>
+              )
+              : marketplaceItems.value.length === 0
+              ? (
+                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                  <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
+                  <p class="text-sm">No marketplace listings found.</p>
+                </div>
+              )
+              : (
+                <div class="overflow-x-auto rounded-box border border-base-content/10">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Store</th>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Price</th>
+                        <th>Condition</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {marketplaceItems.value.map((item, i) => (
+                        <tr key={i}>
+                          <td class="font-medium">
+                            {item.strStorename}{" "}
+                            <span class="text-base-content/50 font-normal text-sm">({item.n4SellerFeedbackScore})</span>
+                          </td>
+                          <td class="text-right font-mono">{item.n4Qty}</td>
+                          <td class="text-right font-mono">{formatPrice(item.mInvSalePrice)}</td>
+                          <td>
+                            <ConditionBadge condition={item.codeNew as "N" | "U"} />
+                          </td>
+                          <td class="text-base-content/70 text-sm">{item.strDesc}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+          </section>
+        </div>
       </div>
-    </div>
+
+      {catalogItem.value && (
+        <dialog ref={imageDialogRef} class="modal">
+          <div class="modal-box flex flex-col items-center p-6 max-w-xl">
+            <form method="dialog">
+              <button type="submit" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            </form>
+            <img
+              src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
+              alt={catalogItem.value.name}
+              class="max-w-full max-h-[70vh] object-contain"
+            />
+            <p class="mt-3 text-sm font-medium text-center">{catalogItem.value.name}</p>
+          </div>
+          <form method="dialog" class="modal-backdrop">
+            <button type="submit">close</button>
+          </form>
+        </dialog>
+      )}
+    </>
   );
 }
