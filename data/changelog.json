@@ -1,8 +1,43 @@
 [
   {
+    "hash": "1b386a3",
+    "subject": "Add color selection to inventory item lookup",
+    "body": "Fetches known colors for an item via the BrickLink API on initial lookup, enriching names from the KV color cache. Color select enables when the item has real colors; selecting a color re-fetches marketplace listings filtered by that color without repeating the color API call. COLOR is included in pending items and the XML output; COLOR_NAME is display-only and stripped before submission."
+  },
+  {
+    "hash": "b1d931f",
+    "subject": "Add Colors settings page with BrickLink cache and 24h cron",
+    "body": "Adds BLColor and ColorsMeta types, KV helpers for color storage, and BricklinkClient.getColors() via GET /colors. A refreshColors() utility stores each color individually in KV. New POST /api/colors/refresh endpoint returns updated colors and meta. The Colors island shows swatches, IDs, names, and types with a Refresh button. The /colors page follows the standard route/partial pattern, appears in the Settings sidebar with a palette icon, and a Deno cron runs automatic refresh at 01:00 daily."
+  },
+  {
+    "hash": "f6bec33",
+    "subject": "Add marketplace lookup to Inventory page",
+    "body": "Adds a two-step BrickLink API proxy: resolve user-facing item ID to internal ID via the catalog search API (cached in KV on success), then fetch AU marketplace listings. Adds POST /api/xml for JSON-to-XML conversion using @libs/xml and GET /api/marketplace. The Inventory island shows a marketplace table with store feedback score, quantity, price, condition, and description."
+  },
+  {
+    "hash": "89ab228",
+    "subject": "Add Inventory data entry UI and XML API",
+    "body": "Adds POST /api/xml endpoint using @libs/xml to convert JSON to XML. Adds the Inventory island with item entry form, pending items table with Copy XML and Reset actions, and stub sections for store and marketplace. Two-column layout on wide screens with form fields split across four rows."
+  },
+  {
+    "hash": "83508e9",
+    "subject": "Fix double spacing in Inventory page",
+    "body": "Remove wrapper div with p-6 from InventoryContent — AppFrame already provides page padding, matching the pattern used by other content components."
+  },
+  {
+    "hash": "7ba3bd0",
+    "subject": "Add Inventory page stub and update sidebar",
+    "body": "Adds shell Inventory route/partial, inserts it between Orders and Customers in the sidebar (renamed from \"Processing\" to \"Workflow\"), and registers the warehouse icon in @source inline."
+  },
+  {
     "hash": "0dd7de3",
     "subject": "Optimise @source inline to only include dynamically interpolated icons",
     "body": "Reduced the icon pragma from 35 entries to 9 — only the icons passed dynamically via the Sidebar MenuItem icon prop. Statically referenced icons are detected automatically by Tailwind's scanner. Also removed 9 icons that were unused entirely."
+  },
+  {
+    "hash": "5c1fd5f",
+    "subject": "Add Change Log page under Admin section",
+    "body": "Adds /admin/changelog route displaying a collapsible list of changes sourced from data/changelog.json. Each entry uses a DaisyUI details/summary collapse with the commit subject as the title and optional body as detail. The changelog data is maintained separately in JSON so new entries can be prepended without touching the route code."
   },
   {
     "hash": "1ecefe8",
