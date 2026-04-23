@@ -1,6 +1,8 @@
 import type {
+  BLCatalogItem,
   BLColor,
   BLItemColor,
+  BLItemImage,
   BLMemberRating,
   BLNotification,
   BLOrder,
@@ -145,6 +147,18 @@ export class BricklinkClient {
   getItemColors(itemType: string, itemNo: string): Promise<BLItemColor[]> {
     const apiType = ITEM_TYPE_API[itemType] ?? itemType;
     return this.get<BLItemColor[]>(`/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/colors`);
+  }
+
+  getCatalogItem(itemType: string, itemNo: string): Promise<BLCatalogItem> {
+    const apiType = ITEM_TYPE_API[itemType] ?? itemType;
+    return this.get<BLCatalogItem>(`/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}`);
+  }
+
+  getItemImage(itemType: string, itemNo: string, colorId: number): Promise<BLItemImage> {
+    const apiType = ITEM_TYPE_API[itemType] ?? itemType;
+    return this.get<BLItemImage>(
+      `/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/images/${colorId}`,
+    );
   }
 
   getMemberRating(username: string): Promise<BLMemberRating> {

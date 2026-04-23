@@ -31,6 +31,13 @@ type ItemColor = {
   color_name: string;
 };
 
+type CatalogItem = {
+  name: string;
+  image_url: string;
+  year_released: number;
+  is_obsolete: boolean;
+};
+
 function formatPrice(raw: string): string {
   return raw.startsWith("AU ") ? raw.slice(3) : raw;
 }
@@ -66,6 +73,8 @@ export default function Inventory() {
   const marketplaceError = useSignal<string | null>(null);
   const itemColors = useSignal<ItemColor[]>([]);
   const selectedColorId = useSignal<number | null>(null); // null = All
+  const catalogItem = useSignal<CatalogItem | null>(null);
+  const colorImageUrl = useSignal<string | null>(null); // overrides catalogItem.image_url for a specific color
 
   // Color select is only useful when the item has more than one real color.
   // A single color with ID 0 means the item is colorless.
@@ -105,6 +114,8 @@ export default function Inventory() {
     itemColors.value = [];
     selectedColorId.value = null;
     marketplaceItems.value = null;
+    catalogItem.value = null;
+    colorImageUrl.value = null;
   }
 
   function removeItem(id: string) {
@@ -143,6 +154,8 @@ export default function Inventory() {
     marketplaceItems.value = null;
     itemColors.value = [];
     selectedColorId.value = null;
+    catalogItem.value = null;
+    colorImageUrl.value = null;
     try {
       const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(itemType.value)}`;
       const resp = await fetch(url);
@@ -150,6 +163,7 @@ export default function Inventory() {
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
       itemColors.value = json.colors ?? [];
+      catalogItem.value = json.catalogItem ?? null;
     } catch (err) {
       marketplaceError.value = String(err);
     } finally {
@@ -157,13 +171,15 @@ export default function Inventory() {
     }
   }
 
-  // Re-fetches marketplace listings for a specific color. Skips the color lookup.
+  // Re-fetches marketplace listings for a specific color. Skips the color/catalog lookup.
   async function refreshMarketplace(colorId: number | null) {
     const id = itemId.value.trim();
     if (!id) return;
     marketplaceLoading.value = true;
     marketplaceError.value = null;
     marketplaceItems.value = null;
+    // Selecting "All" restores the original catalog image immediately.
+    if (colorId === null) colorImageUrl.value = null;
     try {
       const colorParam = colorId !== null ? String(colorId) : "all";
       const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
@@ -173,6 +189,7 @@ export default function Inventory() {
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
+      if (json.imageUrl) colorImageUrl.value = json.imageUrl;
     } catch (err) {
       marketplaceError.value = String(err);
     } finally {
@@ -409,6 +426,35 @@ export default function Inventory() {
       </div>
 
       <div class="space-y-8">
+        <section>
+          <h2 class="text-lg font-semibold mb-4">Item Overview</h2>
+          {catalogItem.value
+            ? (
+              <div class="border border-base-content/10 rounded-box p-4 flex gap-4 items-start">
+                <img
+                  src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
+                  alt={catalogItem.value.name}
+                  class="w-24 h-24 object-contain rounded-box bg-base-200 shrink-0"
+                />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start gap-2 mb-1">
+                    <h3 class="font-semibold text-base">{catalogItem.value.name}</h3>
+                    {catalogItem.value.is_obsolete && (
+                      <span class="badge badge-warning badge-sm shrink-0 mt-0.5">Obsolete</span>
+                    )}
+                  </div>
+                  <p class="text-sm text-base-content/70">{catalogItem.value.year_released}</p>
+                </div>
+              </div>
+            )
+            : (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--package size-10 mb-2"></span>
+                <p class="text-sm">Item details will appear here after a lookup.</p>
+              </div>
+            )}
+        </section>
+
         <section>
           <h2 class="text-lg font-semibold mb-4">Store Items</h2>
           <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">

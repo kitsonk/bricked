@@ -296,6 +296,28 @@ export interface BLColor {
   color_type: string;
 }
 
+/** Item image data returned by GET /items/{type}/{no}/images/{colorId}. */
+export interface BLItemImage {
+  type: string;
+  no: string;
+  thumbnail_url: string;
+}
+
+/** A catalog item returned by GET /items/{type}/{no}. */
+export interface BLCatalogItem {
+  no: string;
+  name: string;
+  type: string;
+  category_id: number;
+  image_url: string;
+  thumbnail_url: string;
+  weight: string;
+  year_released: number;
+  description: string;
+  is_obsolete: boolean;
+  language_code: string;
+}
+
 /** A color known to exist for a specific item, from GET /items/{type}/{no}/colors. */
 export interface BLItemColor extends BLColor {
   quantity: {
