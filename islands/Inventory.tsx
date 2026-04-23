@@ -39,6 +39,13 @@ type CatalogItem = {
   is_obsolete: boolean;
 };
 
+type StoreItem = {
+  invQty: number;
+  nativePrice: string;
+  invNew: string;
+  invDescription: string;
+};
+
 function formatPrice(raw: string): string {
   return raw.startsWith("AU ") ? raw.slice(3) : raw;
 }
@@ -77,6 +84,8 @@ export default function Inventory() {
   const catalogItem = useSignal<CatalogItem | null>(null);
   const colorImageUrl = useSignal<string | null>(null); // overrides catalogItem.image_url for a specific color
   const partCount = useSignal<number | null>(null);
+  const storeItems = useSignal<StoreItem[] | null>(null);
+  const storeItemId = useSignal<number | null>(null);
   const imageDialogRef = useRef<HTMLDialogElement>(null);
 
   // Color select is only useful when the item has more than one real color.
@@ -120,6 +129,8 @@ export default function Inventory() {
     catalogItem.value = null;
     colorImageUrl.value = null;
     partCount.value = null;
+    storeItems.value = null;
+    storeItemId.value = null;
   }
 
   function removeItem(id: string) {
@@ -161,6 +172,8 @@ export default function Inventory() {
     catalogItem.value = null;
     colorImageUrl.value = null;
     partCount.value = null;
+    storeItems.value = null;
+    storeItemId.value = null;
     try {
       const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(itemType.value)}`;
       const resp = await fetch(url);
@@ -170,6 +183,8 @@ export default function Inventory() {
       itemColors.value = json.colors ?? [];
       catalogItem.value = json.catalogItem ?? null;
       partCount.value = json.partCount ?? null;
+      storeItems.value = json.storeItems ?? [];
+      storeItemId.value = json.idItem ?? null;
     } catch (err) {
       marketplaceError.value = String(err);
     } finally {
@@ -184,6 +199,7 @@ export default function Inventory() {
     marketplaceLoading.value = true;
     marketplaceError.value = null;
     marketplaceItems.value = null;
+    storeItems.value = null;
     // Selecting "All" restores the original catalog image immediately.
     if (colorId === null) colorImageUrl.value = null;
     try {
@@ -195,6 +211,7 @@ export default function Inventory() {
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
+      storeItems.value = json.storeItems ?? [];
       if (json.imageUrl) colorImageUrl.value = json.imageUrl;
     } catch (err) {
       marketplaceError.value = String(err);
@@ -475,10 +492,71 @@ export default function Inventory() {
 
           <section>
             <h2 class="text-lg font-semibold mb-4">Store Items</h2>
-            <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-              <span class="iconify lucide--store size-10 mb-2"></span>
-              <p class="text-sm">Store items matching the item ID will appear here.</p>
-            </div>
+            {marketplaceLoading.value
+              ? (
+                <div class="flex justify-center py-10">
+                  <span class="loading loading-spinner loading-md"></span>
+                </div>
+              )
+              : storeItems.value === null
+              ? (
+                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                  <span class="iconify lucide--store size-10 mb-2"></span>
+                  <p class="text-sm">Store items matching the item ID will appear here.</p>
+                </div>
+              )
+              : storeItems.value.length === 0
+              ? (
+                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                  <span class="iconify lucide--store size-10 mb-2"></span>
+                  <p class="text-sm">No store listings found for this item.</p>
+                </div>
+              )
+              : (
+                <div class="overflow-x-auto rounded-box border border-base-content/10">
+                  <table class="table table-sm">
+                    <thead>
+                      <tr>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Price</th>
+                        <th>Condition</th>
+                        <th>Description</th>
+                        <th class="w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {storeItems.value.map((item, i) => {
+                        const detailUrl = new URL("https://www.bricklink.com/v2/inventory_detail.page");
+                        if (storeItemId.value) detailUrl.searchParams.set("itemID", String(storeItemId.value));
+                        if (selectedColorId.value !== null && selectedColorId.value > 0) {
+                          detailUrl.searchParams.set("colorID", String(selectedColorId.value));
+                        }
+                        return (
+                          <tr key={i}>
+                            <td class="text-right font-mono">{item.invQty}</td>
+                            <td class="text-right font-mono">{formatPrice(item.nativePrice)}</td>
+                            <td>
+                              <ConditionBadge condition={item.invNew === "New" ? "N" : "U"} />
+                            </td>
+                            <td class="text-base-content/70 text-sm">{item.invDescription}</td>
+                            <td>
+                              <a
+                                href={detailUrl.toString()}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn btn-ghost btn-xs btn-square"
+                                title="View on BrickLink"
+                              >
+                                <span class="iconify lucide--external-link size-3.5"></span>
+                              </a>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
           </section>
 
           <section>

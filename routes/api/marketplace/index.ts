@@ -52,6 +52,13 @@ export const handler = define.handlers({
       marketplaceUrl.searchParams.set("color", String(colorIdNum));
     }
 
+    const storeUrl = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
+    storeUrl.searchParams.set("sid", "4245762");
+    storeUrl.searchParams.set("itemID", String(idItem));
+    if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
+      storeUrl.searchParams.set("colorID", String(colorIdNum));
+    }
+
     const creds = getCredentials();
     const client = creds ? new BricklinkClient(creds) : null;
     const isInitial = coloridParam === null;
@@ -88,13 +95,15 @@ export const handler = define.handlers({
       : Promise.resolve([]);
 
     let marketplaceResp: Response;
+    let storeResp: Response;
     let colors: { color_id: number; color_name: string }[];
     let catalogItem: BLCatalogItem | null;
     let imageUrl: string | null;
     let subsets: BLSubsetEntry[];
     try {
-      [marketplaceResp, colors, catalogItem, imageUrl, subsets] = await Promise.all([
+      [marketplaceResp, storeResp, colors, catalogItem, imageUrl, subsets] = await Promise.all([
         fetch(marketplaceUrl),
+        fetch(storeUrl),
         colorsPromise,
         catalogItemPromise,
         imageUrlPromise,
@@ -107,7 +116,20 @@ export const handler = define.handlers({
       return Response.json({ error: `Upstream HTTP ${marketplaceResp.status}` }, { status: 502 });
     }
 
+    const storeJson = storeResp.ok
+      ? await storeResp.json() as { result?: { groups?: Array<{ items?: unknown[] }> } }
+      : null;
+    const storeItems = storeJson?.result?.groups?.[0]?.items ?? [];
+
     const partCount = subsets.length > 0 ? subsets.length : null;
-    return Response.json({ ...await marketplaceResp.json(), colors, catalogItem, imageUrl, partCount });
+    return Response.json({
+      ...await marketplaceResp.json(),
+      colors,
+      catalogItem,
+      imageUrl,
+      partCount,
+      storeItems,
+      idItem,
+    });
   },
 });
