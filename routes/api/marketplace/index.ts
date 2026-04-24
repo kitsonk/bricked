@@ -18,6 +18,10 @@ export const handler = define.handlers({
     // colorid=N (int) → specific color: fetch marketplace filtered by N + color-specific image
     const coloridParam = ctx.url.searchParams.get("colorid");
     const colorIdNum = coloridParam && coloridParam !== "all" ? parseInt(coloridParam, 10) : null;
+    const pageParam = parseInt(ctx.url.searchParams.get("page") ?? "1", 10);
+    const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+    // list_only=true → page navigation: skip store + image fetches, return only marketplace listing data
+    const listOnly = ctx.url.searchParams.get("list_only") === "true";
 
     // Resolve the internal BrickLink item ID, using KV cache if available.
     let searchResult = await getBricklinkItemSearch(itemid);
@@ -48,15 +52,10 @@ export const handler = define.handlers({
     const marketplaceUrl = new URL("https://www.bricklink.com/ajax/clone/catalogifs.ajax");
     marketplaceUrl.searchParams.set("itemid", String(idItem));
     marketplaceUrl.searchParams.set("loc", "AU");
+    marketplaceUrl.searchParams.set("rpp", "10");
+    marketplaceUrl.searchParams.set("pi", String(page));
     if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
       marketplaceUrl.searchParams.set("color", String(colorIdNum));
-    }
-
-    const storeUrl = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
-    storeUrl.searchParams.set("sid", "4245762");
-    storeUrl.searchParams.set("itemID", String(idItem));
-    if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
-      storeUrl.searchParams.set("colorID", String(colorIdNum));
     }
 
     const creds = getCredentials();
@@ -80,7 +79,7 @@ export const handler = define.handlers({
       ? client.getCatalogItem(itemtype, itemid).catch(() => null)
       : Promise.resolve(null);
 
-    const imageUrlPromise: Promise<string | null> = colorIdNum !== null && colorIdNum > 0 && client
+    const imageUrlPromise: Promise<string | null> = !listOnly && colorIdNum !== null && colorIdNum > 0 && client
       ? client.getItemImage(itemtype, itemid, colorIdNum)
         .then((img) => img.thumbnail_url ?? null)
         .catch((err) => {
@@ -94,8 +93,20 @@ export const handler = define.handlers({
       ? client.getSubsets(itemtype, itemid).catch(() => [])
       : Promise.resolve([]);
 
+    const storePromise: Promise<Response | null> = listOnly ? Promise.resolve(null) : fetch(
+      (() => {
+        const url = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
+        url.searchParams.set("sid", "4245762");
+        url.searchParams.set("itemID", String(idItem));
+        if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
+          url.searchParams.set("colorID", String(colorIdNum));
+        }
+        return url;
+      })(),
+    );
+
     let marketplaceResp: Response;
-    let storeResp: Response;
+    let storeResp: Response | null;
     let colors: { color_id: number; color_name: string }[];
     let catalogItem: BLCatalogItem | null;
     let imageUrl: string | null;
@@ -103,7 +114,7 @@ export const handler = define.handlers({
     try {
       [marketplaceResp, storeResp, colors, catalogItem, imageUrl, subsets] = await Promise.all([
         fetch(marketplaceUrl),
-        fetch(storeUrl),
+        storePromise,
         colorsPromise,
         catalogItemPromise,
         imageUrlPromise,
@@ -116,7 +127,7 @@ export const handler = define.handlers({
       return Response.json({ error: `Upstream HTTP ${marketplaceResp.status}` }, { status: 502 });
     }
 
-    const storeJson = storeResp.ok
+    const storeJson = !listOnly && storeResp?.ok
       ? await storeResp.json() as { result?: { groups?: Array<{ items?: unknown[] }> } }
       : null;
     const storeItems = storeJson?.result?.groups?.[0]?.items ?? [];
@@ -128,8 +139,8 @@ export const handler = define.handlers({
       catalogItem,
       imageUrl,
       partCount,
-      storeItems,
       idItem,
+      ...(!listOnly && { storeItems }),
     });
   },
 });

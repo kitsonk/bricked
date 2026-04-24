@@ -78,7 +78,10 @@ export default function Inventory() {
 
   const marketplaceItems = useSignal<MarketplaceItem[] | null>(null);
   const marketplaceLoading = useSignal(false);
+  const storeLoading = useSignal(false);
   const marketplaceError = useSignal<string | null>(null);
+  const marketplacePage = useSignal(1);
+  const marketplaceTotalCount = useSignal<number | null>(null);
   const itemColors = useSignal<ItemColor[]>([]);
   const selectedColorId = useSignal<number | null>(null); // null = All
   const catalogItem = useSignal<CatalogItem | null>(null);
@@ -131,6 +134,8 @@ export default function Inventory() {
     partCount.value = null;
     storeItems.value = null;
     storeItemId.value = null;
+    marketplacePage.value = 1;
+    marketplaceTotalCount.value = null;
   }
 
   function removeItem(id: string) {
@@ -165,6 +170,7 @@ export default function Inventory() {
     const id = itemId.value.trim();
     if (!id) return;
     marketplaceLoading.value = true;
+    storeLoading.value = true;
     marketplaceError.value = null;
     marketplaceItems.value = null;
     itemColors.value = [];
@@ -174,12 +180,17 @@ export default function Inventory() {
     partCount.value = null;
     storeItems.value = null;
     storeItemId.value = null;
+    marketplacePage.value = 1;
+    marketplaceTotalCount.value = null;
     try {
-      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(itemType.value)}`;
+      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
+        encodeURIComponent(itemType.value)
+      }&page=1`;
       const resp = await fetch(url);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
+      marketplaceTotalCount.value = json.total_count ?? null;
       itemColors.value = json.colors ?? [];
       catalogItem.value = json.catalogItem ?? null;
       partCount.value = json.partCount ?? null;
@@ -189,6 +200,7 @@ export default function Inventory() {
       marketplaceError.value = String(err);
     } finally {
       marketplaceLoading.value = false;
+      storeLoading.value = false;
     }
   }
 
@@ -197,22 +209,50 @@ export default function Inventory() {
     const id = itemId.value.trim();
     if (!id) return;
     marketplaceLoading.value = true;
+    storeLoading.value = true;
     marketplaceError.value = null;
     marketplaceItems.value = null;
     storeItems.value = null;
+    marketplacePage.value = 1;
+    marketplaceTotalCount.value = null;
     // Selecting "All" restores the original catalog image immediately.
     if (colorId === null) colorImageUrl.value = null;
     try {
       const colorParam = colorId !== null ? String(colorId) : "all";
       const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
         encodeURIComponent(itemType.value)
-      }&colorid=${colorParam}`;
+      }&colorid=${colorParam}&page=1`;
       const resp = await fetch(url);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
+      marketplaceTotalCount.value = json.total_count ?? null;
       storeItems.value = json.storeItems ?? [];
       if (json.imageUrl) colorImageUrl.value = json.imageUrl;
+    } catch (err) {
+      marketplaceError.value = String(err);
+    } finally {
+      marketplaceLoading.value = false;
+      storeLoading.value = false;
+    }
+  }
+
+  async function fetchMarketplacePage(page: number) {
+    const id = itemId.value.trim();
+    if (!id) return;
+    marketplaceLoading.value = true;
+    marketplaceError.value = null;
+    try {
+      const colorParam = selectedColorId.value !== null ? `&colorid=${selectedColorId.value}` : "&colorid=all";
+      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
+        encodeURIComponent(itemType.value)
+      }${colorParam}&page=${page}&list_only=true`;
+      const resp = await fetch(url);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
+      marketplaceItems.value = json.list ?? [];
+      marketplaceTotalCount.value = json.total_count ?? null;
+      marketplacePage.value = page;
     } catch (err) {
       marketplaceError.value = String(err);
     } finally {
@@ -492,7 +532,7 @@ export default function Inventory() {
 
           <section>
             <h2 class="text-lg font-semibold mb-4">Store Items</h2>
-            {marketplaceLoading.value
+            {storeLoading.value
               ? (
                 <div class="flex justify-center py-10">
                   <span class="loading loading-spinner loading-md"></span>
@@ -567,8 +607,9 @@ export default function Inventory() {
                 <div>{marketplaceError.value}</div>
               </div>
             )}
-            {marketplaceLoading.value
+            {marketplaceLoading.value && marketplaceItems.value === null
               ? (
+                // Initial load or color change — no data yet, show centred spinner
                 <div class="flex justify-center py-10">
                   <span class="loading loading-spinner loading-md"></span>
                 </div>
@@ -587,37 +628,77 @@ export default function Inventory() {
                   <p class="text-sm">No marketplace listings found.</p>
                 </div>
               )
-              : (
-                <div class="overflow-x-auto rounded-box border border-base-content/10">
-                  <table class="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Store</th>
-                        <th class="text-right">Qty</th>
-                        <th class="text-right">Price</th>
-                        <th>Condition</th>
-                        <th>Description</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {marketplaceItems.value.map((item, i) => (
-                        <tr key={i}>
-                          <td class="font-medium">
-                            {item.strStorename}{" "}
-                            <span class="text-base-content/50 font-normal text-sm">({item.n4SellerFeedbackScore})</span>
-                          </td>
-                          <td class="text-right font-mono">{item.n4Qty}</td>
-                          <td class="text-right font-mono">{formatPrice(item.mInvSalePrice)}</td>
-                          <td>
-                            <ConditionBadge condition={item.codeNew as "N" | "U"} />
-                          </td>
-                          <td class="text-base-content/70 text-sm">{item.strDesc}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              : (() => {
+                const totalPages = Math.ceil((marketplaceTotalCount.value ?? 0) / 10);
+                return (
+                  // Wrap in relative so the loading overlay can cover table + pagination together
+                  <div class="relative">
+                    {marketplaceLoading.value && (
+                      <div class="absolute inset-0 z-10 flex items-center justify-center rounded-box bg-base-100/70 backdrop-blur-[1px]">
+                        <span class="loading loading-spinner loading-md"></span>
+                      </div>
+                    )}
+                    <div class="overflow-x-auto rounded-box border border-base-content/10">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Store</th>
+                            <th class="text-right">Qty</th>
+                            <th class="text-right">Price</th>
+                            <th>Condition</th>
+                            <th>Description</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {marketplaceItems.value.map((item, i) => (
+                            <tr key={i}>
+                              <td class="font-medium">
+                                {item.strStorename}{" "}
+                                <span class="text-base-content/50 font-normal text-sm">
+                                  ({item.n4SellerFeedbackScore})
+                                </span>
+                              </td>
+                              <td class="text-right font-mono">{item.n4Qty}</td>
+                              <td class="text-right font-mono">{formatPrice(item.mInvSalePrice)}</td>
+                              <td>
+                                <ConditionBadge condition={item.codeNew as "N" | "U"} />
+                              </td>
+                              <td class="text-base-content/70 text-sm">{item.strDesc}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {totalPages > 1 && (
+                      <div class="flex items-center justify-between mt-3">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-ghost"
+                          disabled={marketplacePage.value <= 1 || marketplaceLoading.value}
+                          onClick={() => fetchMarketplacePage(marketplacePage.value - 1)}
+                        >
+                          <span class="iconify lucide--chevron-left size-4"></span>
+                          Prev
+                        </button>
+                        <span class="text-sm text-base-content/70">
+                          Page {marketplacePage.value} of {totalPages}
+                          {marketplaceTotalCount.value !== null &&
+                            <span class="ml-1">({marketplaceTotalCount.value} total)</span>}
+                        </span>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-ghost"
+                          disabled={marketplacePage.value >= totalPages || marketplaceLoading.value}
+                          onClick={() => fetchMarketplacePage(marketplacePage.value + 1)}
+                        >
+                          Next
+                          <span class="iconify lucide--chevron-right size-4"></span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
           </section>
         </div>
       </div>
