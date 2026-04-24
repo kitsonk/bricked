@@ -1,5 +1,31 @@
 [
   {
+    "hash": "06c0214",
+    "subject": "Add pagination to Marketplace Items with overlay loading UX",
+    "body": "Forwards rpp=10 and pi to the upstream catalog API; accepts page and list_only params on the API route so page navigation skips the store and image fetches entirely. Adds prev/next controls with page N of M display. Splits marketplaceLoading from storeLoading so Store Items stays live while only the Marketplace Items section shows a loading state. Keeps existing items visible behind an absolute overlay spinner during page turns instead of clearing the container and collapsing its height."
+  },
+  {
+    "hash": "0730ddf",
+    "subject": "Limit store items table height with scrolling and sticky header"
+  },
+  {
+    "hash": "f879e5e",
+    "subject": "Add Store Items section with live store listings per item lookup"
+  },
+  {
+    "hash": "161b6d7",
+    "subject": "Add zoomable image modal to item overview with hover indicator"
+  },
+  {
+    "hash": "7ea5161",
+    "subject": "Add part count from Get Subsets API for Sets and Minifigures"
+  },
+  {
+    "hash": "3d03792",
+    "subject": "Add item overview panel with catalog data and color-synced image",
+    "body": "On initial lookup, fetches the BrickLink catalog item (name, year, obsolete flag, image) and displays it in an overview card above Store Items. Selecting a color calls GET /items/{type}/{no}/images/{colorId} to fetch a color-specific thumbnail, swapping the image immediately; reverting to All restores the original catalog image."
+  },
+  {
     "hash": "1b386a3",
     "subject": "Add color selection to inventory item lookup",
     "body": "Fetches known colors for an item via the BrickLink API on initial lookup, enriching names from the KV color cache. Color select enables when the item has real colors; selecting a color re-fetches marketplace listings filtered by that color without repeating the color API call. COLOR is included in pending items and the XML output; COLOR_NAME is display-only and stripped before submission."
