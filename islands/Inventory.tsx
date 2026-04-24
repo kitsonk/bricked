@@ -68,7 +68,7 @@ export default function Inventory() {
   const itemId = useSignal("");
   const price = useSignal("");
   const qty = useSignal("1");
-  const condition = useSignal<Condition>("N");
+  const condition = useSignal<Condition>("U");
   const description = useSignal("");
   const remarks = useSignal("");
 
@@ -405,7 +405,7 @@ export default function Inventory() {
               <div class="flex gap-2">
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline"
+                  class="btn btn-sm btn-primary"
                   disabled={pending.value.length === 0 || copying.value}
                   onClick={copyXml}
                 >
@@ -416,7 +416,7 @@ export default function Inventory() {
                 </button>
                 <button
                   type="button"
-                  class="btn btn-sm btn-ghost text-error"
+                  class="btn btn-sm btn-secondary"
                   disabled={pending.value.length === 0}
                   onClick={() => {
                     pending.value = [];
