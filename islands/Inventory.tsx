@@ -102,6 +102,7 @@ export default function Inventory() {
 
   function addItem(e: Event) {
     e.preventDefault();
+    if (description.value.length > 255) return;
     const colorId = selectedColorId.value;
     const hasColor = colorId !== null && colorId !== 0;
     pending.value = [
@@ -368,12 +369,18 @@ export default function Inventory() {
                   <legend class="fieldset-legend">Description</legend>
                   <input
                     type="text"
-                    class="input w-full"
+                    class={`input w-full${description.value.length > 255 ? " input-error" : ""}`}
                     placeholder="Optional"
-                    maxLength={255}
                     value={description.value}
                     onInput={(e) => (description.value = e.currentTarget.value)}
                   />
+                  <p
+                    class={`text-xs text-right mt-1${
+                      description.value.length > 255 ? " text-error" : " text-base-content/50"
+                    }`}
+                  >
+                    {description.value.length}/255
+                  </p>
                 </fieldset>
                 <fieldset class="fieldset mb-4">
                   <legend class="fieldset-legend">Remarks</legend>
