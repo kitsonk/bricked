@@ -12,13 +12,15 @@ import type { BLMemberRating, BLOrderSummary } from "@/utils/types.ts";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 import { formatAmount, humanTime } from "@/utils/format.ts";
 
-export const handler = define.handlers<{
+export type CustomerDetailData = {
   username: string;
   rating: BLMemberRating | null;
   orders: BLOrderSummary[];
   messageCounts: Record<number, number>;
   ratingError: string | null;
-}>({
+};
+
+export const handler = define.handlers<CustomerDetailData>({
   async GET(ctx) {
     const creds = getCredentials();
     if (!creds) return ctx.redirect("/environment");
@@ -60,12 +62,12 @@ export const handler = define.handlers<{
   },
 });
 
-export default define.page<typeof handler>(function CustomerDetail({ data }) {
+export function CustomerDetailContent({ data }: { data: CustomerDetailData }) {
   const { username, rating, orders, messageCounts, ratingError } = data;
   const total = rating ? rating.rating.PRAISE + rating.rating.NEUTRAL + rating.rating.COMPLAINT : 0;
 
   return (
-    <AppFrame>
+    <>
       <div class="flex items-center gap-4 mb-6">
         <a href="/customers" class="btn btn-ghost btn-sm">
           <span class="iconify lucide--arrow-left size-4"></span>
@@ -187,6 +189,14 @@ export default define.page<typeof handler>(function CustomerDetail({ data }) {
             </div>
           )}
       </div>
+    </>
+  );
+}
+
+export default define.page<typeof handler>(function CustomerDetail({ data }) {
+  return (
+    <AppFrame>
+      <CustomerDetailContent data={data} />
     </AppFrame>
   );
 });

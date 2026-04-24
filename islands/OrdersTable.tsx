@@ -26,10 +26,11 @@ function sortOrders(orders: BLOrderSummary[], dateSort: "asc" | "desc"): BLOrder
 }
 
 export default function OrdersTable(
-  { orders, sentOrderIds, messageCounts, dateSort }: {
+  { orders, sentOrderIds, messageCounts, buyerOrderCounts, dateSort }: {
     orders: BLOrderSummary[];
     sentOrderIds: number[];
     messageCounts?: Record<number, number>;
+    buyerOrderCounts: Record<string, number>;
     dateSort: "asc" | "desc";
   },
 ) {
@@ -156,7 +157,20 @@ export default function OrdersTable(
                       )}
                     </td>
                   )}
-                  <td class="font-medium">{order.buyer_name}</td>
+                  <td class="font-medium">
+                    <a
+                      class="link"
+                      href={`/customers/${order.buyer_name}`}
+                      f-partial={`/partials/customers/${order.buyer_name}`}
+                    >
+                      {order.buyer_name}
+                    </a>
+                    {(buyerOrderCounts[order.buyer_name] ?? 0) > 0 && (
+                      <span class="text-base-content/50 font-normal ml-1">
+                        ({buyerOrderCounts[order.buyer_name]})
+                      </span>
+                    )}
+                  </td>
                   <td class="text-sm">{humanTime(order.date_ordered)}</td>
                   <td>
                     <StatusBadge status={order.status} />

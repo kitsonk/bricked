@@ -4,6 +4,7 @@ import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import {
   getCredentials,
+  getCustomer,
   getOrderMessageCountCache,
   listDriveThruSentOrderIds,
   saveOrderMessageCountCache,
@@ -20,6 +21,7 @@ export type OrdersData = {
   orders: BLOrderSummary[];
   sentOrderIds: number[];
   messageCounts: Record<number, number>;
+  buyerOrderCounts: Record<string, number>;
   filter: "unfiled" | "filed";
   dateSort: "asc" | "desc";
   error: string | null;
@@ -58,10 +60,23 @@ export const handler = define.handlers<OrdersData>({
         );
         messageCounts = Object.fromEntries(counts);
       }
-      return page({ orders, sentOrderIds, messageCounts, filter, dateSort, error: null });
+      const uniqueBuyers = [...new Set(orders.map((o) => o.buyer_name))];
+      const buyerCustomers = await Promise.all(uniqueBuyers.map((b) => getCustomer(b)));
+      const buyerOrderCounts = Object.fromEntries(
+        uniqueBuyers.map((b, i) => [b, buyerCustomers[i]?.orderCount ?? 0]),
+      );
+      return page({ orders, sentOrderIds, messageCounts, buyerOrderCounts, filter, dateSort, error: null });
     } catch (err) {
       logger.error`Failed to load orders: ${err}`;
-      return page({ orders: [], sentOrderIds: [], messageCounts: {}, filter, dateSort, error: String(err) });
+      return page({
+        orders: [],
+        sentOrderIds: [],
+        messageCounts: {},
+        buyerOrderCounts: {},
+        filter,
+        dateSort,
+        error: String(err),
+      });
     }
   },
 });
@@ -94,6 +109,7 @@ export function OrdersContent({ data }: { data: OrdersData }) {
           orders={data.orders}
           sentOrderIds={data.sentOrderIds}
           messageCounts={data.filter === "unfiled" ? data.messageCounts : undefined}
+          buyerOrderCounts={data.buyerOrderCounts}
           dateSort={dateSort}
         />
       </div>
