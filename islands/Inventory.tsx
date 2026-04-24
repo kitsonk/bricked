@@ -473,7 +473,7 @@ export default function Inventory() {
                           <td>
                             <button
                               type="button"
-                              class="btn btn-ghost btn-xs btn-square text-error"
+                              class="btn btn-ghost btn-xs btn-square text-secondary"
                               title="Remove"
                               onClick={() => removeItem(item.id)}
                             >
