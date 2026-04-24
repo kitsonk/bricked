@@ -30,7 +30,7 @@ export function Sidebar() {
         </label>
         <p class="menu-label mt-2 px-2.5">Workflow</p>
         <div class="mt-2">
-          <MenuItem icon="house" label="Home" href="/orders" fPartial="/partials/orders" />
+          <MenuItem icon="house" label="Home" href="/" fPartial="/partials/" />
           <MenuItem icon="shopping-bag" label="Orders" href="/orders" fPartial="/partials/orders" />
           <MenuItem icon="warehouse" label="Inventory" href="/inventory" fPartial="/partials/inventory" />
           <MenuItem icon="users" label="Customers" href="/customers" fPartial="/partials/customers" />
