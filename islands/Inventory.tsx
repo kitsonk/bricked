@@ -67,7 +67,7 @@ export default function Inventory() {
   const itemType = useSignal<ItemType>("S");
   const itemId = useSignal("");
   const price = useSignal("");
-  const qty = useSignal("");
+  const qty = useSignal("1");
   const condition = useSignal<Condition>("N");
   const description = useSignal("");
   const remarks = useSignal("");
@@ -123,7 +123,7 @@ export default function Inventory() {
     ];
     itemId.value = "";
     price.value = "";
-    qty.value = "";
+    qty.value = "1";
     description.value = "";
     remarks.value = "";
     itemColors.value = [];
