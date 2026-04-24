@@ -2,8 +2,8 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, getShippingMethodEnrichment } from "@/utils/kv.ts";
-import type { BLOrder, BLOrderItem, BLOrderMessage } from "@/utils/types.ts";
+import { getCredentials, getCustomer, getShippingMethodEnrichment } from "@/utils/kv.ts";
+import type { BLOrder, BLOrderItem, BLOrderMessage, Customer } from "@/utils/types.ts";
 import { OrderMessageBubble } from "@/components/OrderMessageBubble.tsx";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 import { formatAmount, humanTime } from "@/utils/format.ts";
@@ -14,6 +14,7 @@ export const handler = define.handlers<{
   order: BLOrder | null;
   items: BLOrderItem[];
   messages: BLOrderMessage[];
+  customer: Customer | null;
   hasTracking: boolean;
   error: string | null;
 }>({
@@ -33,16 +34,19 @@ export const handler = define.handlers<{
         client.getOrderItems(orderId),
         client.getOrderMessages(orderId),
       ]);
-      const enrichment = order.shipping?.method_id ? await getShippingMethodEnrichment(order.shipping.method_id) : null;
-      return page({ order, items, messages, hasTracking: enrichment?.hasTracking ?? false, error: null });
+      const [enrichment, customer] = await Promise.all([
+        order.shipping?.method_id ? getShippingMethodEnrichment(order.shipping.method_id) : Promise.resolve(null),
+        getCustomer(order.buyer_name),
+      ]);
+      return page({ order, items, messages, customer, hasTracking: enrichment?.hasTracking ?? false, error: null });
     } catch (err) {
-      return page({ order: null, items: [], messages: [], hasTracking: false, error: String(err) });
+      return page({ order: null, items: [], messages: [], customer: null, hasTracking: false, error: String(err) });
     }
   },
 });
 
 export default define.page<typeof handler>(function OrderDetail({ data }) {
-  const { order, items, messages, error } = data;
+  const { order, items, messages, customer, error } = data;
   return (
     <AppFrame>
       <div class="flex items-center gap-4 mb-6">
@@ -76,7 +80,13 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                 Buyer
               </h2>
               <p class="font-medium">
-                {order.buyer_name}
+                <a
+                  href={`/customers/${order.buyer_name}`}
+                  f-partial={`/partials/customers/${order.buyer_name}`}
+                  class="link"
+                >
+                  {order.buyer_name}
+                </a>
                 {(order.shipping.address.name.first || order.shipping.address.name.full) && (
                   <span class="text-base-content/50 font-normal ml-1">
                     ({order.shipping.address.name.first || order.shipping.address.name.full})
@@ -84,6 +94,14 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                 )}
               </p>
               <p class="text-sm text-base-content/60">{order.buyer_email}</p>
+              {customer && (
+                <div class="text-sm text-base-content/60 mt-1 flex flex-col gap-0.5">
+                  <span>{customer.orderCount} order{customer.orderCount !== 1 ? "s" : ""} total</span>
+                  {Object.entries(customer.totalsByCurrency).map(([code, total]) => (
+                    <span key={code}>{code} {formatAmount(String(total))} total value</span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div class="card bg-base-200">
