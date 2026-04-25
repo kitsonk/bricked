@@ -412,7 +412,7 @@ export default function ShipList(
                   >
                     {verifyingAll.value
                       ? <span class="loading loading-spinner loading-xs"></span>
-                      : <span class="iconify lucide--badge-check size-3.5"></span>}
+                      : <span class="iconify lucide--wand-sparkles size-3.5"></span>}
                   </button>
                 </div>
               </th>
