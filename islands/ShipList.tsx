@@ -60,6 +60,8 @@ export default function ShipList(
   );
 
   const addresses = useSignal<Record<number, AusPostAddress>>(initialAddresses);
+  const verifyStatuses = useSignal<Record<number, "verifying" | "success" | "unmatched" | "error">>({});
+  const verifyingAll = useSignal(false);
   const editingOrderId = useSignal<number | null>(null);
   const editingCountryCode = useSignal<string>("");
   const formAddress = useSignal<AusPostAddress>(EMPTY_ADDRESS);
@@ -204,6 +206,52 @@ export default function ShipList(
     } finally {
       saving.value = false;
     }
+  }
+
+  async function verifyAllAddresses() {
+    verifyingAll.value = true;
+    const exportableOrders = orders.filter((o) => isExportable(o, trackingMethodSet));
+    verifyStatuses.value = Object.fromEntries(exportableOrders.map((o) => [o.order_id, "verifying" as const]));
+
+    await Promise.all(
+      exportableOrders.map(async (order) => {
+        const addr = addresses.value[order.order_id];
+        try {
+          const resp = await fetch("/api/ship-list/verify-address", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(addr),
+          });
+          const json = await resp.json();
+          if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
+          if (!json.matched) {
+            verifyStatuses.value = { ...verifyStatuses.value, [order.order_id]: "unmatched" };
+          } else {
+            const updatedAddr: AusPostAddress = {
+              ...addr,
+              addressLine1: json.addressLine1,
+              addressLine2: json.addressLine2 ?? "",
+              addressLine3: json.addressLine3 ?? "",
+              suburb: json.suburb,
+              state: json.state,
+              postcode: json.postcode,
+            };
+            const saveResp = await fetch(`/api/ship-list/${order.order_id}/address`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(updatedAddr),
+            });
+            if (!saveResp.ok) throw new Error(`HTTP ${saveResp.status}`);
+            addresses.value = { ...addresses.value, [order.order_id]: updatedAddr };
+            verifyStatuses.value = { ...verifyStatuses.value, [order.order_id]: "success" };
+          }
+        } catch {
+          verifyStatuses.value = { ...verifyStatuses.value, [order.order_id]: "error" };
+        }
+      }),
+    );
+
+    verifyingAll.value = false;
   }
 
   return (
@@ -352,7 +400,22 @@ export default function ShipList(
             <tr>
               <th>Order Info</th>
               <th>Shipping Method</th>
-              <th>Ship To</th>
+              <th>
+                <div class="flex items-center gap-1">
+                  Ship To
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-xs btn-square"
+                    title="Verify all exportable addresses"
+                    disabled={verifyingAll.value}
+                    onClick={verifyAllAddresses}
+                  >
+                    {verifyingAll.value
+                      ? <span class="loading loading-spinner loading-xs"></span>
+                      : <span class="iconify lucide--badge-check size-3.5"></span>}
+                  </button>
+                </div>
+              </th>
               <th>Recipient Info</th>
               <th>Package Type</th>
               <th>Dimensions</th>
@@ -391,6 +454,29 @@ export default function ShipList(
                         {addr.addressLine3 && <div>{addr.addressLine3}</div>}
                         {(addr.suburb || addr.state || addr.postcode) && (
                           <div>{[addr.suburb, addr.state, addr.postcode].filter(Boolean).join(", ")}</div>
+                        )}
+                        {verifyStatuses.value[order.order_id] === "verifying" && (
+                          <div class="mt-1">
+                            <span class="loading loading-spinner loading-xs"></span>
+                          </div>
+                        )}
+                        {verifyStatuses.value[order.order_id] === "success" && (
+                          <div class="text-success text-xs mt-1 flex items-center gap-1">
+                            <span class="iconify lucide--circle-check size-3.5"></span>
+                            Verified
+                          </div>
+                        )}
+                        {verifyStatuses.value[order.order_id] === "unmatched" && (
+                          <div class="text-warning text-xs mt-1 flex items-center gap-1">
+                            <span class="iconify lucide--alert-triangle size-3.5"></span>
+                            Unmatched
+                          </div>
+                        )}
+                        {verifyStatuses.value[order.order_id] === "error" && (
+                          <div class="text-error text-xs mt-1 flex items-center gap-1">
+                            <span class="iconify lucide--alert-circle size-3.5"></span>
+                            Error
+                          </div>
                         )}
                       </div>
                       <button
