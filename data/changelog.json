@@ -1,5 +1,60 @@
 [
   {
+    "hash": "8e5bfff",
+    "subject": "Add bulk verify-all button to ShipList Ship To column",
+    "body": "Adds a badge-check icon button in the Ship To header that verifies all exportable addresses in parallel, auto-saving matched results to KV and showing per-row status indicators (verified, unmatched, error)."
+  },
+  {
+    "hash": "41a72de",
+    "subject": "Rewrite manifest CSV export to new AusPost format"
+  },
+  {
+    "hash": "f907775",
+    "subject": "Show repeat-buyer badge on pick list order cards"
+  },
+  {
+    "hash": "2611873",
+    "subject": "Only count completed orders in CRM buyer history",
+    "body": "Replaces the CANCELLED exclusion with an allowlist of SHIPPED, RECEIVED, COMPLETED, and PURGED — so in-progress and other non-final statuses are also excluded from order counts and totals."
+  },
+  {
+    "hash": "518cb95",
+    "subject": "Fix home partial route to use named file instead of directory index",
+    "body": "routes/partials/index.tsx mapped to /partials (the directory root) which Fresh could not reliably serve as a partial endpoint, causing the sidebar Home link to update the URL but silently fail to swap the content region. Renaming to home.tsx gives a clean /partials/home URL matching the pattern used by all other flat partials."
+  },
+  {
+    "hash": "5178085",
+    "subject": "Fix orders filter tabs: dual active state and stale partial data",
+    "body": "Fresh's f-client-nav marks all anchors sharing a pathname as aria-current=\"page\", causing DaisyUI to render both tabs as active. Fixed with a CSS override. Also corrected the Filed tab's f-partial URL to include query params so the handler receives the correct filter, and replaced a one-time useSignal initialisation in OrdersTable with a plain derived value so partial swaps render fresh rows."
+  },
+  {
+    "hash": "8eac687",
+    "subject": "Show buyer history in order detail card",
+    "body": "Fetches the Customer record from KV and displays total order count and total value per currency in the Buyer card. Also links the buyer name to the customer page with f-partial."
+  },
+  {
+    "hash": "0a9d9bb",
+    "subject": "Link buyer name to customer page and show total order count",
+    "body": "Adds a partial route for customers/[username] so in-app navigation swaps only the content region. Buyer cells in OrdersTable now link to that page with f-partial and show the customer's historical order count from KV."
+  },
+  {
+    "hash": "cae02e5",
+    "subject": "Add home page with orders and customer stats",
+    "body": "Replaces the redirect with a proper landing page showing the app logo, title, and three navigation cards for Orders, Inventory, and Customers. The Orders card shows live unfiled order count; Customers shows total count from the buyer index."
+  },
+  {
+    "hash": "6ef3668",
+    "subject": "Add character counter and over-limit validation to Description input"
+  },
+  {
+    "hash": "3186bf6",
+    "subject": "Update styling and default condition for inventory items"
+  },
+  {
+    "hash": "1d0a106",
+    "subject": "Default Qty to 1 and reset to 1 after adding an item"
+  },
+  {
     "hash": "06c0214",
     "subject": "Add pagination to Marketplace Items with overlay loading UX",
     "body": "Forwards rpp=10 and pi to the upstream catalog API; accepts page and list_only params on the API route so page navigation skips the store and image fetches entirely. Adds prev/next controls with page N of M display. Splits marketplaceLoading from storeLoading so Store Items stays live while only the Marketplace Items section shows a loading state. Keeps existing items visible behind an absolute overlay spinner during page turns instead of clearing the container and collapsing its height."
