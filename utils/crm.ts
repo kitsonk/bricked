@@ -57,6 +57,8 @@ export async function buildCrm(): Promise<void> {
   const cachedOrders = await listCachedOrders();
   logger.debug`CRM phase 2: ${cachedOrders.length} order(s) in local cache`;
 
+  const COMPLETED_STATUSES = new Set(["SHIPPED", "RECEIVED", "COMPLETED", "PURGED"]);
+
   const customerMap = new Map<string, {
     orderCount: number;
     firstOrderDate: string;
@@ -65,7 +67,7 @@ export async function buildCrm(): Promise<void> {
   }>();
 
   for (const order of cachedOrders) {
-    if (order.status === "CANCELLED") continue;
+    if (!COMPLETED_STATUSES.has(order.status)) continue;
 
     const existing = customerMap.get(order.buyer_name);
     const currency = order.cost.currency_code;
