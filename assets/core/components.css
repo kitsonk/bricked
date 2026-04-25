@@ -1,1 +1,13 @@
-
+/*
+ * Fresh's f-client-nav marks every <a> whose pathname matches the current page
+ * as aria-current="page", regardless of query params. DaisyUI also uses that
+ * attribute for active-tab styling. Override it so only .tab-active controls
+ * the visual active state.
+ */
+.tabs-border > .tab[aria-current="page"]:not(.tab-active) {
+  color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+}
+.tabs-border > .tab[aria-current="page"]:not(.tab-active)::before {
+  --tab-border-color: transparent !important;
+  border-top: none !important;
+}

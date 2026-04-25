@@ -6,16 +6,16 @@ export default function OrdersFilterTabs({ filter }: { filter: "unfiled" | "file
         href="/orders"
         {...{ "f-partial": "/partials/orders" }}
         class={`tab${filter === "unfiled" ? " tab-active" : ""}`}
-        aria-selected={filter === "unfiled"}
+        aria-selected={filter === "unfiled" ? true : undefined}
       >
         Unfiled
       </a>
       <a
         role="tab"
         href="/orders?filter=filed&sort=desc"
-        {...{ "f-partial": "/partials/orders" }}
+        {...{ "f-partial": "/partials/orders?filter=filed&sort=desc" }}
         class={`tab${filter === "filed" ? " tab-active" : ""}`}
-        aria-selected={filter === "filed"}
+        aria-selected={filter === "filed" ? true : undefined}
       >
         Filed
       </a>

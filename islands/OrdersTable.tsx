@@ -34,7 +34,7 @@ export default function OrdersTable(
     dateSort: "asc" | "desc";
   },
 ) {
-  const localOrders = useSignal<BLOrderSummary[]>(sortOrders(orders, dateSort));
+  const sortedOrders = sortOrders(orders, dateSort);
   const selected = useSignal(new Set<number>());
   const sentSet = new Set(sentOrderIds);
 
@@ -49,16 +49,16 @@ export default function OrdersTable(
   }
 
   function toggleAll() {
-    selected.value = selected.value.size === localOrders.value.length && localOrders.value.length > 0
+    selected.value = selected.value.size === sortedOrders.length && sortedOrders.length > 0
       ? new Set()
-      : new Set(localOrders.value.map((o) => o.order_id));
+      : new Set(sortedOrders.map((o) => o.order_id));
   }
 
-  const allSelected = selected.value.size === localOrders.value.length && localOrders.value.length > 0;
+  const allSelected = selected.value.size === sortedOrders.length && sortedOrders.length > 0;
   const someSelected = selected.value.size > 0;
   const selectedIds = [...selected.value].join(",");
 
-  if (localOrders.value.length === 0) {
+  if (sortedOrders.length === 0) {
     return (
       <div class="text-center py-16 text-base-content/50">
         <span class="iconify lucide--inbox size-12 block mx-auto mb-3"></span>
@@ -72,7 +72,7 @@ export default function OrdersTable(
     <div>
       <div class="flex items-center justify-between mb-4">
         <p class="text-sm text-base-content/60">
-          {localOrders.value.length} order{localOrders.value.length !== 1 ? "s" : ""}
+          {sortedOrders.length} order{sortedOrders.length !== 1 ? "s" : ""}
         </p>
         <div class="flex items-center gap-2">
           <a
@@ -122,7 +122,7 @@ export default function OrdersTable(
             </tr>
           </thead>
           <tbody>
-            {localOrders.value.map((order) => {
+            {sortedOrders.map((order) => {
               const isSelected = selected.value.has(order.order_id);
               return (
                 <tr
