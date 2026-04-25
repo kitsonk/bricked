@@ -2,7 +2,7 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials } from "@/utils/kv.ts";
+import { getCredentials, getCustomer } from "@/utils/kv.ts";
 import type { BLOrder, PickListItem, PickListOrder } from "@/utils/types.ts";
 import { decodeHtml } from "@/utils/html.ts";
 import PickList from "@/islands/PickList.tsx";
@@ -33,13 +33,16 @@ export const handler = define.handlers<
         Promise.all(orderIds.map((id) => client.getOrderItems(id))),
       ]);
 
-      const orders: PickListOrder[] = orderDetails.map((o) => ({
+      const customers = await Promise.all(orderDetails.map((o) => getCustomer(o.buyer_name)));
+
+      const orders: PickListOrder[] = orderDetails.map((o, i) => ({
         orderId: o.order_id,
         buyerName: o.buyer_name,
         shippingName: o.shipping.address.name.first || o.shipping.address.name.full,
         shippingMethod: o.shipping.method,
         status: o.status,
         dateOrdered: o.date_ordered,
+        orderCount: customers[i]?.orderCount,
       }));
 
       const map = new Map<string, PickListItem>();

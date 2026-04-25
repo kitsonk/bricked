@@ -239,6 +239,8 @@ export interface PickListOrder {
   shippingMethod: string;
   status: OrderStatus;
   dateOrdered: string;
+  /** Total non-cancelled orders for this buyer, from CRM. Omitted if CRM data unavailable. */
+  orderCount?: number;
 }
 
 export interface PickListItem {

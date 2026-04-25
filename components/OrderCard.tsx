@@ -39,6 +39,14 @@ export function OrderCard({ order, items, picked, packedOrderIds, packingOrderId
             <div class="flex items-center gap-2 flex-wrap">
               <span class="text-sm font-medium">{order.buyerName}</span>
               {order.shippingName && <span class="text-sm text-base-content/50">({order.shippingName})</span>}
+              {order.orderCount != null && order.orderCount > 0 && (
+                <span
+                  class="badge badge-xs badge-info"
+                  title={`${order.orderCount} previous order${order.orderCount !== 1 ? "s" : ""}`}
+                >
+                  {order.orderCount}
+                </span>
+              )}
             </div>
             <div class="flex items-center gap-2 mt-0.5">
               <span class="text-xs text-base-content/40 font-mono">#{order.orderId}</span>
