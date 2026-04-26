@@ -1,5 +1,34 @@
 [
   {
+    "hash": "01869ea",
+    "subject": "Add pending item editing and description clipboard copy to Inventory",
+    "body": "Pending items now have an edit (pencil) button that populates the form for in-place editing, with the active row highlighted and the panel switching to Edit Item mode. A Delete Item button appears in the form footer during editing. The description field gains an inline copy icon that writes the current value to the clipboard with a brief check confirmation."
+  },
+  {
+    "hash": "8e68239",
+    "subject": "Fix subset part count to sum quantities instead of counting entries"
+  },
+  {
+    "hash": "e02c81e",
+    "subject": "Add extra cover amount to manifest CSV export"
+  },
+  {
+    "hash": "c6cbc26",
+    "subject": "Remove email and phone from ship list and manifest export"
+  },
+  {
+    "hash": "940be45",
+    "subject": "Rewrite manifest CSV export to new AusPost format"
+  },
+  {
+    "hash": "0f0a20f",
+    "subject": "Add recipient phone number to manifest CSV export"
+  },
+  {
+    "hash": "30f2604",
+    "subject": "Change icon for verify addresses"
+  },
+  {
     "hash": "8e5bfff",
     "subject": "Add bulk verify-all button to ShipList Ship To column",
     "body": "Adds a badge-check icon button in the Ship To header that verifies all exportable addresses in parallel, auto-saving matched results to KV and showing per-row status indicators (verified, unmatched, error)."
