@@ -58,7 +58,7 @@ export const handler = define.handlers({
       "Item Width": r.widthCm,
       "Item Height": r.heightCm,
       "Item Weight": r.weightKg,
-      "Extra Cover Amount": r.extraCover,
+      "Extra Cover Amount": r.extraCover === "0" ? "" : r.extraCover,
     }));
 
     const csv = stringify(data, { columns: COLUMNS });
