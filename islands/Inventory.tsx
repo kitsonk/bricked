@@ -16,6 +16,7 @@ type PendingItem = {
   CONDITION: Condition;
   DESCRIPTION: string;
   REMARKS: string;
+  importStatus?: "warning" | "success";
 };
 
 type MarketplaceItem = {
@@ -92,6 +93,10 @@ export default function Inventory() {
   const storeItems = useSignal<StoreItem[] | null>(null);
   const storeItemId = useSignal<number | null>(null);
   const imageDialogRef = useRef<HTMLDialogElement>(null);
+  const importDialogRef = useRef<HTMLDialogElement>(null);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
+  const importPreviewItems = useSignal<PendingItem[] | null>(null);
+  const importError = useSignal<string | null>(null);
 
   // Color select is only useful when the item has more than one real color.
   // A single color with ID 0 means the item is colorless.
@@ -140,6 +145,8 @@ export default function Inventory() {
       REMARKS: remarks.value.trim(),
     };
     if (editingId.value) {
+      const existing = pending.value.find((i) => i.id === editingId.value);
+      if (existing?.importStatus) updatedItem.importStatus = "success";
       pending.value = pending.value.map((i) => i.id === editingId.value ? updatedItem : i);
       editingId.value = null;
     } else {
@@ -178,6 +185,46 @@ export default function Inventory() {
   function cancelEdit() {
     editingId.value = null;
     resetForm();
+  }
+
+  async function handleFileSelect(e: Event) {
+    const file = (e.currentTarget as HTMLInputElement).files?.[0];
+    importPreviewItems.value = null;
+    importError.value = null;
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const resp = await fetch("/api/xml/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/xml" },
+        body: text,
+      });
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
+      importPreviewItems.value = (json.items as Omit<PendingItem, "id" | "importStatus">[]).map((item) => ({
+        ...item,
+        id: crypto.randomUUID(),
+        importStatus: "warning" as const,
+      }));
+    } catch (err) {
+      importError.value = `Failed to import: ${String(err)}`;
+    }
+  }
+
+  function handleImport() {
+    if (!importPreviewItems.value?.length) return;
+    pending.value = [...pending.value, ...importPreviewItems.value];
+    importDialogRef.current?.close();
+    importPreviewItems.value = null;
+    importError.value = null;
+    if (importFileInputRef.current) importFileInputRef.current.value = "";
+  }
+
+  function closeImportDialog() {
+    importDialogRef.current?.close();
+    importPreviewItems.value = null;
+    importError.value = null;
+    if (importFileInputRef.current) importFileInputRef.current.value = "";
   }
 
   function deleteEditingItem() {
@@ -510,6 +557,14 @@ export default function Inventory() {
               <div class="flex gap-2">
                 <button
                   type="button"
+                  class="btn btn-sm btn-secondary"
+                  onClick={() => importDialogRef.current?.showModal()}
+                >
+                  <span class="iconify lucide--file-up size-4"></span>
+                  Import
+                </button>
+                <button
+                  type="button"
                   class="btn btn-sm btn-primary"
                   disabled={pending.value.length === 0 || copying.value}
                   onClick={copyXml}
@@ -547,9 +602,9 @@ export default function Inventory() {
                 </div>
               )
               : (
-                <div class="overflow-x-auto rounded-box border border-base-content/10">
+                <div class="overflow-x-auto overflow-y-auto max-h-128 rounded-box border border-base-content/10">
                   <table class="table table-sm">
-                    <thead>
+                    <thead class="sticky top-0 bg-base-100">
                       <tr>
                         <th>Type</th>
                         <th>Item ID</th>
@@ -564,7 +619,16 @@ export default function Inventory() {
                     </thead>
                     <tbody>
                       {pending.value.map((item) => (
-                        <tr key={item.id} class={editingId.value === item.id ? "bg-primary/10" : ""}>
+                        <tr
+                          key={item.id}
+                          class={editingId.value === item.id
+                            ? "bg-primary/10"
+                            : item.importStatus === "warning"
+                            ? "bg-warning/10"
+                            : item.importStatus === "success"
+                            ? "bg-success/10"
+                            : ""}
+                        >
                           <td>{TYPE_LABELS[item.ITEMTYPE]}</td>
                           <td class="font-mono">{item.ITEMID}</td>
                           <td class="text-sm">
@@ -581,8 +645,7 @@ export default function Inventory() {
                                 type="button"
                                 class="btn btn-ghost btn-xs btn-square text-primary"
                                 title="Edit"
-                                onClick={() =>
-                                  startEdit(item)}
+                                onClick={() => startEdit(item)}
                               >
                                 <span class="iconify lucide--pencil size-3.5"></span>
                               </button>
@@ -590,8 +653,7 @@ export default function Inventory() {
                                 type="button"
                                 class="btn btn-ghost btn-xs btn-square text-error"
                                 title="Remove"
-                                onClick={() =>
-                                  removeItem(item.id)}
+                                onClick={() => removeItem(item.id)}
                               >
                                 <span class="iconify lucide--trash-2 size-3.5"></span>
                               </button>
@@ -819,6 +881,58 @@ export default function Inventory() {
           </section>
         </div>
       </div>
+
+      <dialog ref={importDialogRef} class="modal">
+        <div class="modal-box">
+          <h3 class="text-lg font-bold mb-4">Import XML</h3>
+          <fieldset class="fieldset mb-4">
+            <legend class="fieldset-legend">Select XML file</legend>
+            <input
+              ref={importFileInputRef}
+              type="file"
+              accept=".xml"
+              class="file-input file-input-primary w-full"
+              onChange={handleFileSelect}
+            />
+          </fieldset>
+          {importError.value && (
+            <div role="alert" class="alert alert-error mb-4">
+              <span class="iconify lucide--alert-circle size-5"></span>
+              <div>{importError.value}</div>
+            </div>
+          )}
+          {importPreviewItems.value !== null && (
+            <p class="text-sm text-base-content/70 mb-4">
+              {importPreviewItems.value.length === 0
+                ? "No items found in this file."
+                : `Found ${importPreviewItems.value.length} item${
+                  importPreviewItems.value.length === 1 ? "" : "s"
+                } to import.`}
+            </p>
+          )}
+          <div class="modal-action">
+            <button
+              type="button"
+              class="btn btn-ghost"
+              onClick={closeImportDialog}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              disabled={!importPreviewItems.value?.length}
+              onClick={handleImport}
+            >
+              <span class="iconify lucide--file-up size-4"></span>
+              Import
+            </button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button type="submit" onClick={closeImportDialog}>close</button>
+        </form>
+      </dialog>
 
       {catalogItem.value && (
         <dialog ref={imageDialogRef} class="modal">
