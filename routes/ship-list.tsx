@@ -10,8 +10,6 @@ function deriveAddress(order: BLOrder): AusPostAddress {
   const addr = order.shipping?.address;
   return {
     recipientName: addr?.name.full || [addr?.name.first, addr?.name.last].filter(Boolean).join(" ") || "",
-    recipientEmail: order.buyer_email || "",
-    recipientPhone: addr?.phone_number || "",
     addressLine1: addr?.address1 || "",
     addressLine2: addr?.address2 || "",
     addressLine3: "",
@@ -55,12 +53,7 @@ export const handler = define.handlers<{
 
       const addresses: Record<number, AusPostAddress> = {};
       orders.forEach((order, idx) => {
-        const base = savedAddresses[idx] ?? deriveAddress(order);
-        addresses[order.order_id] = {
-          ...base,
-          recipientEmail: base.recipientEmail || order.buyer_email || "",
-          recipientPhone: base.recipientPhone || order.shipping?.address?.phone_number || "",
-        };
+        addresses[order.order_id] = savedAddresses[idx] ?? deriveAddress(order);
       });
 
       return page({ orders, packageTypes, addresses, trackingMethodIds, error: null });

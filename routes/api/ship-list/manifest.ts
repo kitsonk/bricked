@@ -4,7 +4,6 @@ import type { AusPostAddress } from "@/utils/types.ts";
 
 interface ManifestRow {
   orderId: number;
-  buyerEmail: string;
   countryCode: string;
   address: AusPostAddress;
   lengthCm: string;

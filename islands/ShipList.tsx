@@ -11,8 +11,6 @@ interface Dims {
 
 const EMPTY_ADDRESS: AusPostAddress = {
   recipientName: "",
-  recipientEmail: "",
-  recipientPhone: "",
   addressLine1: "",
   addressLine2: "",
   addressLine3: "",
@@ -155,7 +153,6 @@ export default function ShipList(
   async function exportManifest() {
     const rows = orders.filter((o) => isExportable(o, trackingMethodSet)).map((order) => ({
       orderId: order.order_id,
-      buyerEmail: order.buyer_email,
       countryCode: order.shipping?.address?.country_code ?? "",
       address: addresses.value[order.order_id],
       lengthCm: dimensions.value[order.order_id].l,
@@ -416,7 +413,6 @@ export default function ShipList(
                   </button>
                 </div>
               </th>
-              <th>Recipient Info</th>
               <th>Package Type</th>
               <th>Dimensions</th>
               <th>Weight (g)</th>
@@ -487,48 +483,6 @@ export default function ShipList(
                       >
                         <span class="iconify lucide--pencil size-3.5"></span>
                       </button>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-2">
-                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>
-                          Email
-                        </span>
-                        <input
-                          type="email"
-                          class="input input-sm w-full min-w-48"
-                          value={addr?.recipientEmail ?? ""}
-                          onInput={(e) => {
-                            addresses.value = {
-                              ...addresses.value,
-                              [order.order_id]: {
-                                ...addresses.value[order.order_id],
-                                recipientEmail: e.currentTarget.value,
-                              },
-                            };
-                          }}
-                        />
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span class={`text-xs w-10 ${exportable ? "text-base-content/50" : "text-neutral-content/60"}`}>
-                          Phone
-                        </span>
-                        <input
-                          type="tel"
-                          class="input input-sm w-full min-w-36"
-                          value={addr?.recipientPhone ?? ""}
-                          onInput={(e) => {
-                            addresses.value = {
-                              ...addresses.value,
-                              [order.order_id]: {
-                                ...addresses.value[order.order_id],
-                                recipientPhone: e.currentTarget.value,
-                              },
-                            };
-                          }}
-                        />
-                      </div>
                     </div>
                   </td>
                   {exportable
