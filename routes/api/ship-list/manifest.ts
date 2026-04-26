@@ -31,6 +31,7 @@ const COLUMNS = [
   "Item Width",
   "Item Height",
   "Item Weight",
+  "Extra Cover Amount",
 ];
 
 export const handler = define.handlers({
@@ -57,6 +58,7 @@ export const handler = define.handlers({
       "Item Width": r.widthCm,
       "Item Height": r.heightCm,
       "Item Weight": r.weightKg,
+      "Extra Cover Amount": r.extraCover,
     }));
 
     const csv = stringify(data, { columns: COLUMNS });
