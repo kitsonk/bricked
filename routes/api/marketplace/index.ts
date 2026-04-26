@@ -149,7 +149,9 @@ export const handler = define.handlers({
       : null;
     const storeItems = storeJson?.result?.groups?.[0]?.items ?? [];
 
-    const partCount = subsets.length > 0 ? subsets.length : null;
+    const partCount = subsets.length > 0
+      ? subsets.reduce((sum, s) => sum + s.entries.reduce((n, e) => n + e.quantity, 0), 0)
+      : null;
     return Response.json({
       ...await marketplaceResp.json(),
       colors,
