@@ -73,8 +73,10 @@ export default function Inventory() {
   const remarks = useSignal("");
 
   const pending = useSignal<PendingItem[]>([]);
+  const editingId = useSignal<string | null>(null);
   const copying = useSignal(false);
   const copyError = useSignal<string | null>(null);
+  const descCopied = useSignal(false);
 
   const marketplaceItems = useSignal<MarketplaceItem[] | null>(null);
   const marketplaceLoading = useSignal(false);
@@ -100,28 +102,7 @@ export default function Inventory() {
     return true;
   }
 
-  function addItem(e: Event) {
-    e.preventDefault();
-    if (description.value.length > 255) return;
-    const colorId = selectedColorId.value;
-    const hasColor = colorId !== null && colorId !== 0;
-    pending.value = [
-      ...pending.value,
-      {
-        id: crypto.randomUUID(),
-        ITEMTYPE: itemType.value,
-        ITEMID: itemId.value.trim(),
-        ...(hasColor && {
-          COLOR: colorId,
-          COLOR_NAME: itemColors.value.find((c) => c.color_id === colorId)?.color_name,
-        }),
-        PRICE: parseFloat(parseFloat(price.value).toFixed(2)),
-        QTY: parseInt(qty.value, 10),
-        CONDITION: condition.value,
-        DESCRIPTION: description.value.trim(),
-        REMARKS: remarks.value.trim(),
-      },
-    ];
+  function resetForm() {
     itemId.value = "";
     price.value = "";
     qty.value = "1";
@@ -139,8 +120,81 @@ export default function Inventory() {
     marketplaceTotalCount.value = null;
   }
 
+  function addItem(e: Event) {
+    e.preventDefault();
+    if (description.value.length > 255) return;
+    const colorId = selectedColorId.value;
+    const hasColor = colorId !== null && colorId !== 0;
+    const updatedItem: PendingItem = {
+      id: editingId.value ?? crypto.randomUUID(),
+      ITEMTYPE: itemType.value,
+      ITEMID: itemId.value.trim(),
+      ...(hasColor && {
+        COLOR: colorId,
+        COLOR_NAME: itemColors.value.find((c) => c.color_id === colorId)?.color_name,
+      }),
+      PRICE: parseFloat(parseFloat(price.value).toFixed(2)),
+      QTY: parseInt(qty.value, 10),
+      CONDITION: condition.value,
+      DESCRIPTION: description.value.trim(),
+      REMARKS: remarks.value.trim(),
+    };
+    if (editingId.value) {
+      pending.value = pending.value.map((i) => i.id === editingId.value ? updatedItem : i);
+      editingId.value = null;
+    } else {
+      pending.value = [...pending.value, updatedItem];
+    }
+    resetForm();
+  }
+
+  function startEdit(item: PendingItem) {
+    editingId.value = item.id;
+    itemType.value = item.ITEMTYPE;
+    itemId.value = item.ITEMID;
+    price.value = String(item.PRICE);
+    qty.value = String(item.QTY);
+    condition.value = item.CONDITION;
+    description.value = item.DESCRIPTION;
+    remarks.value = item.REMARKS;
+    if (item.COLOR !== undefined && item.COLOR !== 0) {
+      selectedColorId.value = item.COLOR;
+      itemColors.value = item.COLOR_NAME ? [{ color_id: item.COLOR, color_name: item.COLOR_NAME }] : [];
+    } else {
+      selectedColorId.value = null;
+      itemColors.value = [];
+    }
+    marketplaceItems.value = null;
+    catalogItem.value = null;
+    colorImageUrl.value = null;
+    partCount.value = null;
+    storeItems.value = null;
+    storeItemId.value = null;
+    marketplacePage.value = 1;
+    marketplaceTotalCount.value = null;
+    marketplaceError.value = null;
+  }
+
+  function cancelEdit() {
+    editingId.value = null;
+    resetForm();
+  }
+
+  function deleteEditingItem() {
+    if (!editingId.value) return;
+    pending.value = pending.value.filter((i) => i.id !== editingId.value);
+    cancelEdit();
+  }
+
   function removeItem(id: string) {
     pending.value = pending.value.filter((i) => i.id !== id);
+  }
+
+  async function copyDescription() {
+    if (!description.value) return;
+    await navigator.clipboard.writeText(description.value);
+    descCopied.value = true;
+    setTimeout(() => (descCopied.value = false), 1500);
   }
 
   async function copyXml() {
@@ -266,8 +320,20 @@ export default function Inventory() {
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
         <div class="space-y-8">
           <section>
-            <h2 class="text-lg font-semibold mb-4">Add Item</h2>
-            <div class="border border-base-content/10 rounded-box p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold">{editingId.value ? "Edit Item" : "Add Item"}</h2>
+              {editingId.value && (
+                <button type="button" class="btn btn-ghost btn-xs gap-1" onClick={cancelEdit}>
+                  <span class="iconify lucide--x size-3.5"></span>
+                  Cancel
+                </button>
+              )}
+            </div>
+            <div
+              class={`border rounded-box p-4${
+                editingId.value ? " border-primary/40 bg-primary/5" : " border-base-content/10"
+              }`}
+            >
               <form onSubmit={addItem}>
                 <div class="grid grid-cols-3 gap-3 mb-3">
                   <fieldset class="fieldset">
@@ -367,13 +433,26 @@ export default function Inventory() {
                 </div>
                 <fieldset class="fieldset mb-3">
                   <legend class="fieldset-legend">Description</legend>
-                  <input
-                    type="text"
-                    class={`input w-full${description.value.length > 255 ? " input-error" : ""}`}
-                    placeholder="Optional"
-                    value={description.value}
-                    onInput={(e) => (description.value = e.currentTarget.value)}
-                  />
+                  <label class={`input w-full${description.value.length > 255 ? " input-error" : ""}`}>
+                    <input
+                      type="text"
+                      class="grow"
+                      placeholder="Optional"
+                      value={description.value}
+                      onInput={(e) => (description.value = e.currentTarget.value)}
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-xs btn-square -mr-1"
+                      title="Copy to clipboard"
+                      disabled={!description.value}
+                      onClick={copyDescription}
+                    >
+                      {descCopied.value
+                        ? <span class="iconify lucide--check size-3.5 text-success"></span>
+                        : <span class="iconify lucide--copy size-3.5 opacity-50"></span>}
+                    </button>
+                  </label>
                   <p
                     class={`text-xs text-right mt-1${
                       description.value.length > 255 ? " text-error" : " text-base-content/50"
@@ -392,10 +471,29 @@ export default function Inventory() {
                     onInput={(e) => (remarks.value = e.currentTarget.value)}
                   />
                 </fieldset>
-                <div class="flex justify-end">
+                <div class="flex justify-between items-center">
+                  {editingId.value
+                    ? (
+                      <button type="button" class="btn btn-error btn-sm" onClick={deleteEditingItem}>
+                        <span class="iconify lucide--trash-2 size-4"></span>
+                        Delete Item
+                      </button>
+                    )
+                    : <div />}
                   <button type="submit" class="btn btn-primary btn-sm">
-                    <span class="iconify lucide--plus size-4"></span>
-                    Add Item
+                    {editingId.value
+                      ? (
+                        <>
+                          <span class="iconify lucide--check size-4"></span>
+                          Update Item
+                        </>
+                      )
+                      : (
+                        <>
+                          <span class="iconify lucide--plus size-4"></span>
+                          Add Item
+                        </>
+                      )}
                   </button>
                 </div>
               </form>
@@ -466,7 +564,7 @@ export default function Inventory() {
                     </thead>
                     <tbody>
                       {pending.value.map((item) => (
-                        <tr key={item.id}>
+                        <tr key={item.id} class={editingId.value === item.id ? "bg-primary/10" : ""}>
                           <td>{TYPE_LABELS[item.ITEMTYPE]}</td>
                           <td class="font-mono">{item.ITEMID}</td>
                           <td class="text-sm">
@@ -478,14 +576,26 @@ export default function Inventory() {
                           <td class="text-base-content/70 text-sm max-w-48 truncate">{item.DESCRIPTION || "—"}</td>
                           <td class="text-base-content/70 text-sm max-w-48 truncate">{item.REMARKS || "—"}</td>
                           <td>
-                            <button
-                              type="button"
-                              class="btn btn-ghost btn-xs btn-square text-secondary"
-                              title="Remove"
-                              onClick={() => removeItem(item.id)}
-                            >
-                              <span class="iconify lucide--trash-2 size-3.5"></span>
-                            </button>
+                            <div class="flex gap-0.5">
+                              <button
+                                type="button"
+                                class="btn btn-ghost btn-xs btn-square text-primary"
+                                title="Edit"
+                                onClick={() =>
+                                  startEdit(item)}
+                              >
+                                <span class="iconify lucide--pencil size-3.5"></span>
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-ghost btn-xs btn-square text-error"
+                                title="Remove"
+                                onClick={() =>
+                                  removeItem(item.id)}
+                              >
+                                <span class="iconify lucide--trash-2 size-3.5"></span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
