@@ -65,7 +65,7 @@ const ITEM_TYPES: { value: ItemType; label: string }[] = [
 const TYPE_LABELS: Record<string, string> = Object.fromEntries(ITEM_TYPES.map((t) => [t.value, t.label]));
 
 export default function Inventory() {
-  const itemType = useSignal<ItemType>("S");
+  const itemType = useSignal<ItemType>("M");
   const itemId = useSignal("");
   const price = useSignal("");
   const qty = useSignal("1");
