@@ -513,7 +513,8 @@ export default function Inventory() {
                   <input
                     type="text"
                     class="input w-full"
-                    placeholder="Optional"
+                    placeholder="Location, notes, etc."
+                    required
                     value={remarks.value}
                     onInput={(e) => (remarks.value = e.currentTarget.value)}
                   />
