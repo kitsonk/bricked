@@ -691,7 +691,17 @@ export default function Inventory() {
                   </button>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-start gap-2 mb-1">
-                      <h3 class="font-semibold text-base">{catalogItem.value.name}</h3>
+                      <h3 class="font-semibold text-base">
+                        <a
+                          href={`https://www.bricklink.com/v2/catalog/catalogitem.page?${itemType.value}=${itemId.value.trim()}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="link link-hover inline-flex items-center gap-1"
+                        >
+                          {catalogItem.value.name}
+                          <span class="iconify lucide--external-link size-3.5 shrink-0"></span>
+                        </a>
+                      </h3>
                       {catalogItem.value.is_obsolete && (
                         <span class="badge badge-warning badge-sm shrink-0 mt-0.5">Obsolete</span>
                       )}
