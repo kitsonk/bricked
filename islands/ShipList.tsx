@@ -68,6 +68,46 @@ export default function ShipList(
   const verifyResult = useSignal<"success" | "unmatched" | null>(null);
   const addressError = useSignal<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const selectedOrders = useSignal<Set<number>>(new Set());
+
+  const hasSelection = useComputed(() => selectedOrders.value.size > 0);
+
+  const allNonExportableSelected = useComputed(() => {
+    const nonExportable = orders.filter((o) => !isExportable(o, trackingMethodSet));
+    return nonExportable.length > 0 && nonExportable.every((o) => selectedOrders.value.has(o.order_id));
+  });
+
+  function toggleSelected(orderId: number) {
+    const next = new Set(selectedOrders.value);
+    if (next.has(orderId)) {
+      next.delete(orderId);
+    } else {
+      next.add(orderId);
+    }
+    selectedOrders.value = next;
+  }
+
+  function toggleSelectAll() {
+    const nonExportable = orders.filter((o) => !isExportable(o, trackingMethodSet));
+    const allSelected = nonExportable.every((o) => selectedOrders.value.has(o.order_id));
+    const next = new Set(selectedOrders.value);
+    if (allSelected) {
+      for (const order of nonExportable) {
+        next.delete(order.order_id);
+      }
+    } else {
+      for (const order of nonExportable) {
+        next.add(order.order_id);
+      }
+    }
+    selectedOrders.value = next;
+  }
+
+  function printLabels() {
+    const ids = Array.from(selectedOrders.value).join(",");
+    const url = `/print-labels?orders=${encodeURIComponent(ids)}`;
+    globalThis.open(url, "_blank");
+  }
 
   function setPackage(orderId: number, value: string) {
     selectedPackage.value = { ...selectedPackage.value, [orderId]: value };
@@ -253,7 +293,16 @@ export default function ShipList(
 
   return (
     <div>
-      <div class="flex justify-end mb-4">
+      <div class="flex justify-end mb-4 gap-2">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          disabled={!hasSelection.value}
+          onClick={printLabels}
+        >
+          <span class="iconify lucide--printer size-4"></span>
+          Print Labels
+        </button>
         <button
           type="button"
           class="btn btn-primary btn-sm"
@@ -395,6 +444,15 @@ export default function ShipList(
         <table class="table">
           <thead>
             <tr>
+              <th class="w-10">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm"
+                  checked={allNonExportableSelected.value}
+                  onChange={toggleSelectAll}
+                  aria-label="Select all non-exportable orders"
+                />
+              </th>
               <th>Order Info</th>
               <th>Shipping Method</th>
               <th>
@@ -427,6 +485,17 @@ export default function ShipList(
               const exportable = isExportable(order, trackingMethodSet);
               return (
                 <tr key={order.order_id} class={!exportable ? "bg-neutral/10" : ""}>
+                  <td class="w-10">
+                    {!exportable && (
+                      <input
+                        type="checkbox"
+                        class="checkbox checkbox-sm"
+                        checked={selectedOrders.value.has(order.order_id)}
+                        onChange={() => toggleSelected(order.order_id)}
+                        aria-label={`Select order #${order.order_id}`}
+                      />
+                    )}
+                  </td>
                   <td class="text-sm leading-snug">
                     <div>
                       <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
