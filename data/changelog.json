@@ -1,5 +1,31 @@
 [
   {
+    "hash": "7aa17df",
+    "subject": "Resolve color names during XML import",
+    "body": "Look up imported item colors in the KV cache so the pending items table displays color names instead of raw numeric IDs."
+  },
+  {
+    "hash": "efb6ee7",
+    "subject": "Ensure remarks input is required"
+  },
+  {
+    "hash": "a17e580",
+    "subject": "Link item name in Inventory overview card to BrickLink catalog page"
+  },
+  {
+    "hash": "26c39f7",
+    "subject": "Make minifigs the default on inventory page"
+  },
+  {
+    "hash": "8dcac3c",
+    "subject": "Blank extra cover amount in manifest CSV when value is zero"
+  },
+  {
+    "hash": "20441bd",
+    "subject": "Add XML import to Inventory pending items",
+    "body": "Adds an Import button that opens a modal dialog for selecting a BrickLink XML inventory file. Parsing is handled server-side via a new /api/xml/import endpoint. Imported items are appended to the pending list with a warning row tint that turns to success once edited. The pending items table is now scrollable with a max-h-128 cap and sticky headers."
+  },
+  {
     "hash": "01869ea",
     "subject": "Add pending item editing and description clipboard copy to Inventory",
     "body": "Pending items now have an edit (pencil) button that populates the form for in-place editing, with the active row highlighted and the panel switching to Edit Item mode. A Delete Item button appears in the form footer during editing. The description field gains an inline copy icon that writes the current value to the clipboard with a brief check confirmation."
