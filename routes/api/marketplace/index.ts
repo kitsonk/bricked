@@ -3,24 +3,27 @@ import { getBricklinkItemSearch, getColor, getCredentials, saveBricklinkItemSear
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import type { BLCatalogItem, BLSubsetEntry, BricklinkSearchResult } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
+import { bricklinkCatalogUrl } from "@/utils/format.ts";
 
 const logger = getLogger(["bricked", "marketplace"]);
 
-const AJAX_HEADERS = {
-  headers: {
-    "accept": "application/json, text/javascript, */*; q=0.01",
-    "accept-language": "en-AU,en-GB;q=0.9,en;q=0.8,en-US;q=0.7",
-    "priority": "u=1, i",
-    "sec-ch-ua": '"Microsoft Edge";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"macOS"',
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-origin",
-    "x-requested-with": "XMLHttpRequest",
-    "Referer": "https://www.bricklink.com/v2/catalog/catalogitem.page?M=njo0001",
-  },
-};
+function bricklinkAjaxHeaders(itemType: string, itemNo: string) {
+  return {
+    headers: {
+      "accept": "application/json, text/javascript, */*; q=0.01",
+      "accept-language": "en-AU,en-GB;q=0.9,en;q=0.8,en-US;q=0.7",
+      "priority": "u=1, i",
+      "sec-ch-ua": '"Microsoft Edge";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"macOS"',
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+      "x-requested-with": "XMLHttpRequest",
+      "Referer": bricklinkCatalogUrl(itemType, itemNo),
+    },
+  };
+}
 
 export const handler = define.handlers({
   async GET(ctx) {
@@ -46,7 +49,7 @@ export const handler = define.handlers({
       searchUrl.searchParams.set("q", itemid);
       let searchResp: Response;
       try {
-        searchResp = await fetch(searchUrl, AJAX_HEADERS);
+        searchResp = await fetch(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
       } catch (err) {
         return Response.json({ error: String(err) }, { status: 502 });
       }
@@ -119,7 +122,7 @@ export const handler = define.handlers({
         }
         return url;
       })(),
-      AJAX_HEADERS,
+      bricklinkAjaxHeaders(itemtype, itemid),
     );
 
     let marketplaceResp: Response;
@@ -130,7 +133,7 @@ export const handler = define.handlers({
     let subsets: BLSubsetEntry[];
     try {
       [marketplaceResp, storeResp, colors, catalogItem, imageUrl, subsets] = await Promise.all([
-        fetch(marketplaceUrl, AJAX_HEADERS),
+        fetch(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid)),
         storePromise,
         colorsPromise,
         catalogItemPromise,

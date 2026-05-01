@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import type { PickListItem, PickListOrder } from "@/utils/types.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
-import { bricklinkItemImageUrl } from "@/utils/format.ts";
+import { bricklinkCatalogUrl, bricklinkItemImageUrl } from "@/utils/format.ts";
 import { itemKey, OrderCard } from "@/components/OrderCard.tsx";
 import { type PartDialogItem, PartImageDialog } from "@/components/PartImageDialog.tsx";
 
@@ -213,7 +213,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                             </button>
                             <div>
                               <a
-                                href={`https://www.bricklink.com/v2/catalog/catalogitem.page?P=${item.itemNo}`}
+                                href={bricklinkCatalogUrl(item.itemType, item.itemNo)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class={`font-medium link link-hover ${isPicked ? "line-through" : ""}`}

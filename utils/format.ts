@@ -34,3 +34,8 @@ export function bricklinkItemImageUrl(itemType: string, itemNo: string, colorId:
   const colorSegment = itemType === "PART" ? colorId : 0;
   return `https://img.bricklink.com/ItemImage/${typeCode}/${colorSegment}/${itemNo}.png`;
 }
+
+export function bricklinkCatalogUrl(itemType: string, itemNo: string): string {
+  const prefix = ITEM_TYPE_CODE[itemType] ?? itemType;
+  return `https://www.bricklink.com/v2/catalog/catalogitem.page?${prefix}=${itemNo}`;
+}

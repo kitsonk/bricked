@@ -1,13 +1,5 @@
 import { useEffect, useRef } from "preact/hooks";
-import { bricklinkItemImageUrl } from "@/utils/format.ts";
-
-const CATALOG_TYPE_PARAM: Record<string, string> = {
-  PART: "P",
-  MINIFIG: "M",
-  SET: "S",
-  BOOK: "B",
-  GEAR: "G",
-};
+import { bricklinkCatalogUrl, bricklinkItemImageUrl } from "@/utils/format.ts";
 
 export interface PartDialogItem {
   itemNo: string;
@@ -34,8 +26,7 @@ export function PartImageDialog({ item, onClose }: Props) {
     }
   }, [item]);
 
-  const typeParam = item ? (CATALOG_TYPE_PARAM[item.itemType] ?? "P") : "P";
-  const catalogUrl = item ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${typeParam}=${item.itemNo}` : "#";
+  const catalogUrl = item ? bricklinkCatalogUrl(item.itemType, item.itemNo) : "#";
 
   return (
     <dialog ref={dialogRef} class="modal">

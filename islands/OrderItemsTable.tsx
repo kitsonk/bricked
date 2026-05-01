@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import type { BLOrderItem } from "@/utils/types.ts";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
-import { bricklinkItemImageUrl, formatAmount } from "@/utils/format.ts";
+import { bricklinkCatalogUrl, bricklinkItemImageUrl, formatAmount } from "@/utils/format.ts";
 import { decodeHtml } from "@/utils/html.ts";
 import { type PartDialogItem, PartImageDialog } from "@/components/PartImageDialog.tsx";
 
@@ -66,7 +66,7 @@ export default function OrderItemsTable({ orderId, items, currencyCode }: Props)
                     </button>
                     <div>
                       <a
-                        href={`https://www.bricklink.com/v2/catalog/catalogitem.page?P=${item.item.no}`}
+                        href={bricklinkCatalogUrl(item.item.type, item.item.no)}
                         target="_blank"
                         rel="noopener noreferrer"
                         class="font-medium link link-hover"

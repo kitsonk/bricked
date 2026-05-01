@@ -1,6 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { useRef } from "preact/hooks";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
+import { bricklinkCatalogUrl } from "@/utils/format.ts";
 
 type ItemType = "S" | "P" | "M" | "B" | "G" | "C" | "I" | "O";
 type Condition = "N" | "U";
@@ -694,7 +695,7 @@ export default function Inventory() {
                     <div class="flex items-start gap-2 mb-1">
                       <h3 class="font-semibold text-base">
                         <a
-                          href={`https://www.bricklink.com/v2/catalog/catalogitem.page?${itemType.value}=${itemId.value.trim()}`}
+                          href={bricklinkCatalogUrl(itemType.value, itemId.value.trim())}
                           target="_blank"
                           rel="noopener noreferrer"
                           class="link link-hover inline-flex items-center gap-1"
