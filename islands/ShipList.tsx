@@ -426,14 +426,14 @@ export default function ShipList(
               const addr = addresses.value[order.order_id];
               const exportable = isExportable(order, trackingMethodSet);
               return (
-                <tr key={order.order_id} class={!exportable ? "bg-neutral text-neutral-content" : ""}>
+                <tr key={order.order_id} class={!exportable ? "bg-neutral/10" : ""}>
                   <td class="text-sm leading-snug">
                     <div>
                       <a class="link font-mono font-medium" href={`/orders/${order.order_id}`}>
                         #{order.order_id}
                       </a>
                     </div>
-                    <div class={exportable ? "text-base-content/60" : "text-neutral-content/60"}>
+                    <div class="text-base-content/60">
                       {order.total_count} ({order.unique_count} lots)
                     </div>
                     <div class="font-medium">
