@@ -1,5 +1,6 @@
 import { parse } from "@libs/xml";
 import { define } from "@/utils/fresh.ts";
+import { getColor } from "@/utils/kv.ts";
 
 type ItemType = "S" | "P" | "M" | "B" | "G" | "C" | "I" | "O";
 type Condition = "N" | "U";
@@ -8,6 +9,7 @@ export type ImportedItem = {
   ITEMTYPE: ItemType;
   ITEMID: string;
   COLOR?: number;
+  COLOR_NAME?: string;
   PRICE: number;
   QTY: number;
   CONDITION: Condition;
@@ -39,19 +41,23 @@ export const handler = define.handlers({
       : rawItems != null
       ? [rawItems as Record<string, unknown>]
       : [];
-    const items: ImportedItem[] = itemArray.map((item) => {
-      const colorNum = Number(item.COLOR ?? 0);
-      return {
-        ITEMTYPE: String(item.ITEMTYPE ?? "P") as ItemType,
-        ITEMID: String(item.ITEMID ?? ""),
-        ...(colorNum !== 0 && { COLOR: colorNum }),
-        PRICE: parseFloat(parseFloat(String(item.PRICE ?? "0")).toFixed(2)),
-        QTY: parseInt(String(item.QTY ?? "1"), 10),
-        CONDITION: String(item.CONDITION ?? "N") as Condition,
-        DESCRIPTION: String(item.DESCRIPTION ?? ""),
-        REMARKS: String(item.REMARKS ?? ""),
-      };
-    });
+    const items: ImportedItem[] = await Promise.all(
+      itemArray.map(async (item) => {
+        const colorNum = Number(item.COLOR ?? 0);
+        const color = colorNum !== 0 ? await getColor(colorNum) : null;
+        return {
+          ITEMTYPE: String(item.ITEMTYPE ?? "P") as ItemType,
+          ITEMID: String(item.ITEMID ?? ""),
+          ...(colorNum !== 0 && { COLOR: colorNum }),
+          ...(color && { COLOR_NAME: color.color_name }),
+          PRICE: parseFloat(parseFloat(String(item.PRICE ?? "0")).toFixed(2)),
+          QTY: parseInt(String(item.QTY ?? "1"), 10),
+          CONDITION: String(item.CONDITION ?? "N") as Condition,
+          DESCRIPTION: String(item.DESCRIPTION ?? ""),
+          REMARKS: String(item.REMARKS ?? ""),
+        };
+      }),
+    );
     return Response.json({ items });
   },
 });
