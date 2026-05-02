@@ -3,15 +3,20 @@
    that Tailwind does not provide utilities for. */
 
 .label-page {
-  width: 4in;
-  height: 6in;
+  width: 100mm;
+  height: 150mm;
   padding: 10mm;
 }
 
 @media print {
   @page {
-    size: 4in 6in;
+    size: 100mm 150mm;
     margin: 0;
+    padding: 10mm 5mm 5mm 5mm;
+  }
+
+  @page :first {
+    padding-top: 0;
   }
 
   .no-print {
@@ -19,11 +24,12 @@
   }
 
   .label-page {
-    width: 4in !important;
-    height: 6in !important;
+    width: 100%;
+    height: calc(150mm - 20mm) !important;
     padding: 0 !important;
     margin: 0 !important;
     page-break-after: always;
+    overflow: hidden;
   }
 
   .label-page:last-child {
