@@ -124,17 +124,24 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
               key={order.order_id}
               class="label-page relative flex flex-col bg-white box-border shadow-sm border border-gray-300 rounded-lg print:rounded-none print:border-none print:shadow-none"
             >
-              <div class="shrink-0">
-                {fromLines.length > 0
-                  ? (
-                    <div class="text-xs text-gray-700 space-y-0.5">
-                      <div class="font-semibold text-gray-500 uppercase tracking-wider text-[10px] mb-1">
-                        From
+              <div class="shrink-0 flex justify-between items-start gap-2">
+                <div>
+                  {fromLines.length > 0
+                    ? (
+                      <div class="text-xs text-gray-700 space-y-0.5">
+                        <div class="font-semibold text-gray-500 uppercase tracking-wider text-[10px] mb-1">
+                          From
+                        </div>
+                        {fromLines.map((line, i) => <div key={i}>{line}</div>)}
                       </div>
-                      {fromLines.map((line, i) => <div key={i}>{line}</div>)}
-                    </div>
-                  )
-                  : <div class="text-xs text-gray-400 italic">No return address configured</div>}
+                    )
+                    : <div class="text-xs text-gray-400 italic">No return address configured</div>}
+                </div>
+                <img
+                  src="/images/bayside-bricks.jpeg"
+                  alt="Bayside Bricks"
+                  class="h-16 w-auto object-contain shrink-0"
+                />
               </div>
 
               <div class="flex-1 flex flex-col justify-center">
