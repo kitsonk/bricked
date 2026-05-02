@@ -1,0 +1,36 @@
+/* Print label sizing and page setup.
+   Kept in a dedicated file because it uses mm units and @page rules
+   that Tailwind does not provide utilities for. */
+
+.label-page {
+  width: 105mm;
+  height: 148mm;
+  padding: 10mm;
+}
+
+@media print {
+  @page {
+    size: 105mm 148mm;
+    margin: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .label-page {
+    width: 105mm !important;
+    height: 148mm !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    page-break-after: always;
+  }
+
+  .label-page:last-child {
+    page-break-after: auto;
+  }
+
+  body {
+    background: white !important;
+  }
+}

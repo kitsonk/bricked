@@ -81,46 +81,6 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
 
   return (
     <div class="min-h-screen bg-base-200 print:bg-white">
-      <style>
-        {`
-        @media print {
-          @page {
-            size: 105mm 148mm;
-            margin: 0;
-          }
-          .no-print {
-            display: none !important;
-          }
-          .label-page {
-            width: 105mm !important;
-            height: 148mm !important;
-            padding: 10mm !important;
-            border: none !important;
-            margin: 0 !important;
-            page-break-after: always;
-            background: white !important;
-            box-shadow: none !important;
-          }
-          .label-page:last-child {
-            page-break-after: auto;
-          }
-          body {
-            background: white !important;
-          }
-        }
-        .label-page {
-          width: 105mm;
-          height: 148mm;
-          padding: 10mm;
-          box-sizing: border-box;
-          background: white;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-        }
-      `}
-      </style>
-
       <div class="no-print sticky top-0 z-50 p-4 flex items-center justify-between bg-base-200/90 backdrop-blur border-b border-base-300">
         <div class="flex items-center gap-3">
           <h1 class="text-lg font-bold">Shipping Labels</h1>
@@ -162,7 +122,7 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
           return (
             <div
               key={order.order_id}
-              class="label-page shadow-sm border border-gray-300 rounded-lg print:rounded-none print:border-none"
+              class="label-page relative flex flex-col bg-white box-border shadow-sm border border-gray-300 rounded-lg print:rounded-none print:border-none print:shadow-none"
             >
               <div class="shrink-0">
                 {fromLines.length > 0

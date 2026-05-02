@@ -9,6 +9,7 @@
 @import "./core/highlight.css";
 @import "./core/layout.css";
 @import "./core/markdown.css";
+@import "./core/print-labels.css";
 
 /****  Plugins  ****/
 /* Animations */
