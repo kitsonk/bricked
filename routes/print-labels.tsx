@@ -86,7 +86,7 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
         </div>
       </div>
 
-      <div class="p-4 space-y-4 max-w-[120mm] mx-auto">
+      <div class="p-4 space-y-4 max-w-[4in] mx-auto">
         {error && (
           <div role="alert" class="alert alert-error no-print">
             <span class="iconify lucide--alert-circle size-5"></span>
@@ -119,14 +119,14 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
                 <div>
                   {fromLines.length > 0
                     ? (
-                      <div class="text-xs text-gray-700 space-y-0.5">
-                        <div class="font-semibold text-gray-500 uppercase tracking-wider text-[10px] mb-1">
+                      <div class="text-xs text-gray-700 print:text-black space-y-0.5">
+                        <div class="font-semibold text-gray-500 print:text-black uppercase tracking-wider text-[10px] mb-1">
                           From
                         </div>
                         {fromLines.map((line, i) => <div key={i}>{line}</div>)}
                       </div>
                     )
-                    : <div class="text-xs text-gray-400 italic">No return address configured</div>}
+                    : <div class="text-xs text-gray-400 print:text-black italic">No return address configured</div>}
                 </div>
                 <img
                   src="/images/bayside-bricks.jpeg"
@@ -136,14 +136,18 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
               </div>
 
               <div class="flex-1 flex flex-col justify-center">
-                <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Ship To</div>
-                <div class="text-gray-900 leading-relaxed space-y-0.5">
-                  {toLines.map((line, i) => <div key={i} class={i === 0 ? "font-bold text-lg" : ""}>{line}</div>)}
+                <div class="text-[10px] font-semibold text-gray-500 print:text-black uppercase tracking-wider mb-2">
+                  Ship To
+                </div>
+                <div class="text-gray-900 print:text-black leading-relaxed space-y-0.5">
+                  {toLines.map((line, i) => (
+                    <div key={i} class={i === 0 ? "font-bold text-2xl" : "text-lg"}>{line}</div>
+                  ))}
                 </div>
               </div>
 
-              <div class="shrink-0 pt-2 border-t border-gray-200 print:border-gray-200">
-                <div class="text-xs text-gray-500 font-mono">
+              <div class="shrink-0 pt-2 border-t border-gray-200 print:border-black">
+                <div class="text-xs text-gray-500 print:text-black font-mono">
                   Order #{order.order_id}
                 </div>
               </div>
