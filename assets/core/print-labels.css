@@ -15,25 +15,21 @@
     padding: 10mm 5mm 5mm 5mm;
   }
 
-  @page :first {
-    padding-top: 0;
-  }
-
   .no-print {
     display: none !important;
   }
 
   .label-page {
     width: 100%;
-    height: calc(150mm - 20mm) !important;
+    height: calc(150mm - 25mm) !important;
     padding: 0 !important;
     margin: 0 !important;
-    page-break-after: always;
+    break-after: always;
     overflow: hidden;
   }
 
   .label-page:last-child {
-    page-break-after: auto;
+    break-after: avoid;
   }
 
   body {
