@@ -272,6 +272,7 @@ export default function Inventory() {
   async function fetchMarketplace() {
     const id = itemId.value.trim();
     if (!id) return;
+    const previousColorId = selectedColorId.value;
     marketplaceLoading.value = true;
     storeLoading.value = true;
     marketplaceError.value = null;
@@ -299,6 +300,11 @@ export default function Inventory() {
       partCount.value = json.partCount ?? null;
       storeItems.value = json.storeItems ?? [];
       storeItemId.value = json.idItem ?? null;
+
+      if (previousColorId !== null && itemColors.value.some((c) => c.color_id === previousColorId)) {
+        selectedColorId.value = previousColorId;
+        await refreshMarketplace(previousColorId);
+      }
     } catch (err) {
       marketplaceError.value = String(err);
     } finally {
@@ -559,7 +565,7 @@ export default function Inventory() {
               <div class="flex gap-2">
                 <button
                   type="button"
-                  class="btn btn-sm btn-secondary"
+                  class="btn btn-sm btn-primary"
                   onClick={() => importDialogRef.current?.showModal()}
                 >
                   <span class="iconify lucide--file-up size-4"></span>
