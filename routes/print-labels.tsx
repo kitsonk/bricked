@@ -1,7 +1,7 @@
 import { page } from "fresh";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, getShipListAddress } from "@/utils/kv.ts";
+import { getCredentials, getSenderAddress, getShipListAddress } from "@/utils/kv.ts";
 import type { AusPostAddress, BLOrder } from "@/utils/types.ts";
 import PrintButton from "@/islands/PrintButton.tsx";
 
@@ -16,16 +16,6 @@ function deriveAddress(order: BLOrder): AusPostAddress {
     state: addr?.state || "",
     postcode: addr?.postal_code || "",
   };
-}
-
-function getSenderAddress(): AusPostAddress | null {
-  const raw = Deno.env.get("SENDER_ADDRESS");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as AusPostAddress;
-  } catch {
-    return null;
-  }
 }
 
 function formatAddress(addr: AusPostAddress): string[] {
@@ -59,9 +49,10 @@ export const handler = define.handlers<{
 
     try {
       const client = new BricklinkClient(creds);
-      const [orders, savedAddresses] = await Promise.all([
+      const [orders, savedAddresses, sender] = await Promise.all([
         Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
         Promise.all(orderIds.map((id) => getShipListAddress(id))),
+        getSenderAddress(),
       ]);
 
       const addresses: Record<number, AusPostAddress> = {};
@@ -69,7 +60,7 @@ export const handler = define.handlers<{
         addresses[order.order_id] = savedAddresses[idx] ?? deriveAddress(order);
       });
 
-      return page({ orders, addresses, sender: getSenderAddress(), error: null });
+      return page({ orders, addresses, sender, error: null });
     } catch (err) {
       return page({ orders: [], addresses: {}, sender: null, error: String(err) });
     }
@@ -109,8 +100,8 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
             <div>
               <div class="font-medium">Sender address not configured</div>
               <div class="text-sm">
-                Set the <code class="font-mono bg-base-300 px-1 rounded">SENDER_ADDRESS</code>{" "}
-                environment variable to add a return address to labels.
+                Set the sender address in <a href="/configuration" class="link font-medium">Configuration</a>{" "}
+                to add a return address to labels.
               </div>
             </div>
           </div>

@@ -194,7 +194,18 @@ export async function saveShipListAddress(orderId: number, address: AusPostAddre
   return (await kv()).set(shipListAddressKey(orderId), address);
 }
 
-// Order Cache
+// Sender Address
+
+const SENDER_ADDRESS_KEY: Deno.KvKey = ["sender_address"];
+
+export async function getSenderAddress(): Promise<AusPostAddress | null> {
+  const result = await (await kv()).get<AusPostAddress>(SENDER_ADDRESS_KEY);
+  return result.value;
+}
+
+export async function saveSenderAddress(address: AusPostAddress): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(SENDER_ADDRESS_KEY, address);
+}
 
 function orderCacheKey(orderId: number): Deno.KvKey {
   return ["order_cache", orderId];

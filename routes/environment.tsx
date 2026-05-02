@@ -101,31 +101,9 @@ export function EnvironmentContent() {
         <div class="card-body">
           <h2 class="card-title text-lg">Sender Address</h2>
           <p class="text-sm text-base-content/60 mb-4">
-            Used as the return address on shipping labels. Set the following in your <code>.env</code>{" "}
-            file (local) or application configuration (Deno Deploy):
+            Sender address is configured via the <a href="/configuration" class="link">Configuration</a>{" "}
+            page and stored in Deno KV.
           </p>
-          <ul class="text-sm font-mono space-y-1">
-            <li>
-              <span
-                class={`badge badge-sm mr-2 ${Deno.env.get("SENDER_ADDRESS") ? "badge-success" : "badge-ghost"}`}
-              >
-                {Deno.env.get("SENDER_ADDRESS") ? "set" : "optional"}
-              </span>
-              SENDER_ADDRESS
-            </li>
-          </ul>
-          <p class="text-sm text-base-content/60 mt-4">
-            Value must be a JSON object with the following fields:
-          </p>
-          <pre class="bg-base-300 rounded p-3 text-xs font-mono mt-2 overflow-x-auto">{"{\n"}
-            {"  \"recipientName\": \"Your Name\",\n"}
-            {"  \"addressLine1\": \"123 Example St\",\n"}
-            {"  \"addressLine2\": \"\",\n"}
-            {"  \"addressLine3\": \"\",\n"}
-            {"  \"suburb\": \"Suburb\",\n"}
-            {"  \"state\": \"State\",\n"}
-            {"  \"postcode\": \"0000\"\n"}
-            {"}"}</pre>
         </div>
       </div>
     </div>
