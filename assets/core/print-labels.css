@@ -5,18 +5,13 @@
 .label-page {
   width: 100mm;
   height: 150mm;
-  padding: 10mm;
+  background: white;
 }
 
 @media print {
   @page {
     size: 100mm 150mm;
-    margin: 10mm 0 0 0;
-    padding: 10mm 5mm 5mm 5mm;
-  }
-
-  @page :first {
-    margin-top: 0;
+    margin: 0;
   }
 
   .no-print {
@@ -24,15 +19,24 @@
   }
 
   .label-page {
-    width: 100%;
-    height: calc(150mm - 20mm) !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    break-after: always;
+    height: 150mm !important;
+    width: 100mm !important;
+    padding: 10mm 10mm 10mm 0 !important;
+    break-after: page;
     overflow: hidden;
   }
 
+  .label-page:first-child {
+    padding-top: 0 !important;
+  }
+
+  .label-page:last-child {
+    break-after: avoid;
+  }
+
   body {
+    margin: 0;
+    padding: 0;
     background: white !important;
   }
 }

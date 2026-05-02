@@ -113,7 +113,7 @@ export default define.page<typeof handler>(function PrintLabelsPage({ data }) {
           return (
             <div
               key={order.order_id}
-              class="label-page relative flex flex-col bg-white box-border shadow-sm border border-gray-300 rounded-lg print:rounded-none print:border-none print:shadow-none"
+              class="label-page relative flex flex-col bg-white box-border shadow-sm border p-4 border-gray-300 rounded-lg print:rounded-none print:border-none print:shadow-none"
             >
               <div class="shrink-0 flex justify-between items-start gap-2">
                 <div>
