@@ -11,8 +11,12 @@
 @media print {
   @page {
     size: 100mm 150mm;
-    margin: 0;
+    margin: 10mm 0 0 0;
     padding: 10mm 5mm 5mm 5mm;
+  }
+
+  @page :first {
+    margin-top: 0;
   }
 
   .no-print {
@@ -21,15 +25,11 @@
 
   .label-page {
     width: 100%;
-    height: calc(150mm - 25mm) !important;
+    height: calc(150mm - 20mm) !important;
     padding: 0 !important;
     margin: 0 !important;
     break-after: always;
     overflow: hidden;
-  }
-
-  .label-page:last-child {
-    break-after: avoid;
   }
 
   body {
