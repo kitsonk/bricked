@@ -47,7 +47,7 @@
 
     .collapse-content {
       &:before {
-        @apply bg-base-content/10 absolute start-4 top-10 bottom-2 w-px;
+        @apply bg-base-content/10 absolute inset-s-4 top-10 bottom-2 w-px;
         content: "";
       }
     }
