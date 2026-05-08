@@ -52,6 +52,12 @@ function formatPrice(raw: string): string {
   return raw.startsWith("AU ") ? raw.slice(3) : raw;
 }
 
+function decodeHtmlEntities(text: string): string {
+  const el = document.createElement("textarea");
+  el.innerHTML = text;
+  return el.value;
+}
+
 const ITEM_TYPES: { value: ItemType; label: string }[] = [
   { value: "S", label: "Set" },
   { value: "P", label: "Part" },
@@ -690,7 +696,7 @@ export default function Inventory() {
                   >
                     <img
                       src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
-                      alt={catalogItem.value.name}
+                      alt={decodeHtmlEntities(catalogItem.value.name)}
                       class="w-24 h-24 object-contain rounded-box bg-base-200"
                     />
                     <div class="absolute inset-0 rounded-box bg-base-content/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -706,7 +712,7 @@ export default function Inventory() {
                           rel="noopener noreferrer"
                           class="link link-hover inline-flex items-center gap-1"
                         >
-                          {catalogItem.value.name}
+                          {decodeHtmlEntities(catalogItem.value.name)}
                           <span class="iconify lucide--external-link size-3.5 shrink-0"></span>
                         </a>
                       </h3>
@@ -960,10 +966,10 @@ export default function Inventory() {
             </form>
             <img
               src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
-              alt={catalogItem.value.name}
+              alt={decodeHtmlEntities(catalogItem.value.name)}
               class="max-w-full max-h-[70vh] object-contain"
             />
-            <p class="mt-3 text-sm font-medium text-center">{catalogItem.value.name}</p>
+            <p class="mt-3 text-sm font-medium text-center">{decodeHtmlEntities(catalogItem.value.name)}</p>
           </div>
           <form method="dialog" class="modal-backdrop">
             <button type="submit">close</button>
