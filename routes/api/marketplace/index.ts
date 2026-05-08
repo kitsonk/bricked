@@ -1,5 +1,14 @@
 import { define } from "@/utils/fresh.ts";
-import { getBricklinkItemSearch, getColor, getCredentials, saveBricklinkItemSearch } from "@/utils/kv.ts";
+import {
+  getBricklinkItemSearch,
+  getColor,
+  getCredentials,
+  getMarketplaceCache,
+  getStoreItemsCache,
+  saveBricklinkItemSearch,
+  saveMarketplaceCache,
+  saveStoreItemsCache,
+} from "@/utils/kv.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import type { BLCatalogItem, BLSubsetEntry, BricklinkSearchResult } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
@@ -7,22 +16,39 @@ import { bricklinkCatalogUrl } from "@/utils/format.ts";
 
 const logger = getLogger(["bricked", "marketplace"]);
 
-function bricklinkAjaxHeaders(itemType: string, itemNo: string) {
+function bricklinkAjaxHeaders(
+  itemType: string,
+  itemNo: string,
+  site: "same-origin" | "same-site" = "same-origin",
+) {
   return {
     headers: {
       "accept": "application/json, text/javascript, */*; q=0.01",
-      "accept-language": "en-AU,en-GB;q=0.9,en;q=0.8,en-US;q=0.7",
+      "accept-language": "en-AU,en;q=0.9",
+      "origin": "https://www.bricklink.com",
       "priority": "u=1, i",
-      "sec-ch-ua": '"Microsoft Edge";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+      "referer": bricklinkCatalogUrl(itemType, itemNo),
+      "sec-ch-ua": '"Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
       "sec-ch-ua-mobile": "?0",
       "sec-ch-ua-platform": '"macOS"',
       "sec-fetch-dest": "empty",
       "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
+      "sec-fetch-site": site,
+      "user-agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
       "x-requested-with": "XMLHttpRequest",
-      "Referer": bricklinkCatalogUrl(itemType, itemNo),
     },
   };
+}
+
+async function fetchWithRetry(url: URL, init: RequestInit): Promise<Response> {
+  const resp = await fetch(url, init);
+  if (resp.status === 403) {
+    logger.debug`Got 403 from ${url.pathname}, retrying after 2s`;
+    await new Promise((r) => setTimeout(r, 2000));
+    return fetch(url, init);
+  }
+  return resp;
 }
 
 export const handler = define.handlers({
@@ -49,7 +75,7 @@ export const handler = define.handlers({
       searchUrl.searchParams.set("q", itemid);
       let searchResp: Response;
       try {
-        searchResp = await fetch(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
+        searchResp = await fetchWithRetry(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
       } catch (err) {
         return Response.json({ error: String(err) }, { status: 502 });
       }
@@ -112,28 +138,54 @@ export const handler = define.handlers({
       ? client.getSubsets(itemtype, itemid).catch(() => [])
       : Promise.resolve([]);
 
-    const storePromise: Promise<Response | null> = listOnly ? Promise.resolve(null) : fetch(
-      (() => {
-        const url = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
-        url.searchParams.set("sid", "4245762");
-        url.searchParams.set("itemID", String(idItem));
-        if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
-          url.searchParams.set("colorID", String(colorIdNum));
-        }
-        return url;
-      })(),
-      bricklinkAjaxHeaders(itemtype, itemid),
-    );
+    const marketplacePromise = (async () => {
+      const cached = await getMarketplaceCache(idItem, colorIdNum, page);
+      if (cached) {
+        logger.debug`Marketplace cache hit for ${itemid} color=${colorIdNum ?? "all"} page=${page}`;
+        return cached;
+      }
+      const resp = await fetchWithRetry(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid));
+      if (!resp.ok) {
+        throw new Error(`Upstream HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      await saveMarketplaceCache(idItem, colorIdNum, page, data);
+      return data;
+    })();
 
-    let marketplaceResp: Response;
-    let storeResp: Response | null;
+    const storePromise = listOnly ? Promise.resolve(null) : (async () => {
+      const cached = await getStoreItemsCache(idItem, colorIdNum);
+      if (cached) {
+        logger.debug`Store items cache hit for ${itemid} color=${colorIdNum ?? "all"}`;
+        return cached;
+      }
+      const storeUrl = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
+      storeUrl.searchParams.set("sid", "4245762");
+      storeUrl.searchParams.set("itemID", String(idItem));
+      if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
+        storeUrl.searchParams.set("colorID", String(colorIdNum));
+      }
+      const resp = await fetchWithRetry(storeUrl, bricklinkAjaxHeaders(itemtype, itemid, "same-site"));
+      if (!resp.ok) {
+        logger.debug`Store search returned HTTP ${resp.status} for ${itemid}, returning empty`;
+        return [];
+      }
+      const json = await resp.json() as { result?: { groups?: Array<{ items?: unknown[] }> } };
+      const items = json?.result?.groups?.[0]?.items ?? [];
+      await saveStoreItemsCache(idItem, colorIdNum, items);
+      return items;
+    })();
+
+    let marketplaceData: unknown;
+    let storeItems: unknown[] | null;
     let colors: { color_id: number; color_name: string }[];
     let catalogItem: BLCatalogItem | null;
     let imageUrl: string | null;
     let subsets: BLSubsetEntry[];
+
     try {
-      [marketplaceResp, storeResp, colors, catalogItem, imageUrl, subsets] = await Promise.all([
-        fetch(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid)),
+      [marketplaceData, storeItems, colors, catalogItem, imageUrl, subsets] = await Promise.all([
+        marketplacePromise,
         storePromise,
         colorsPromise,
         catalogItemPromise,
@@ -143,26 +195,19 @@ export const handler = define.handlers({
     } catch (err) {
       return Response.json({ error: String(err) }, { status: 502 });
     }
-    if (!marketplaceResp.ok) {
-      return Response.json({ error: `Upstream HTTP ${marketplaceResp.status}` }, { status: 502 });
-    }
-
-    const storeJson = !listOnly && storeResp?.ok
-      ? await storeResp.json() as { result?: { groups?: Array<{ items?: unknown[] }> } }
-      : null;
-    const storeItems = storeJson?.result?.groups?.[0]?.items ?? [];
 
     const partCount = subsets.length > 0
       ? subsets.reduce((sum, s) => sum + s.entries.reduce((n, e) => n + e.quantity, 0), 0)
       : null;
+
     return Response.json({
-      ...await marketplaceResp.json(),
+      ...(marketplaceData as Record<string, unknown>),
       colors,
       catalogItem,
       imageUrl,
       partCount,
       idItem,
-      ...(!listOnly && { storeItems }),
+      ...(!listOnly && storeItems != null ? { storeItems } : {}),
     });
   },
 });

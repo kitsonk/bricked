@@ -237,6 +237,55 @@ export async function listCachedOrdersByBuyer(buyerName: string): Promise<BLOrde
     .sort((a, b) => b.date_ordered.localeCompare(a.date_ordered));
 }
 
+// Marketplace Cache
+
+const MARKETPLACE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function marketplaceCacheKey(idItem: number, colorId: number | null, page: number): Deno.KvKey {
+  return ["marketplace_cache", idItem, colorId ?? "all", page];
+}
+
+export async function getMarketplaceCache(
+  idItem: number,
+  colorId: number | null,
+  page: number,
+): Promise<unknown | null> {
+  const result = await (await kv()).get<unknown>(marketplaceCacheKey(idItem, colorId, page));
+  return result.value;
+}
+
+export async function saveMarketplaceCache(
+  idItem: number,
+  colorId: number | null,
+  page: number,
+  data: unknown,
+): Promise<void> {
+  await (await kv()).set(marketplaceCacheKey(idItem, colorId, page), data, {
+    expireIn: MARKETPLACE_CACHE_TTL_MS,
+  });
+}
+
+// Store Items Cache
+
+const STORE_ITEMS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+function storeItemsCacheKey(idItem: number, colorId: number | null): Deno.KvKey {
+  return ["store_items_cache", idItem, colorId ?? "all"];
+}
+
+export async function getStoreItemsCache(idItem: number, colorId: number | null): Promise<unknown[] | null> {
+  const result = await (await kv()).get<unknown[]>(storeItemsCacheKey(idItem, colorId));
+  return result.value;
+}
+
+export async function saveStoreItemsCache(
+  idItem: number,
+  colorId: number | null,
+  items: unknown[],
+): Promise<void> {
+  await (await kv()).set(storeItemsCacheKey(idItem, colorId), items, { expireIn: STORE_ITEMS_CACHE_TTL_MS });
+}
+
 // CRM Customers
 
 function customerKey(buyerName: string): Deno.KvKey {
