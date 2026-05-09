@@ -10,7 +10,7 @@ import { getLogger } from "@/utils/log.ts";
 
 const logger = getLogger(["bricked", "shipping-methods"]);
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_ENRICHMENT: ShippingMethodEnrichment = { hasTracking: false };
+const DEFAULT_ENRICHMENT: ShippingMethodEnrichment = { hasTracking: false, printLabel: false };
 
 export async function getShippingMethodsWithEnrichment(client: BricklinkClient): Promise<ShippingMethod[]> {
   const now = Date.now();

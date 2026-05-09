@@ -24,6 +24,7 @@ export const handler = define.handlers<{
   packageTypes: PackageType[];
   addresses: Record<number, AusPostAddress>;
   trackingMethodIds: number[];
+  printLabelMethodIds: number[];
   error: string | null;
 }>({
   async GET(ctx) {
@@ -50,15 +51,25 @@ export const handler = define.handlers<{
       const trackingMethodIds = [...enrichments.entries()]
         .filter(([, e]) => e.hasTracking)
         .map(([id]) => id);
+      const printLabelMethodIds = [...enrichments.entries()]
+        .filter(([, e]) => e.printLabel)
+        .map(([id]) => id);
 
       const addresses: Record<number, AusPostAddress> = {};
       orders.forEach((order, idx) => {
         addresses[order.order_id] = savedAddresses[idx] ?? deriveAddress(order);
       });
 
-      return page({ orders, packageTypes, addresses, trackingMethodIds, error: null });
+      return page({ orders, packageTypes, addresses, trackingMethodIds, printLabelMethodIds, error: null });
     } catch (err) {
-      return page({ orders: [], packageTypes: [], addresses: {}, trackingMethodIds: [], error: String(err) });
+      return page({
+        orders: [],
+        packageTypes: [],
+        addresses: {},
+        trackingMethodIds: [],
+        printLabelMethodIds: [],
+        error: String(err),
+      });
     }
   },
 });
@@ -99,6 +110,7 @@ export default define.page<typeof handler>(function ShipListPage({ data }) {
           packageTypes={packageTypes}
           addresses={data.addresses}
           trackingMethodIds={data.trackingMethodIds}
+          printLabelMethodIds={data.printLabelMethodIds}
         />
       )}
     </AppFrame>

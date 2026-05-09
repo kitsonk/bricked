@@ -25,20 +25,26 @@ function isExportable(order: BLOrder, trackingMethodIds: Set<number>): boolean {
   return true;
 }
 
+function isPrintLabel(order: BLOrder, printLabelMethodIds: Set<number>): boolean {
+  return printLabelMethodIds.has(order.shipping?.method_id);
+}
+
 function packageLabel(pt: PackageType): string {
   const dims = `${pt.lengthCm.toFixed(1)} × ${pt.widthCm.toFixed(1)} × ${pt.heightCm.toFixed(1)} cm`;
   return `${pt.label} (${dims})`;
 }
 
 export default function ShipList(
-  { orders, packageTypes, addresses: initialAddresses, trackingMethodIds }: {
+  { orders, packageTypes, addresses: initialAddresses, trackingMethodIds, printLabelMethodIds }: {
     orders: BLOrder[];
     packageTypes: PackageType[];
     addresses: Record<number, AusPostAddress>;
     trackingMethodIds: number[];
+    printLabelMethodIds: number[];
   },
 ) {
   const trackingMethodSet = new Set(trackingMethodIds);
+  const printLabelMethodSet = new Set(printLabelMethodIds);
   const packageById = new Map(packageTypes.map((pt) => [pt.id, pt]));
 
   const selectedPackage = useSignal<Record<number, string>>(
@@ -72,9 +78,9 @@ export default function ShipList(
 
   const hasSelection = useComputed(() => selectedOrders.value.size > 0);
 
-  const allNonExportableSelected = useComputed(() => {
-    const nonExportable = orders.filter((o) => !isExportable(o, trackingMethodSet));
-    return nonExportable.length > 0 && nonExportable.every((o) => selectedOrders.value.has(o.order_id));
+  const allPrintLabelSelected = useComputed(() => {
+    const printLabelOrders = orders.filter((o) => isPrintLabel(o, printLabelMethodSet));
+    return printLabelOrders.length > 0 && printLabelOrders.every((o) => selectedOrders.value.has(o.order_id));
   });
 
   function toggleSelected(orderId: number) {
@@ -88,15 +94,15 @@ export default function ShipList(
   }
 
   function toggleSelectAll() {
-    const nonExportable = orders.filter((o) => !isExportable(o, trackingMethodSet));
-    const allSelected = nonExportable.every((o) => selectedOrders.value.has(o.order_id));
+    const printLabelOrders = orders.filter((o) => isPrintLabel(o, printLabelMethodSet));
+    const allSelected = printLabelOrders.every((o) => selectedOrders.value.has(o.order_id));
     const next = new Set(selectedOrders.value);
     if (allSelected) {
-      for (const order of nonExportable) {
+      for (const order of printLabelOrders) {
         next.delete(order.order_id);
       }
     } else {
-      for (const order of nonExportable) {
+      for (const order of printLabelOrders) {
         next.add(order.order_id);
       }
     }
@@ -247,11 +253,14 @@ export default function ShipList(
 
   async function verifyAllAddresses() {
     verifyingAll.value = true;
-    const exportableOrders = orders.filter((o) => isExportable(o, trackingMethodSet));
-    verifyStatuses.value = Object.fromEntries(exportableOrders.map((o) => [o.order_id, "verifying" as const]));
+    const verifyOrders = orders.filter((o) =>
+      isExportable(o, trackingMethodSet) ||
+      (printLabelMethodSet.has(o.shipping?.method_id) && o.shipping?.address?.country_code === "AU")
+    );
+    verifyStatuses.value = Object.fromEntries(verifyOrders.map((o) => [o.order_id, "verifying" as const]));
 
     await Promise.all(
-      exportableOrders.map(async (order) => {
+      verifyOrders.map(async (order) => {
         const addr = addresses.value[order.order_id];
         try {
           const resp = await fetch("/api/ship-list/verify-address", {
@@ -448,9 +457,9 @@ export default function ShipList(
                 <input
                   type="checkbox"
                   class="checkbox checkbox-sm"
-                  checked={allNonExportableSelected.value}
+                  checked={allPrintLabelSelected.value}
                   onChange={toggleSelectAll}
-                  aria-label="Select all non-exportable orders"
+                  aria-label="Select all print-label orders"
                 />
               </th>
               <th>Order Info</th>
@@ -486,7 +495,7 @@ export default function ShipList(
               return (
                 <tr key={order.order_id} class={!exportable ? "bg-neutral/10" : ""}>
                   <td class="w-10">
-                    {!exportable && (
+                    {isPrintLabel(order, printLabelMethodSet) && (
                       <input
                         type="checkbox"
                         class="checkbox checkbox-sm"

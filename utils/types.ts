@@ -189,6 +189,7 @@ export interface BLShippingMethod {
 
 export interface ShippingMethodEnrichment {
   hasTracking: boolean;
+  printLabel: boolean;
 }
 
 export interface ShippingMethod extends BLShippingMethod {

@@ -9,10 +9,10 @@ export const handler = define.handlers({
       return Response.json({ error: "Invalid method id" }, { status: 400 });
     }
     const body = await ctx.req.json();
-    if (typeof body.hasTracking !== "boolean") {
-      return Response.json({ error: "hasTracking (boolean) is required" }, { status: 400 });
+    if (typeof body.hasTracking !== "boolean" || typeof body.printLabel !== "boolean") {
+      return Response.json({ error: "hasTracking and printLabel (boolean) are required" }, { status: 400 });
     }
-    const enrichment: ShippingMethodEnrichment = { hasTracking: body.hasTracking };
+    const enrichment: ShippingMethodEnrichment = { hasTracking: body.hasTracking, printLabel: body.printLabel };
     await saveShippingMethodEnrichment(methodId, enrichment);
     return Response.json(enrichment);
   },

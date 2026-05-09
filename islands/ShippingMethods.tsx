@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import type { ShippingMethod } from "@/utils/types.ts";
+import type { ShippingMethod, ShippingMethodEnrichment } from "@/utils/types.ts";
 
 const AREA_LABELS: Record<string, string> = {
   D: "Domestic",
@@ -7,24 +7,26 @@ const AREA_LABELS: Record<string, string> = {
   B: "Both",
 };
 
+type EnrichmentKey = keyof ShippingMethodEnrichment;
+
 export default function ShippingMethods({ initialMethods }: { initialMethods: ShippingMethod[] }) {
   const methods = useSignal<ShippingMethod[]>(initialMethods);
   const saving = useSignal<number | null>(null);
   const error = useSignal<string | null>(null);
 
-  async function toggleTracking(method: ShippingMethod) {
+  async function toggleField(method: ShippingMethod, field: EnrichmentKey) {
     saving.value = method.method_id;
     error.value = null;
-    const newValue = !method.enrichment.hasTracking;
+    const newValue = !method.enrichment[field];
     try {
       const resp = await fetch(`/api/shipping-methods/${method.method_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hasTracking: newValue }),
+        body: JSON.stringify({ ...method.enrichment, [field]: newValue }),
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       methods.value = methods.value.map((m) =>
-        m.method_id === method.method_id ? { ...m, enrichment: { ...m.enrichment, hasTracking: newValue } } : m
+        m.method_id === method.method_id ? { ...m, enrichment: { ...m.enrichment, [field]: newValue } } : m
       );
     } catch (err) {
       error.value = String(err);
@@ -58,6 +60,7 @@ export default function ShippingMethods({ initialMethods }: { initialMethods: Sh
               <th>Area</th>
               <th>Note</th>
               <th class="text-center">Has Tracking</th>
+              <th class="text-center">Print Label</th>
             </tr>
           </thead>
           <tbody>
@@ -78,7 +81,16 @@ export default function ShippingMethods({ initialMethods }: { initialMethods: Sh
                     class="checkbox checkbox-sm"
                     checked={m.enrichment.hasTracking}
                     disabled={saving.value === m.method_id}
-                    onChange={() => toggleTracking(m)}
+                    onChange={() => toggleField(m, "hasTracking")}
+                  />
+                </td>
+                <td class="text-center">
+                  <input
+                    type="checkbox"
+                    class="checkbox checkbox-sm"
+                    checked={m.enrichment.printLabel}
+                    disabled={saving.value === m.method_id}
+                    onChange={() => toggleField(m, "printLabel")}
                   />
                 </td>
               </tr>
