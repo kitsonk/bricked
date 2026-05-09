@@ -1,5 +1,51 @@
 [
   {
+    "hash": "aceb661",
+    "subject": "Use dynamic Referer headers for BrickLink AJAX requests and centralise catalog URL generation",
+    "body": "Replaces hardcoded AJAX_HEADERS with bricklinkAjaxHeaders(itemType, itemNo) so the Referer matches the requested catalog page. Adds bricklinkCatalogUrl() to utils/format.ts for reuse across the app. Updates Inventory, OrderItemsTable, PickList, and PartImageDialog to use the shared utility, fixing hardcoded P= prefixes in OrderItemsTable and PickList."
+  },
+  {
+    "hash": "0c64dba",
+    "subject": "Improve styling of non-exportable items on the ship list"
+  },
+  {
+    "hash": "fcc995d",
+    "subject": "Add label printing for non-exportable orders"
+  },
+  {
+    "hash": "d01781f",
+    "subject": "Refactor inline print styles into assets/core/print-labels.css"
+  },
+  {
+    "hash": "2492167",
+    "subject": "Move sender address from env var to Deno KV with UI configuration",
+    "body": "Adds getSenderAddress/saveSenderAddress KV helpers, a new /configuration page with a form to edit the sender address, and a /api/configuration endpoint. The print-labels module now reads from KV instead of SENDER_ADDRESS. Adds a Configuration link to the sidebar under Settings and updates the environment page to reference it."
+  },
+  {
+    "hash": "e32528a",
+    "subject": "Preserve color selection during item lookup in inventory editor",
+    "body": "Also updates Import button styling to match other primary actions."
+  },
+  {
+    "hash": "02cd8fb",
+    "subject": "Update print labels for HotLabel HL-S8 4x6 thermal printer",
+    "body": "Resizes labels and page setup from 105x148mm to 4x6 inches. Forces all text and borders to solid black under @media print for thermal printer clarity (grays do not render well). Increases recipient name to text-2xl and address lines to text-lg for better readability on printed labels."
+  },
+  {
+    "hash": "c2bdb85",
+    "subject": "Improve BrickLink internal API anti-bot evasion",
+    "body": "Adds realistic Chrome 135 User-Agent and Origin headers to AJAX requests. Fixes referer casing and varies sec-fetch-site per endpoint. Introduces fetchWithRetry that pauses 2s and retries once on 403. Adds KV caching for marketplace listings (5 min TTL) and store items (10 min TTL) to reduce repeated scraping traffic and lower temporary ban risk."
+  },
+  {
+    "hash": "6a134a7",
+    "subject": "Decode HTML entities in catalog item names",
+    "body": "BrickLink returns item names with inline numeric character references (e.g. &#40; for parentheses). Adds a decodeHtmlEntities helper that uses a temporary textarea to decode these, and applies it wherever catalogItem.name is rendered: the overview link text, both image alt attributes, and the zoom dialog caption."
+  },
+  {
+    "hash": "363b68f",
+    "subject": "Add printLabel flag to shipping methods and ship list"
+  },
+  {
     "hash": "7aa17df",
     "subject": "Resolve color names during XML import",
     "body": "Look up imported item colors in the KV cache so the pending items table displays color names instead of raw numeric IDs."
