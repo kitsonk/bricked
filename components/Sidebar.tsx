@@ -53,6 +53,12 @@ export function Sidebar() {
             href="/drive-thru/templates"
             fPartial="/partials/drive-thru/templates"
           />
+          <MenuItem
+            icon="list-checks"
+            label="Drive Thru Rules"
+            href="/drive-thru/rules"
+            fPartial="/partials/drive-thru/rules"
+          />
         </div>
         <p class="menu-label mt-4 px-2.5">Admin</p>
         <div class="mt-2">

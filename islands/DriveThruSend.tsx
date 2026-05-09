@@ -6,12 +6,16 @@ export default function DriveThruSend({
   order,
   templates,
   sentRecord,
+  selectedTemplateId,
+  matchedRuleName,
 }: {
   order: BLOrder;
   templates: DriveThruTemplate[];
   sentRecord: DriveThruSentRecord | null;
+  selectedTemplateId: string | null;
+  matchedRuleName: string | null;
 }) {
-  const selectedId = useSignal(templates[0]?.id ?? "");
+  const selectedId = useSignal(selectedTemplateId ?? templates[0]?.id ?? "");
   const sending = useSignal(false);
   const error = useSignal<string | null>(null);
   const sent = useSignal<DriveThruSentRecord | null>(sentRecord);
@@ -86,8 +90,9 @@ export default function DriveThruSend({
               >
                 {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
-              <p class="label">
+              <p class="label flex items-center gap-2">
                 <a href="/drive-thru/templates" class="link link-primary text-xs">Manage templates</a>
+                {matchedRuleName && <span class="badge badge-xs badge-info">Auto: {matchedRuleName}</span>}
               </p>
             </fieldset>
 

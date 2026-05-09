@@ -2,8 +2,16 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, getDriveThruSent, listDriveThruTemplates } from "@/utils/kv.ts";
+import {
+  getCredentials,
+  getCustomer,
+  getDefaultTemplateId,
+  getDriveThruSent,
+  listDriveThruTemplates,
+  listTemplateRules,
+} from "@/utils/kv.ts";
 import type { BLOrder, DriveThruSentRecord, DriveThruTemplate } from "@/utils/types.ts";
+import { evaluateTemplateRules } from "@/utils/drive-thru.ts";
 import { formatAmount } from "@/utils/format.ts";
 import DriveThruSend from "@/islands/DriveThruSend.tsx";
 
@@ -11,6 +19,8 @@ export const handler = define.handlers<{
   order: BLOrder | null;
   templates: DriveThruTemplate[];
   sentRecord: DriveThruSentRecord | null;
+  selectedTemplateId: string | null;
+  matchedRuleName: string | null;
   error: string | null;
 }>({
   async GET(ctx) {
@@ -21,25 +31,50 @@ export const handler = define.handlers<{
 
     const orderId = Number(ctx.params.orderId);
     if (isNaN(orderId)) {
-      return page({ order: null, templates: [], sentRecord: null, error: "Invalid order ID" });
+      return page({
+        order: null,
+        templates: [],
+        sentRecord: null,
+        selectedTemplateId: null,
+        matchedRuleName: null,
+        error: "Invalid order ID",
+      });
     }
 
     try {
       const client = new BricklinkClient(creds);
-      const [order, templates, sentRecord] = await Promise.all([
+      const [order, templates, sentRecord, rules, defaultTemplateId] = await Promise.all([
         client.getOrder(orderId),
         listDriveThruTemplates(),
         getDriveThruSent(orderId),
+        listTemplateRules(),
+        getDefaultTemplateId(),
       ]);
-      return page({ order, templates, sentRecord, error: null });
+      const customer = order ? await getCustomer(order.buyer_name) : null;
+      const { templateId, matchedRule } = evaluateTemplateRules(rules, order, customer, defaultTemplateId);
+      return page({
+        order,
+        templates,
+        sentRecord,
+        selectedTemplateId: templateId,
+        matchedRuleName: matchedRule?.name ?? null,
+        error: null,
+      });
     } catch (err) {
-      return page({ order: null, templates: [], sentRecord: null, error: String(err) });
+      return page({
+        order: null,
+        templates: [],
+        sentRecord: null,
+        selectedTemplateId: null,
+        matchedRuleName: null,
+        error: String(err),
+      });
     }
   },
 });
 
 export default define.page<typeof handler>(function DriveThruPage({ data }) {
-  const { order, templates, sentRecord, error } = data;
+  const { order, templates, sentRecord, selectedTemplateId, matchedRuleName, error } = data;
 
   return (
     <AppFrame>
@@ -88,7 +123,13 @@ export default define.page<typeof handler>(function DriveThruPage({ data }) {
               </div>
             </div>
 
-            <DriveThruSend order={order} templates={templates} sentRecord={sentRecord} />
+            <DriveThruSend
+              order={order}
+              templates={templates}
+              sentRecord={sentRecord}
+              selectedTemplateId={selectedTemplateId}
+              matchedRuleName={matchedRuleName}
+            />
           </>
         )}
       </div>

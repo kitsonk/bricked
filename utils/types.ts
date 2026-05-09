@@ -221,6 +221,33 @@ export interface DriveThruSentRecord {
   sentAt: string;
 }
 
+export type RuleOperator = "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "contains";
+
+export type RuleField =
+  | "customer_order_count"
+  | "shipping_method"
+  | "shipping_method_id"
+  | "order_total"
+  | "item_count"
+  | "country_code"
+  | "status";
+
+export interface RuleCondition {
+  field: RuleField;
+  operator: RuleOperator;
+  value: string | number;
+}
+
+export interface TemplateRule {
+  id: string;
+  name: string;
+  templateId: string;
+  conditions: RuleCondition[];
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PackageType {
   id: string;
   label: string;

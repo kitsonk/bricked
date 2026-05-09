@@ -20,4 +20,4 @@
   prefixes: lucide;
 }
 
-@source inline("lucide--{house,shopping-bag,warehouse,users,settings,truck,package,palette,send,scroll,history}");
+@source inline("lucide--{house,shopping-bag,warehouse,users,settings,truck,package,palette,send,list-checks,arrow-up,arrow-down,minus,scroll,history}");

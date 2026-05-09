@@ -13,6 +13,7 @@ import type {
   PackageType,
   ShippingMethodEnrichment,
   StoredNotification,
+  TemplateRule,
 } from "@/utils/types.ts";
 
 export function getCredentials(): BricklinkCredentials | null {
@@ -425,4 +426,43 @@ export async function saveBricklinkItemSearch(
   result: BricklinkSearchResult,
 ): Promise<Deno.KvCommitResult> {
   return (await kv()).set(bricklinkItemSearchKey(itemId), result);
+}
+
+// Drive Thru Template Rules
+
+function templateRuleKey(id: string): Deno.KvKey {
+  return ["drive_thru_rules", id];
+}
+
+const DEFAULT_TEMPLATE_KEY: Deno.KvKey = ["drive_thru_default_template"];
+
+export async function listTemplateRules(): Promise<TemplateRule[]> {
+  const entries = (await kv()).list<TemplateRule>({ prefix: ["drive_thru_rules"] });
+  const results: TemplateRule[] = [];
+  for await (const entry of entries) {
+    results.push(entry.value);
+  }
+  return results.sort((a, b) => a.priority - b.priority);
+}
+
+export async function getTemplateRule(id: string): Promise<TemplateRule | null> {
+  const result = await (await kv()).get<TemplateRule>(templateRuleKey(id));
+  return result.value;
+}
+
+export async function saveTemplateRule(rule: TemplateRule): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(templateRuleKey(rule.id), rule);
+}
+
+export async function deleteTemplateRule(id: string): Promise<void> {
+  return (await kv()).delete(templateRuleKey(id));
+}
+
+export async function getDefaultTemplateId(): Promise<string | null> {
+  const result = await (await kv()).get<string>(DEFAULT_TEMPLATE_KEY);
+  return result.value;
+}
+
+export async function setDefaultTemplateId(id: string): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(DEFAULT_TEMPLATE_KEY, id);
 }
