@@ -346,6 +346,9 @@ export default function ShipList(
               <span>Address could not be verified — please check and correct manually.</span>
             </div>
           )}
+          {editingCountryCode.value && editingCountryCode.value !== "AU" && (
+            <div class="text-sm text-base-content/60 mb-4">Country: {editingCountryCode.value}</div>
+          )}
           <form onSubmit={saveAddress}>
             <fieldset class="fieldset mb-3">
               <legend class="fieldset-legend">Recipient contact name *</legend>
@@ -528,6 +531,10 @@ export default function ShipList(
                         {addr.addressLine3 && <div>{addr.addressLine3}</div>}
                         {(addr.suburb || addr.state || addr.postcode) && (
                           <div>{[addr.suburb, addr.state, addr.postcode].filter(Boolean).join(", ")}</div>
+                        )}
+                        {order.shipping?.address?.country_code &&
+                          order.shipping.address.country_code !== "AU" && (
+                          <div class="text-base-content/60">{order.shipping.address.country_code}</div>
                         )}
                         {verifyStatuses.value[order.order_id] === "verifying" && (
                           <div class="mt-1">
