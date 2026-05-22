@@ -92,6 +92,7 @@ export default function Inventory() {
   const marketplaceError = useSignal<string | null>(null);
   const marketplacePage = useSignal(1);
   const marketplaceTotalCount = useSignal<number | null>(null);
+  const marketplacePageSize = useSignal<number>(10);
   const itemColors = useSignal<ItemColor[]>([]);
   const selectedColorId = useSignal<number | null>(null); // null = All
   const catalogItem = useSignal<CatalogItem | null>(null);
@@ -301,6 +302,7 @@ export default function Inventory() {
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
       marketplaceTotalCount.value = json.total_count ?? null;
+      marketplacePageSize.value = json.pageSize ?? 10;
       itemColors.value = json.colors ?? [];
       catalogItem.value = json.catalogItem ?? null;
       partCount.value = json.partCount ?? null;
@@ -342,6 +344,7 @@ export default function Inventory() {
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
       marketplaceTotalCount.value = json.total_count ?? null;
+      marketplacePageSize.value = json.pageSize ?? 10;
       storeItems.value = json.storeItems ?? [];
       if (json.imageUrl) colorImageUrl.value = json.imageUrl;
     } catch (err) {
@@ -367,6 +370,7 @@ export default function Inventory() {
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
       marketplaceItems.value = json.list ?? [];
       marketplaceTotalCount.value = json.total_count ?? null;
+      marketplacePageSize.value = json.pageSize ?? 10;
       marketplacePage.value = page;
     } catch (err) {
       marketplaceError.value = String(err);
@@ -832,7 +836,7 @@ export default function Inventory() {
                 </div>
               )
               : (() => {
-                const totalPages = Math.ceil((marketplaceTotalCount.value ?? 0) / 10);
+                const totalPages = Math.ceil((marketplaceTotalCount.value ?? 0) / marketplacePageSize.value);
                 return (
                   // Wrap in relative so the loading overlay can cover table + pagination together
                   <div class="relative">

@@ -12,7 +12,7 @@ import {
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import type { BLCatalogItem, BLSubsetEntry, BricklinkSearchResult } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
-import { bricklinkCatalogUrl } from "@/utils/format.ts";
+import { bricklinkCatalogUrl, MARKETPLACE_PAGE_SIZE } from "@/utils/format.ts";
 
 const logger = getLogger(["bricked", "marketplace"]);
 
@@ -97,7 +97,7 @@ export const handler = define.handlers({
     const marketplaceUrl = new URL("https://www.bricklink.com/ajax/clone/catalogifs.ajax");
     marketplaceUrl.searchParams.set("itemid", String(idItem));
     marketplaceUrl.searchParams.set("loc", "AU");
-    marketplaceUrl.searchParams.set("rpp", "10");
+    marketplaceUrl.searchParams.set("rpp", String(MARKETPLACE_PAGE_SIZE));
     marketplaceUrl.searchParams.set("pi", String(page));
     if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
       marketplaceUrl.searchParams.set("color", String(colorIdNum));
@@ -207,6 +207,7 @@ export const handler = define.handlers({
       imageUrl,
       partCount,
       idItem,
+      pageSize: MARKETPLACE_PAGE_SIZE,
       ...(!listOnly && storeItems != null ? { storeItems } : {}),
     });
   },

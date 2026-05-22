@@ -39,3 +39,5 @@ export function bricklinkCatalogUrl(itemType: string, itemNo: string): string {
   const prefix = ITEM_TYPE_CODE[itemType] ?? itemType;
   return `https://www.bricklink.com/v2/catalog/catalogitem.page?${prefix}=${itemNo}`;
 }
+
+export const MARKETPLACE_PAGE_SIZE = 50;
