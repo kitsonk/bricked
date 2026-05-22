@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import { useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { ConditionBadge } from "@/components/ConditionBadge.tsx";
 import { bricklinkCatalogUrl } from "@/utils/format.ts";
 
@@ -103,11 +103,21 @@ export default function Inventory() {
   const imageDialogRef = useRef<HTMLDialogElement>(null);
   const importDialogRef = useRef<HTMLDialogElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const rowRefs = useRef<Map<string, HTMLTableRowElement>>(new Map());
   const importPreviewItems = useSignal<PendingItem[] | null>(null);
   const importError = useSignal<string | null>(null);
 
   // Color select is only useful when the item has more than one real color.
   // A single color with ID 0 means the item is colorless.
+  useEffect(() => {
+    if (editingId.value) {
+      const el = rowRefs.current.get(editingId.value);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [editingId.value]);
+
   function isColorSelectEnabled(): boolean {
     const colors = itemColors.value;
     if (colors.length === 0) return false;
@@ -133,12 +143,10 @@ export default function Inventory() {
     marketplaceTotalCount.value = null;
   }
 
-  function addItem(e: Event) {
-    e.preventDefault();
-    if (description.value.length > 255) return;
+  function buildPendingItem(): PendingItem {
     const colorId = selectedColorId.value;
     const hasColor = colorId !== null && colorId !== 0;
-    const updatedItem: PendingItem = {
+    return {
       id: editingId.value ?? crypto.randomUUID(),
       ITEMTYPE: itemType.value,
       ITEMID: itemId.value.trim(),
@@ -152,6 +160,12 @@ export default function Inventory() {
       DESCRIPTION: description.value.trim(),
       REMARKS: remarks.value.trim(),
     };
+  }
+
+  function addItem(e: Event) {
+    e.preventDefault();
+    if (description.value.length > 255) return;
+    const updatedItem = buildPendingItem();
     if (editingId.value) {
       const existing = pending.value.find((i) => i.id === editingId.value);
       if (existing?.importStatus) updatedItem.importStatus = "success";
@@ -239,6 +253,30 @@ export default function Inventory() {
     if (!editingId.value) return;
     pending.value = pending.value.filter((i) => i.id !== editingId.value);
     cancelEdit();
+  }
+
+  function getNextPendingItem(): PendingItem | undefined {
+    if (!editingId.value) return undefined;
+    const idx = pending.value.findIndex((i) => i.id === editingId.value);
+    if (idx === -1 || idx >= pending.value.length - 1) return undefined;
+    return pending.value[idx + 1];
+  }
+
+  function deleteAndNext() {
+    const next = getNextPendingItem();
+    deleteEditingItem();
+    if (next) startEdit(next);
+  }
+
+  function updateAndNext(e: Event) {
+    e.preventDefault();
+    if (description.value.length > 255) return;
+    const next = getNextPendingItem();
+    const updatedItem = buildPendingItem();
+    const existing = pending.value.find((i) => i.id === editingId.value);
+    if (existing?.importStatus) updatedItem.importStatus = "success";
+    pending.value = pending.value.map((i) => i.id === editingId.value ? updatedItem : i);
+    if (next) startEdit(next);
   }
 
   function removeItem(id: string) {
@@ -539,27 +577,53 @@ export default function Inventory() {
                 <div class="flex justify-between items-center">
                   {editingId.value
                     ? (
-                      <button type="button" class="btn btn-error btn-sm" onClick={deleteEditingItem}>
-                        <span class="iconify lucide--trash-2 size-4"></span>
-                        Delete Item
-                      </button>
+                      <div class="join">
+                        <button
+                          type="button"
+                          class="btn btn-error btn-sm join-item"
+                          onClick={deleteEditingItem}
+                        >
+                          <span class="iconify lucide--trash-2 size-4"></span>
+                          Delete Item
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-error btn-sm join-item"
+                          onClick={deleteAndNext}
+                          disabled={!getNextPendingItem()}
+                          title="Delete and edit next item"
+                        >
+                          <span class="iconify lucide--chevron-right size-4"></span>
+                          Next
+                        </button>
+                      </div>
                     )
                     : <div />}
-                  <button type="submit" class="btn btn-primary btn-sm">
-                    {editingId.value
-                      ? (
-                        <>
+                  {editingId.value
+                    ? (
+                      <div class="join">
+                        <button type="submit" class="btn btn-primary btn-sm join-item">
                           <span class="iconify lucide--check size-4"></span>
                           Update Item
-                        </>
-                      )
-                      : (
-                        <>
-                          <span class="iconify lucide--plus size-4"></span>
-                          Add Item
-                        </>
-                      )}
-                  </button>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-primary btn-sm join-item"
+                          onClick={updateAndNext}
+                          disabled={!getNextPendingItem()}
+                          title="Update and edit next item"
+                        >
+                          <span class="iconify lucide--chevron-right size-4"></span>
+                          Next
+                        </button>
+                      </div>
+                    )
+                    : (
+                      <button type="submit" class="btn btn-primary btn-sm">
+                        <span class="iconify lucide--plus size-4"></span>
+                        Add Item
+                      </button>
+                    )}
                 </div>
               </form>
             </div>
@@ -639,6 +703,9 @@ export default function Inventory() {
                       {pending.value.map((item) => (
                         <tr
                           key={item.id}
+                          ref={(el) => {
+                            if (el) rowRefs.current.set(item.id, el);
+                          }}
                           class={editingId.value === item.id
                             ? "bg-primary/10"
                             : item.importStatus === "warning"
