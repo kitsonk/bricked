@@ -85,6 +85,7 @@ export default function Inventory() {
   const copying = useSignal(false);
   const copyError = useSignal<string | null>(null);
   const descCopied = useSignal(false);
+  const originalItem = useSignal<PendingItem | null>(null);
 
   const marketplaceItems = useSignal<MarketplaceItem[] | null>(null);
   const marketplaceLoading = useSignal(false);
@@ -103,6 +104,7 @@ export default function Inventory() {
   const imageDialogRef = useRef<HTMLDialogElement>(null);
   const importDialogRef = useRef<HTMLDialogElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const rowRefs = useRef<Map<string, HTMLTableRowElement>>(new Map());
   const importPreviewItems = useSignal<PendingItem[] | null>(null);
   const importError = useSignal<string | null>(null);
@@ -202,10 +204,13 @@ export default function Inventory() {
     marketplacePage.value = 1;
     marketplaceTotalCount.value = null;
     marketplaceError.value = null;
+    // snapshot original for dirty-state checks
+    originalItem.value = { ...item };
   }
 
   function cancelEdit() {
     editingId.value = null;
+    originalItem.value = null;
     resetForm();
   }
 
@@ -249,10 +254,64 @@ export default function Inventory() {
     if (importFileInputRef.current) importFileInputRef.current.value = "";
   }
 
-  function deleteEditingItem() {
+  function hasChanges(): boolean {
+    if (!originalItem.value) return false;
+    const current = buildPendingItem();
+    const orig = originalItem.value;
+    if (current.ITEMTYPE !== orig.ITEMTYPE) return true;
+    if (current.ITEMID !== orig.ITEMID) return true;
+    if (current.PRICE !== orig.PRICE) return true;
+    if (current.QTY !== orig.QTY) return true;
+    if (current.CONDITION !== orig.CONDITION) return true;
+    if (current.DESCRIPTION !== orig.DESCRIPTION) return true;
+    if (current.REMARKS !== orig.REMARKS) return true;
+    if ((current.COLOR ?? 0) !== (orig.COLOR ?? 0)) return true;
+    return false;
+  }
+
+  const deleteStep = useSignal<"idle" | "confirming" | "confirmed">("idle");
+  const onDeleteConfirmed = useRef<(() => void) | null>(null);
+
+  function performDelete() {
     if (!editingId.value) return;
     pending.value = pending.value.filter((i) => i.id !== editingId.value);
     cancelEdit();
+  }
+
+  function confirmDeleteIfNeeded(nextAction: () => void) {
+    if (!hasChanges()) {
+      nextAction();
+      return;
+    }
+    onDeleteConfirmed.current = nextAction;
+    deleteStep.value = "confirming";
+    deleteDialogRef.current?.showModal();
+  }
+
+  function handleDeleteConfirmed() {
+    deleteDialogRef.current?.close();
+    const action = onDeleteConfirmed.current;
+    onDeleteConfirmed.current = null;
+    deleteStep.value = "idle";
+    if (action) action();
+  }
+
+  function handleDeleteCancelled() {
+    deleteDialogRef.current?.close();
+    onDeleteConfirmed.current = null;
+    deleteStep.value = "idle";
+  }
+
+  function deleteEditingItem() {
+    confirmDeleteIfNeeded(() => performDelete());
+  }
+
+  function deleteAndNext() {
+    const next = getNextPendingItem();
+    confirmDeleteIfNeeded(() => {
+      performDelete();
+      if (next) startEdit(next);
+    });
   }
 
   function getNextPendingItem(): PendingItem | undefined {
@@ -260,12 +319,6 @@ export default function Inventory() {
     const idx = pending.value.findIndex((i) => i.id === editingId.value);
     if (idx === -1 || idx >= pending.value.length - 1) return undefined;
     return pending.value[idx + 1];
-  }
-
-  function deleteAndNext() {
-    const next = getNextPendingItem();
-    deleteEditingItem();
-    if (next) startEdit(next);
   }
 
   function updateAndNext(e: Event) {
@@ -1026,6 +1079,35 @@ export default function Inventory() {
         </div>
         <form method="dialog" class="modal-backdrop">
           <button type="submit" onClick={closeImportDialog}>close</button>
+        </form>
+      </dialog>
+
+      <dialog ref={deleteDialogRef} class="modal">
+        <div class="modal-box">
+          <h3 class="text-lg font-bold mb-4">Confirm Delete</h3>
+          <p class="mb-4">
+            This item has unsaved changes. Are you sure you want to delete it?
+          </p>
+          <div class="modal-action">
+            <button
+              type="button"
+              class="btn btn-ghost"
+              onClick={handleDeleteCancelled}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-error"
+              onClick={handleDeleteConfirmed}
+            >
+              <span class="iconify lucide--trash-2 size-4"></span>
+              Delete
+            </button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button type="submit" onClick={handleDeleteCancelled}>close</button>
         </form>
       </dialog>
 
