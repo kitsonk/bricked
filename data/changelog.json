@@ -1,5 +1,34 @@
 [
   {
+    "hash": "eeeadbf",
+    "subject": "Add local shipping method overrides for orders",
+    "body": "Introduce LocalShippingOverride type and Deno KV storage. Add patchOrderShipping utility that applies local overrides to fetched BLOrder objects. Create PUT /api/orders/{orderId}/shipping-method endpoint for persisting overrides. Update ShipList island: shipping method is now an editable select backed by cached BL methods. Patch order shipping on retrieval in ship-list, print-labels, pick-list, order detail, drive-thru, and the orders API endpoint. Show a 'local' badge on the order detail page when an override is active. Drive-thru template rules now evaluate against the locally overridden method."
+  },
+  {
+    "hash": "3bdebdd",
+    "subject": "Add delete confirmation dialog when editing inventory item with unsaved changes",
+    "body": "Snapshot the original item values when entering edit mode via originalItem signal. Add hasChanges() helper comparing current form state against the snapshot. Gate both Delete Item and Delete + Next actions through confirmDeleteIfNeeded(). Show a confirmation modal when unsaved changes exist; delete immediately otherwise. Clear the snapshot on cancelEdit to avoid stale state."
+  },
+  {
+    "hash": "9a9786b",
+    "subject": "Add \"Next\" action buttons and auto-scroll for pending inventory items",
+    "body": "When editing a pending item, the Delete Item and Update Item buttons now have join-item 'Next' counterparts that perform the same action and automatically move to the next pending item. This speeds up bulk editing of imported items. Extract buildPendingItem() to share item construction between add and update paths. Add getNextPendingItem(), deleteAndNext(), and updateAndNext() helpers. Wrap action buttons in DaisyUI join groups for a compact unified look. Disable 'Next' buttons when there is no subsequent pending item. Add row refs and a useEffect so the active pending row scrolls into view automatically when navigating with the Next buttons."
+  },
+  {
+    "hash": "ea8339b",
+    "subject": "Increase marketplace page size to 50 and expose pageSize in API response",
+    "body": "Add shared MARKETPLACE_PAGE_SIZE constant in utils/format.ts. Update marketplace API route to use constant and return pageSize in JSON. Update Inventory island to read dynamic pageSize from API for pagination."
+  },
+  {
+    "hash": "84f4b84",
+    "subject": "Show non-AU country code in Ship To and edit dialog"
+  },
+  {
+    "hash": "7c40787",
+    "subject": "Add Drive Thru template selection rules with auto-evaluation",
+    "body": "Introduce TemplateRule and RuleCondition types. Persist rules and default template ID in Deno KV. Add evaluateTemplateRules engine with eq/ne/gt/gte/lt/lte/contains operators. Create /drive-thru/rules management UI with condition builder and reordering. Pre-select templates on send page based on order/customer criteria. Add Drive Thru Rules to sidebar navigation."
+  },
+  {
     "hash": "aceb661",
     "subject": "Use dynamic Referer headers for BrickLink AJAX requests and centralise catalog URL generation",
     "body": "Replaces hardcoded AJAX_HEADERS with bricklinkAjaxHeaders(itemType, itemNo) so the Referer matches the requested catalog page. Adds bricklinkCatalogUrl() to utils/format.ts for reuse across the app. Updates Inventory, OrderItemsTable, PickList, and PartImageDialog to use the shared utility, fixing hardcoded P= prefixes in OrderItemsTable and PickList."
