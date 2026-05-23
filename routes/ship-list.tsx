@@ -2,8 +2,15 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, getShipListAddress, listPackageTypes, listShippingMethodEnrichments } from "@/utils/kv.ts";
-import type { AusPostAddress, BLOrder, PackageType } from "@/utils/types.ts";
+import {
+  getCredentials,
+  getShipListAddress,
+  getShippingMethodsCache,
+  listPackageTypes,
+  listShippingMethodEnrichments,
+} from "@/utils/kv.ts";
+import type { AusPostAddress, BLOrder, BLShippingMethod, PackageType } from "@/utils/types.ts";
+import { patchOrdersShipping } from "@/utils/orders.ts";
 import ShipList from "@/islands/ShipList.tsx";
 
 function deriveAddress(order: BLOrder): AusPostAddress {
@@ -25,6 +32,7 @@ export const handler = define.handlers<{
   addresses: Record<number, AusPostAddress>;
   trackingMethodIds: number[];
   printLabelMethodIds: number[];
+  shippingMethods: BLShippingMethod[];
   error: string | null;
 }>({
   async GET(ctx) {
@@ -41,12 +49,17 @@ export const handler = define.handlers<{
 
     try {
       const client = new BricklinkClient(creds);
-      const [orders, packageTypes, savedAddresses, enrichments] = await Promise.all([
+      const [rawOrders, packageTypes, savedAddresses, enrichments, shippingMethodsCache] = await Promise.all([
         Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
         listPackageTypes(),
         Promise.all(orderIds.map((id) => getShipListAddress(id))),
         listShippingMethodEnrichments(),
+        getShippingMethodsCache(),
       ]);
+
+      await patchOrdersShipping(rawOrders);
+      const orders = rawOrders;
+      const shippingMethods = shippingMethodsCache?.methods ?? [];
 
       const trackingMethodIds = [...enrichments.entries()]
         .filter(([, e]) => e.hasTracking)
@@ -60,7 +73,15 @@ export const handler = define.handlers<{
         addresses[order.order_id] = savedAddresses[idx] ?? deriveAddress(order);
       });
 
-      return page({ orders, packageTypes, addresses, trackingMethodIds, printLabelMethodIds, error: null });
+      return page({
+        orders,
+        packageTypes,
+        addresses,
+        trackingMethodIds,
+        printLabelMethodIds,
+        shippingMethods,
+        error: null,
+      });
     } catch (err) {
       return page({
         orders: [],
@@ -68,6 +89,7 @@ export const handler = define.handlers<{
         addresses: {},
         trackingMethodIds: [],
         printLabelMethodIds: [],
+        shippingMethods: [],
         error: String(err),
       });
     }
@@ -111,6 +133,7 @@ export default define.page<typeof handler>(function ShipListPage({ data }) {
           addresses={data.addresses}
           trackingMethodIds={data.trackingMethodIds}
           printLabelMethodIds={data.printLabelMethodIds}
+          shippingMethods={data.shippingMethods}
         />
       )}
     </AppFrame>

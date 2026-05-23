@@ -11,6 +11,7 @@ import {
   listTemplateRules,
 } from "@/utils/kv.ts";
 import type { BLOrder, DriveThruSentRecord, DriveThruTemplate } from "@/utils/types.ts";
+import { patchOrderShipping } from "@/utils/orders.ts";
 import { evaluateTemplateRules } from "@/utils/drive-thru.ts";
 import { formatAmount } from "@/utils/format.ts";
 import DriveThruSend from "@/islands/DriveThruSend.tsx";
@@ -50,6 +51,7 @@ export const handler = define.handlers<{
         listTemplateRules(),
         getDefaultTemplateId(),
       ]);
+      if (order) await patchOrderShipping(order);
       const customer = order ? await getCustomer(order.buyer_name) : null;
       const { templateId, matchedRule } = evaluateTemplateRules(rules, order, customer, defaultTemplateId);
       return page({

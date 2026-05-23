@@ -1,6 +1,6 @@
 import { useRef } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
-import type { AusPostAddress, BLOrder, PackageType } from "@/utils/types.ts";
+import type { AusPostAddress, BLOrder, BLShippingMethod, PackageType } from "@/utils/types.ts";
 import { formatAmount } from "@/utils/format.ts";
 
 interface Dims {
@@ -35,17 +35,22 @@ function packageLabel(pt: PackageType): string {
 }
 
 export default function ShipList(
-  { orders, packageTypes, addresses: initialAddresses, trackingMethodIds, printLabelMethodIds }: {
+  { orders, packageTypes, addresses: initialAddresses, trackingMethodIds, printLabelMethodIds, shippingMethods }: {
     orders: BLOrder[];
     packageTypes: PackageType[];
     addresses: Record<number, AusPostAddress>;
     trackingMethodIds: number[];
     printLabelMethodIds: number[];
+    shippingMethods: BLShippingMethod[];
   },
 ) {
   const trackingMethodSet = new Set(trackingMethodIds);
   const printLabelMethodSet = new Set(printLabelMethodIds);
   const packageById = new Map(packageTypes.map((pt) => [pt.id, pt]));
+
+  const localOrders = useSignal<BLOrder[]>(orders);
+  const shippingOverrides = useSignal<Set<number>>(new Set());
+  const savingMethodId = useSignal<number | null>(null);
 
   const selectedPackage = useSignal<Record<number, string>>(
     Object.fromEntries(orders.map((o) => [o.order_id, ""])),
@@ -75,13 +80,39 @@ export default function ShipList(
   const addressError = useSignal<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const selectedOrders = useSignal<Set<number>>(new Set());
+  const methodError = useSignal<string | null>(null);
 
   const hasSelection = useComputed(() => selectedOrders.value.size > 0);
 
   const allPrintLabelSelected = useComputed(() => {
-    const printLabelOrders = orders.filter((o) => isPrintLabel(o, printLabelMethodSet));
+    const printLabelOrders = localOrders.value.filter((o) => isPrintLabel(o, printLabelMethodSet));
     return printLabelOrders.length > 0 && printLabelOrders.every((o) => selectedOrders.value.has(o.order_id));
   });
+
+  async function updateShippingMethod(orderId: number, methodId: number, methodName: string) {
+    savingMethodId.value = orderId;
+    methodError.value = null;
+    try {
+      const resp = await fetch(`/api/orders/${orderId}/shipping-method`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ methodId, methodName }),
+      });
+      if (!resp.ok) {
+        const json = await resp.json();
+        throw new Error(json.error ?? `HTTP ${resp.status}`);
+      }
+      // Update local order so isExportable / isPrintLabel recompute
+      localOrders.value = localOrders.value.map((o) =>
+        o.order_id === orderId ? { ...o, shipping: { ...o.shipping, method: methodName, method_id: methodId } } : o
+      );
+      shippingOverrides.value = new Set([...shippingOverrides.value, orderId]);
+    } catch (err) {
+      methodError.value = String(err);
+    } finally {
+      savingMethodId.value = null;
+    }
+  }
 
   function toggleSelected(orderId: number) {
     const next = new Set(selectedOrders.value);
@@ -94,7 +125,7 @@ export default function ShipList(
   }
 
   function toggleSelectAll() {
-    const printLabelOrders = orders.filter((o) => isPrintLabel(o, printLabelMethodSet));
+    const printLabelOrders = localOrders.value.filter((o) => isPrintLabel(o, printLabelMethodSet));
     const allSelected = printLabelOrders.every((o) => selectedOrders.value.has(o.order_id));
     const next = new Set(selectedOrders.value);
     if (allSelected) {
@@ -134,7 +165,7 @@ export default function ShipList(
   }
 
   function openAddressDialog(orderId: number) {
-    const order = orders.find((o) => o.order_id === orderId);
+    const order = localOrders.value.find((o) => o.order_id === orderId);
     editingOrderId.value = orderId;
     editingCountryCode.value = order?.shipping?.address?.country_code ?? "";
     formAddress.value = { ...addresses.value[orderId] };
@@ -187,7 +218,7 @@ export default function ShipList(
   }
 
   const exportReady = useComputed(() =>
-    orders
+    localOrders.value
       .filter((o) => isExportable(o, trackingMethodSet))
       .every((order) => {
         const dims = dimensions.value[order.order_id];
@@ -197,7 +228,7 @@ export default function ShipList(
   );
 
   async function exportManifest() {
-    const rows = orders.filter((o) => isExportable(o, trackingMethodSet)).map((order) => ({
+    const rows = localOrders.value.filter((o) => isExportable(o, trackingMethodSet)).map((order) => ({
       orderId: order.order_id,
       countryCode: order.shipping?.address?.country_code ?? "",
       address: addresses.value[order.order_id],
@@ -253,7 +284,7 @@ export default function ShipList(
 
   async function verifyAllAddresses() {
     verifyingAll.value = true;
-    const verifyOrders = orders.filter((o) =>
+    const verifyOrders = localOrders.value.filter((o) =>
       isExportable(o, trackingMethodSet) ||
       (printLabelMethodSet.has(o.shipping?.method_id) && o.shipping?.address?.country_code === "AU")
     );
@@ -302,6 +333,12 @@ export default function ShipList(
 
   return (
     <div>
+      {methodError.value && (
+        <div role="alert" class="alert alert-error mb-4">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <div>{methodError.value}</div>
+        </div>
+      )}
       <div class="flex justify-end mb-4 gap-2">
         <button
           type="button"
@@ -490,11 +527,25 @@ export default function ShipList(
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => {
+            {localOrders.value.map((order) => {
               const isCustom = selectedPackage.value[order.order_id] === "";
               const dims = dimensions.value[order.order_id];
               const addr = addresses.value[order.order_id];
               const exportable = isExportable(order, trackingMethodSet);
+              const hasOverride = shippingOverrides.value.has(order.order_id);
+              const methodIds = new Set(shippingMethods.map((m) => m.method_id));
+              // Include the order's current method in the list even if it's not in the BL cache
+              const methodOptions = shippingMethods.slice();
+              if (!methodIds.has(order.shipping.method_id)) {
+                methodOptions.push({
+                  method_id: order.shipping.method_id,
+                  name: order.shipping.method,
+                  note: "",
+                  insurance: false,
+                  is_default: false,
+                  area: "",
+                });
+              }
               return (
                 <tr key={order.order_id} class={!exportable ? "bg-neutral/10" : ""}>
                   <td class="w-10">
@@ -521,7 +572,25 @@ export default function ShipList(
                       {order.disp_cost.currency_code} {formatAmount(order.disp_cost.grand_total)}
                     </div>
                   </td>
-                  <td class="text-sm">{order.shipping?.method || "—"}</td>
+                  <td>
+                    <div class="flex items-center gap-1">
+                      <select
+                        class="select select-sm w-full min-w-32"
+                        value={order.shipping.method_id}
+                        disabled={savingMethodId.value === order.order_id}
+                        onChange={(e) => {
+                          const methodId = Number(e.currentTarget.value);
+                          const method = methodOptions.find((m) => m.method_id === methodId);
+                          if (method) updateShippingMethod(order.order_id, methodId, method.name);
+                        }}
+                      >
+                        {methodOptions.map((m) => <option key={m.method_id} value={m.method_id}>{m.name}</option>)}
+                      </select>
+                      {hasOverride && (
+                        <span class="iconify lucide--pencil size-3 text-warning" title="Locally overridden"></span>
+                      )}
+                    </div>
+                  </td>
                   <td>
                     <div class="flex items-start justify-between gap-2">
                       <div class="text-sm leading-snug">

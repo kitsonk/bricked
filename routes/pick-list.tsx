@@ -3,6 +3,7 @@ import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials, getCustomer } from "@/utils/kv.ts";
+import { patchOrdersShipping } from "@/utils/orders.ts";
 import type { BLOrder, PickListItem, PickListOrder } from "@/utils/types.ts";
 import { decodeHtml } from "@/utils/html.ts";
 import PickList from "@/islands/PickList.tsx";
@@ -32,6 +33,8 @@ export const handler = define.handlers<
         Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
         Promise.all(orderIds.map((id) => client.getOrderItems(id))),
       ]);
+
+      await patchOrdersShipping(orderDetails);
 
       const customers = await Promise.all(orderDetails.map((o) => getCustomer(o.buyer_name)));
 

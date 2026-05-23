@@ -10,6 +10,7 @@ import type {
   Customer,
   DriveThruSentRecord,
   DriveThruTemplate,
+  LocalShippingOverride,
   PackageType,
   ShippingMethodEnrichment,
   StoredNotification,
@@ -465,4 +466,33 @@ export async function getDefaultTemplateId(): Promise<string | null> {
 
 export async function setDefaultTemplateId(id: string): Promise<Deno.KvCommitResult> {
   return (await kv()).set(DEFAULT_TEMPLATE_KEY, id);
+}
+
+// Local Shipping Method Overrides
+
+function orderShippingOverrideKey(orderId: number): Deno.KvKey {
+  return ["order_shipping_override", orderId];
+}
+
+export async function getShippingOverride(orderId: number): Promise<LocalShippingOverride | null> {
+  const result = await (await kv()).get<LocalShippingOverride>(orderShippingOverrideKey(orderId));
+  return result.value;
+}
+
+export async function saveShippingOverride(
+  orderId: number,
+  override: LocalShippingOverride,
+): Promise<Deno.KvCommitResult> {
+  return (await kv()).set(orderShippingOverrideKey(orderId), override);
+}
+
+export async function listShippingOverrides(orderIds: number[]): Promise<Map<number, LocalShippingOverride>> {
+  const map = new Map<number, LocalShippingOverride>();
+  await Promise.all(
+    orderIds.map(async (id) => {
+      const override = await getShippingOverride(id);
+      if (override) map.set(id, override);
+    }),
+  );
+  return map;
 }

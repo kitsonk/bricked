@@ -3,6 +3,7 @@ import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials, getSenderAddress, getShipListAddress } from "@/utils/kv.ts";
 import type { AusPostAddress, BLOrder } from "@/utils/types.ts";
+import { patchOrdersShipping } from "@/utils/orders.ts";
 import PrintButton from "@/islands/PrintButton.tsx";
 
 function deriveAddress(order: BLOrder): AusPostAddress {
@@ -49,11 +50,14 @@ export const handler = define.handlers<{
 
     try {
       const client = new BricklinkClient(creds);
-      const [orders, savedAddresses, sender] = await Promise.all([
+      const [rawOrders, savedAddresses, sender] = await Promise.all([
         Promise.all(orderIds.map((id) => client.get<BLOrder>(`/orders/${id}`))),
         Promise.all(orderIds.map((id) => getShipListAddress(id))),
         getSenderAddress(),
       ]);
+
+      await patchOrdersShipping(rawOrders);
+      const orders = rawOrders;
 
       const addresses: Record<number, AusPostAddress> = {};
       orders.forEach((order, idx) => {

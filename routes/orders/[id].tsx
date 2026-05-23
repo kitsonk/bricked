@@ -2,8 +2,9 @@ import { page } from "fresh";
 import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
-import { getCredentials, getCustomer, getShippingMethodEnrichment } from "@/utils/kv.ts";
+import { getCredentials, getCustomer, getShippingMethodEnrichment, getShippingOverride } from "@/utils/kv.ts";
 import type { BLOrder, BLOrderItem, BLOrderMessage, Customer } from "@/utils/types.ts";
+import { patchOrderShipping } from "@/utils/orders.ts";
 import { OrderMessageBubble } from "@/components/OrderMessageBubble.tsx";
 import { StatusBadge } from "@/components/StatusBadge.tsx";
 import { formatAmount, humanTime } from "@/utils/format.ts";
@@ -16,6 +17,7 @@ export const handler = define.handlers<{
   messages: BLOrderMessage[];
   customer: Customer | null;
   hasTracking: boolean;
+  shippingOverridden: boolean;
   error: string | null;
 }>({
   async GET(ctx) {
@@ -34,13 +36,31 @@ export const handler = define.handlers<{
         client.getOrderItems(orderId),
         client.getOrderMessages(orderId),
       ]);
-      const [enrichment, customer] = await Promise.all([
+      await patchOrderShipping(order);
+      const [enrichment, customer, override] = await Promise.all([
         order.shipping?.method_id ? getShippingMethodEnrichment(order.shipping.method_id) : Promise.resolve(null),
         getCustomer(order.buyer_name),
+        getShippingOverride(order.order_id),
       ]);
-      return page({ order, items, messages, customer, hasTracking: enrichment?.hasTracking ?? false, error: null });
+      return page({
+        order,
+        items,
+        messages,
+        customer,
+        hasTracking: enrichment?.hasTracking ?? false,
+        shippingOverridden: override !== null,
+        error: null,
+      });
     } catch (err) {
-      return page({ order: null, items: [], messages: [], customer: null, hasTracking: false, error: String(err) });
+      return page({
+        order: null,
+        items: [],
+        messages: [],
+        customer: null,
+        hasTracking: false,
+        shippingOverridden: false,
+        error: String(err),
+      });
     }
   },
 });
@@ -141,6 +161,11 @@ export default define.page<typeof handler>(function OrderDetail({ data }) {
                   <p class="font-medium">
                     {order.shipping.method}
                     <span class="text-xs text-base-content/40 font-mono ml-2">#{order.shipping.method_id}</span>
+                    {data.shippingOverridden && (
+                      <span class="badge badge-xs badge-warning ml-2" title="Locally overridden">
+                        local
+                      </span>
+                    )}
                   </p>
                 )}
                 {order.shipping.address.name.full && (

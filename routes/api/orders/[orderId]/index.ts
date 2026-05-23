@@ -1,6 +1,7 @@
 import { define } from "@/utils/fresh.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
 import { getCredentials } from "@/utils/kv.ts";
+import { patchOrderShipping } from "@/utils/orders.ts";
 
 export const handler = define.handlers({
   async GET(ctx) {
@@ -15,6 +16,7 @@ export const handler = define.handlers({
     try {
       const client = new BricklinkClient(creds);
       const order = await client.getOrder(orderId);
+      await patchOrderShipping(order);
       return Response.json(order);
     } catch (err) {
       return Response.json({ error: String(err) }, { status: 500 });

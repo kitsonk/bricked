@@ -248,6 +248,12 @@ export interface TemplateRule {
   updatedAt: string;
 }
 
+export interface LocalShippingOverride {
+  methodId: number;
+  methodName: string;
+  updatedAt: string;
+}
+
 export interface PackageType {
   id: string;
   label: string;
