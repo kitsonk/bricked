@@ -3,8 +3,11 @@ import { AppFrame } from "@/components/AppFrame.tsx";
 import { define } from "@/utils/fresh.ts";
 import { kv } from "@/utils/kv.ts";
 import { listLogRecords } from "@kitsonk/logtape-kv-sink";
+import type { LogLevel } from "@logtape/logtape";
+import LogLevelFilter from "@/islands/LogLevelFilter.tsx";
 
 const PAGE_SIZE = 20;
+const ALL_LEVELS: LogLevel[] = ["trace", "debug", "info", "warning", "error", "fatal"];
 
 export type SerializedLogEntry = {
   timestamp: number;
@@ -18,14 +21,21 @@ export type LogsData = {
   nextCursor: string | null;
   currentCursor: string | null;
   history: string[];
+  levels: LogLevel[];
 };
 
 export const handler = define.handlers<LogsData>({
   async GET(ctx) {
     const cursor = ctx.url.searchParams.get("cursor") ?? undefined;
     const history = ctx.url.searchParams.getAll("history");
+    const selectedLevels = ctx.url.searchParams.getAll("level") as LogLevel[];
+    const levels = selectedLevels.length > 0 ? selectedLevels : [...ALL_LEVELS];
 
-    const iter = listLogRecords(kv(), { limit: PAGE_SIZE, cursor });
+    const iter = listLogRecords(kv(), {
+      limit: PAGE_SIZE,
+      cursor,
+      level: levels.length === ALL_LEVELS.length ? [] : levels,
+    });
     const entries: SerializedLogEntry[] = [];
     for await (const record of iter) {
       entries.push({
@@ -41,14 +51,15 @@ export const handler = define.handlers<LogsData>({
       nextCursor = iter.cursor;
     }
 
-    return page({ entries, nextCursor, currentCursor: cursor ?? null, history });
+    return page({ entries, nextCursor, currentCursor: cursor ?? null, history, levels });
   },
 });
 
-function pageUrl(cursor: string | null, history: string[]): string {
+function pageUrl(cursor: string | null, history: string[], levels: LogLevel[]): string {
   const params = new URLSearchParams();
   if (cursor) params.set("cursor", cursor);
   for (const h of history) params.append("history", h);
+  for (const l of levels) params.append("level", l);
   const qs = params.toString();
   return qs ? `/admin/logs?${qs}` : "/admin/logs";
 }
@@ -75,24 +86,29 @@ function levelBadgeClass(level: string): string {
 }
 
 export function LogsContent({ data }: { data: LogsData }) {
-  const { entries, nextCursor, currentCursor, history } = data;
+  const { entries, nextCursor, currentCursor, history, levels } = data;
 
   const hasPrev = history.length > 0;
   const prevCursor = hasPrev ? (history[history.length - 1] || null) : null;
   const prevHistory = history.slice(0, -1);
-  const olderUrl = nextCursor ? pageUrl(nextCursor, [...history, currentCursor ?? ""]) : null;
-  const newerUrl = hasPrev ? pageUrl(prevCursor, prevHistory) : null;
+  const olderUrl = nextCursor ? pageUrl(nextCursor, [...history, currentCursor ?? ""], levels) : null;
+  const newerUrl = hasPrev ? pageUrl(prevCursor, prevHistory, levels) : null;
   const isFirstPage = !hasPrev && !currentCursor;
 
   return (
     <>
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold">Logs</h1>
-        <a href="/admin/logs" class="btn btn-ghost btn-sm">
+        <a
+          href={pageUrl(null, [], levels.length === ALL_LEVELS.length ? [] : levels)}
+          class="btn btn-ghost btn-sm"
+        >
           <span class="iconify lucide--refresh-cw size-4"></span>
           Latest
         </a>
       </div>
+
+      <LogLevelFilter appliedLevels={levels} />
 
       <div class="border border-base-content/10 rounded-box">
         {entries.length === 0
