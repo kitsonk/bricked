@@ -68,45 +68,39 @@ export const handler = define.handlers({
     // list_only=true → page navigation: skip store + image fetches, return only marketplace listing data
     const listOnly = ctx.url.searchParams.get("list_only") === "true";
 
-    // Resolve the internal BrickLink item ID, using KV cache if available.
-    let searchResult = await getBricklinkItemSearch(itemid);
-    if (!searchResult) {
+    // Phase 5: Resolve the internal BrickLink item ID; never fail the whole
+    // request if the search endpoint is rate-limited or unreachable.
+    let searchResult: BricklinkSearchResult | null = null;
+    const cachedSearch = await getBricklinkItemSearch(itemid);
+    if (cachedSearch) {
+      searchResult = cachedSearch;
+    } else {
       const searchUrl = new URL("https://www.bricklink.com/ajax/clone/search/searchproduct.ajax");
       searchUrl.searchParams.set("q", itemid);
-      let searchResp: Response;
       try {
-        searchResp = await fetchWithRetry(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
+        const searchResp = await fetchWithRetry(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
+        if (searchResp.ok) {
+          const json = await searchResp.json() as BricklinkSearchResult;
+          if (json.returnCode === 0) {
+            await saveBricklinkItemSearch(itemid, json);
+            searchResult = json;
+          }
+        } else {
+          logger.warn`Search upstream HTTP ${searchResp.status} for ${itemid}`;
+        }
       } catch (err) {
-        return Response.json({ error: String(err) }, { status: 502 });
+        logger.warn`Search fetch failed for ${itemid}: ${String(err)}`;
       }
-      if (!searchResp.ok) {
-        return Response.json({ error: `Search upstream HTTP ${searchResp.status}` }, { status: 502 });
-      }
-      const json = await searchResp.json() as BricklinkSearchResult;
-      if (json.returnCode === 0) {
-        await saveBricklinkItemSearch(itemid, json);
-      }
-      searchResult = json;
     }
 
-    const idItem = searchResult.result?.typeList?.[0]?.items?.[0]?.idItem;
-    if (!idItem) {
-      return Response.json({ error: "Item not found" }, { status: 404 });
-    }
-
-    const marketplaceUrl = new URL("https://www.bricklink.com/ajax/clone/catalogifs.ajax");
-    marketplaceUrl.searchParams.set("itemid", String(idItem));
-    marketplaceUrl.searchParams.set("loc", "AU");
-    marketplaceUrl.searchParams.set("rpp", String(MARKETPLACE_PAGE_SIZE));
-    marketplaceUrl.searchParams.set("pi", String(page));
-    if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
-      marketplaceUrl.searchParams.set("color", String(colorIdNum));
-    }
+    const idItem = searchResult?.result?.typeList?.[0]?.items?.[0]?.idItem ?? null;
 
     const creds = getCredentials();
     const client = creds ? new BricklinkClient(creds) : null;
     const isInitial = coloridParam === null;
 
+    // API-client calls (colors, catalog, subsets, image) are independent of
+    // idItem and should succeed even when www.bricklink.com/ajax is throttled.
     const colorsPromise = isInitial && client
       ? client.getItemColors(itemtype, itemid)
         .then((itemColors) =>
@@ -138,45 +132,73 @@ export const handler = define.handlers({
       ? client.getSubsets(itemtype, itemid).catch(() => [])
       : Promise.resolve([]);
 
+    // Phase 1: Marketplace listings – catch everything so a 429/403/non-ok
+    // response never bubbles up and kills the API-client data.
     const marketplacePromise = (async () => {
-      const cached = await getMarketplaceCache(idItem, colorIdNum, page);
-      if (cached) {
-        logger.debug`Marketplace cache hit for ${itemid} color=${colorIdNum ?? "all"} page=${page}`;
-        return cached;
+      if (!idItem) {
+        return {
+          data: { list: [], total_count: 0 } as Record<string, unknown>,
+          error: "Item not found" as string | null,
+        };
       }
-      const resp = await fetchWithRetry(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid));
-      if (!resp.ok) {
-        throw new Error(`Upstream HTTP ${resp.status}`);
+      try {
+        const cached = await getMarketplaceCache(idItem, colorIdNum, page);
+        if (cached) {
+          logger.debug`Marketplace cache hit for ${itemid} color=${colorIdNum ?? "all"} page=${page}`;
+          return { data: cached as Record<string, unknown>, error: null as string | null };
+        }
+        const marketplaceUrl = new URL("https://www.bricklink.com/ajax/clone/catalogifs.ajax");
+        marketplaceUrl.searchParams.set("itemid", String(idItem));
+        marketplaceUrl.searchParams.set("loc", "AU");
+        marketplaceUrl.searchParams.set("rpp", String(MARKETPLACE_PAGE_SIZE));
+        marketplaceUrl.searchParams.set("pi", String(page));
+        if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
+          marketplaceUrl.searchParams.set("color", String(colorIdNum));
+        }
+        const resp = await fetchWithRetry(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid));
+        if (!resp.ok) {
+          throw new Error(`Upstream HTTP ${resp.status}`);
+        }
+        const data = await resp.json();
+        await saveMarketplaceCache(idItem, colorIdNum, page, data);
+        return { data: data as Record<string, unknown>, error: null as string | null };
+      } catch (err) {
+        logger.warn`Marketplace fetch failed for ${itemid}: ${String(err)}`;
+        return { data: { list: [], total_count: 0 } as Record<string, unknown>, error: String(err) as string | null };
       }
-      const data = await resp.json();
-      await saveMarketplaceCache(idItem, colorIdNum, page, data);
-      return data;
     })();
 
+    // Phase 2: Store items – fully resilient to network and HTTP errors.
     const storePromise = listOnly ? Promise.resolve(null) : (async () => {
-      const cached = await getStoreItemsCache(idItem, colorIdNum);
-      if (cached) {
-        logger.debug`Store items cache hit for ${itemid} color=${colorIdNum ?? "all"}`;
-        return cached;
-      }
-      const storeUrl = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
-      storeUrl.searchParams.set("sid", "4245762");
-      storeUrl.searchParams.set("itemID", String(idItem));
-      if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
-        storeUrl.searchParams.set("colorID", String(colorIdNum));
-      }
-      const resp = await fetchWithRetry(storeUrl, bricklinkAjaxHeaders(itemtype, itemid, "same-site"));
-      if (!resp.ok) {
-        logger.debug`Store search returned HTTP ${resp.status} for ${itemid}, returning empty`;
+      if (!idItem) return [];
+      try {
+        const cached = await getStoreItemsCache(idItem, colorIdNum);
+        if (cached) {
+          logger.debug`Store items cache hit for ${itemid} color=${colorIdNum ?? "all"}`;
+          return cached;
+        }
+        const storeUrl = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
+        storeUrl.searchParams.set("sid", "4245762");
+        storeUrl.searchParams.set("itemID", String(idItem));
+        if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
+          storeUrl.searchParams.set("colorID", String(colorIdNum));
+        }
+        const resp = await fetchWithRetry(storeUrl, bricklinkAjaxHeaders(itemtype, itemid, "same-site"));
+        if (!resp.ok) {
+          logger.debug`Store search returned HTTP ${resp.status} for ${itemid}, returning empty`;
+          return [];
+        }
+        const json = await resp.json() as { result?: { groups?: Array<{ items?: unknown[] }> } };
+        const items = json?.result?.groups?.[0]?.items ?? [];
+        await saveStoreItemsCache(idItem, colorIdNum, items);
+        return items;
+      } catch (err) {
+        logger.warn`Store fetch failed for ${itemid}: ${String(err)}`;
         return [];
       }
-      const json = await resp.json() as { result?: { groups?: Array<{ items?: unknown[] }> } };
-      const items = json?.result?.groups?.[0]?.items ?? [];
-      await saveStoreItemsCache(idItem, colorIdNum, items);
-      return items;
     })();
 
-    let marketplaceData: unknown;
+    let marketplaceResult: { data: Record<string, unknown>; error: string | null };
     let storeItems: unknown[] | null;
     let colors: { color_id: number; color_name: string }[];
     let catalogItem: BLCatalogItem | null;
@@ -184,7 +206,7 @@ export const handler = define.handlers({
     let subsets: BLSubsetEntry[];
 
     try {
-      [marketplaceData, storeItems, colors, catalogItem, imageUrl, subsets] = await Promise.all([
+      [marketplaceResult, storeItems, colors, catalogItem, imageUrl, subsets] = await Promise.all([
         marketplacePromise,
         storePromise,
         colorsPromise,
@@ -193,6 +215,8 @@ export const handler = define.handlers({
         subsetsPromise,
       ]);
     } catch (err) {
+      // Safety net – every promise above is now self-catch()ing, so this
+      // branch is effectively unreachable, but kept for defence in depth.
       return Response.json({ error: String(err) }, { status: 502 });
     }
 
@@ -200,14 +224,17 @@ export const handler = define.handlers({
       ? subsets.reduce((sum, s) => sum + s.entries.reduce((n, e) => n + e.quantity, 0), 0)
       : null;
 
+    // Phase 3: Return everything we have; include marketplaceError so the UI
+    // can show a helpful message without losing the catalog/colors data.
     return Response.json({
-      ...(marketplaceData as Record<string, unknown>),
+      ...marketplaceResult.data,
       colors,
       catalogItem,
       imageUrl,
       partCount,
       idItem,
       pageSize: MARKETPLACE_PAGE_SIZE,
+      ...(marketplaceResult.error ? { marketplaceError: marketplaceResult.error } : {}),
       ...(!listOnly && storeItems != null ? { storeItems } : {}),
     });
   },

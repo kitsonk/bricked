@@ -394,6 +394,7 @@ export default function Inventory() {
       marketplaceItems.value = json.list ?? [];
       marketplaceTotalCount.value = json.total_count ?? null;
       marketplacePageSize.value = json.pageSize ?? 10;
+      marketplaceError.value = json.marketplaceError ?? null;
       itemColors.value = json.colors ?? [];
       catalogItem.value = json.catalogItem ?? null;
       partCount.value = json.partCount ?? null;
@@ -436,6 +437,7 @@ export default function Inventory() {
       marketplaceItems.value = json.list ?? [];
       marketplaceTotalCount.value = json.total_count ?? null;
       marketplacePageSize.value = json.pageSize ?? 10;
+      marketplaceError.value = json.marketplaceError ?? null;
       storeItems.value = json.storeItems ?? [];
       if (json.imageUrl) colorImageUrl.value = json.imageUrl;
     } catch (err) {
@@ -462,6 +464,7 @@ export default function Inventory() {
       marketplaceItems.value = json.list ?? [];
       marketplaceTotalCount.value = json.total_count ?? null;
       marketplacePageSize.value = json.pageSize ?? 10;
+      marketplaceError.value = json.marketplaceError ?? null;
       marketplacePage.value = page;
     } catch (err) {
       marketplaceError.value = String(err);
