@@ -17,6 +17,12 @@ export function Topbar() {
           <span class="iconify lucide--menu size-5"></span>
         </label>
       </div>
+      <form method="POST" action="/logout">
+        <button type="submit" class="btn btn-ghost btn-sm" aria-label="Log out" title="Log out">
+          <span class="iconify lucide--log-out size-4"></span>
+          <span class="hidden sm:inline">Log out</span>
+        </button>
+      </form>
     </div>
   );
 }

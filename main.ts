@@ -1,5 +1,6 @@
 import { App, staticFiles } from "fresh";
 import logging from "@/middleware/logging.ts";
+import auth from "@/middleware/auth.ts";
 import type { State } from "@/utils/fresh.ts";
 import { buildCrm } from "@/utils/crm.ts";
 import { refreshColors } from "@/utils/colors.ts";
@@ -10,7 +11,7 @@ const logger = getLogger(["bricked", "main"]);
 export const app = new App<State>();
 
 app
-  .use(staticFiles(), logging())
+  .use(staticFiles(), logging(), auth())
   .fsRoutes();
 
 // Refresh the CRM database once every 24 hours.

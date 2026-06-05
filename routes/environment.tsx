@@ -106,6 +106,42 @@ export function EnvironmentContent() {
           </p>
         </div>
       </div>
+
+      <div class="card bg-base-200 mt-6">
+        <div class="card-body">
+          <h2 class="card-title text-lg">Application Auth</h2>
+          <p class="text-sm text-base-content/60 mb-4">
+            Basic auth credentials gate the entire app (except static assets and the BrickLink notification webhook).
+            When unset, authentication is disabled and a warning is logged at startup.
+          </p>
+          <ul class="text-sm font-mono space-y-1">
+            <li>
+              <span
+                class={`badge badge-sm mr-2 ${Deno.env.get("APP_USERNAME") ? "badge-success" : "badge-warning"}`}
+              >
+                {Deno.env.get("APP_USERNAME") ? "set" : "missing"}
+              </span>
+              APP_USERNAME
+            </li>
+            <li>
+              <span
+                class={`badge badge-sm mr-2 ${Deno.env.get("APP_PASSWORD") ? "badge-success" : "badge-warning"}`}
+              >
+                {Deno.env.get("APP_PASSWORD") ? "set" : "missing"}
+              </span>
+              APP_PASSWORD
+            </li>
+            <li>
+              <span
+                class={`badge badge-sm mr-2 ${Deno.env.get("SESSION_SECRET") ? "badge-success" : "badge-warning"}`}
+              >
+                {Deno.env.get("SESSION_SECRET") ? "set" : "missing"}
+              </span>
+              SESSION_SECRET
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
