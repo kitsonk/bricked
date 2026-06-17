@@ -404,6 +404,10 @@ export default function Inventory() {
       if (previousColorId !== null && itemColors.value.some((c) => c.color_id === previousColorId)) {
         selectedColorId.value = previousColorId;
         await refreshMarketplace(previousColorId);
+      } else if (itemColors.value.length === 1 && itemColors.value[0].color_id !== 0) {
+        const onlyColorId = itemColors.value[0].color_id;
+        selectedColorId.value = onlyColorId;
+        await refreshMarketplace(onlyColorId);
       }
     } catch (err) {
       marketplaceError.value = String(err);
