@@ -8,7 +8,7 @@ import { Topbar } from "./Topbar.tsx";
 
 export function AppFrame({ children }: { children: ComponentChildren }) {
   return (
-    <div class="size-full" f-client-nav>
+    <div class="size-full" f-client-nav f-view-transition>
       <div class="flex">
         <input
           aria-label="Toggle layout sidebar"

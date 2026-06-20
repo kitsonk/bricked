@@ -1,1 +1,57 @@
+#layout-sidebar {
+  view-transition-name: sidebar;
+}
 
+#layout-content {
+  view-transition-name: content;
+}
+
+/*
+ * Disable the implicit `root` transition entirely.
+ * Without this, every unnamed element (topbar, footer, backdrop, document)
+ * runs its own default cross-fade on top of the named `content` transition,
+ * which compounds into a visible flicker. We only want `content` to animate.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/*
+ * Persistent regions stay put.
+ */
+::view-transition-old(sidebar),
+::view-transition-new(sidebar) {
+  animation: none;
+}
+
+/*
+ * Content: fade the new snapshot in over a static old snapshot.
+ * The new pseudo-element is stacked above the old by default, so keeping
+ * `old` at opacity 1 means there is never a gap where the background bleeds
+ * through (the classic cross-fade "dip" that reads as flicker). Only `new`
+ * animates, producing a clean reveal.
+ */
+::view-transition-old(content) {
+  animation: none;
+}
+
+@keyframes vt-content-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+::view-transition-new(content) {
+  animation: vt-content-in 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}
