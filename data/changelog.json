@@ -1,5 +1,34 @@
 [
   {
+    "hash": "fb7288c",
+    "subject": "Add view transitions for partial navigation",
+    "body": "Enable f-view-transition on the AppFrame root alongside f-client-nav. Name #layout-sidebar and #layout-content regions so they animate independently, and disable the implicit root transition to avoid a compounding cross-fade flicker. Holds the old content snapshot static and fades only the new content in on top, eliminating the opacity dip where the background bleeds through. Respects prefers-reduced-motion by disabling all view-transition animations."
+  },
+  {
+    "hash": "de15210",
+    "subject": "Auto-select single known color on inventory item lookup",
+    "body": "When the marketplace API returns exactly one real color for an item (length === 1 and color_id !== 0), pre-select that color in the Color dropdown instead of leaving 'All' chosen, avoiding an extra dropdown interaction for single-color items. Extends the previousColorId branch in fetchMarketplace with an else-if that picks the lone color and re-runs refreshMarketplace so listings, image, and store items update consistently. Explicit previousColorId still wins; colorless items (single color_id === 0) remain on 'All'."
+  },
+  {
+    "hash": "cc65122",
+    "subject": "Add bot discouragement, fast probe 404s, and a KV-backed banlist",
+    "body": "Bots that crawled the site before auth was added still hit authenticated endpoints and waste CPU and log noise. Adds a static robots.txt with Disallow: /, an X-Robots-Tag header and Cache-Control: private on every auth-gated response, and a matching <meta name=\"robots\"> on the HTML shell. Adds a fast 404 short-circuit in the new banlist middleware for known junk probe paths (/.env, /wp-admin, /xmlrpc.php, etc.) that bypasses auth and KV. Adds a KV-backed banlist keyed by client IP: an IP accumulating BANLIST_THRESHOLD unauth requests within BANLIST_WINDOW_MS is banned for BANLIST_TTL_MS (defaults 20 / 1h / 24h), with the hot path in-memory cached. Extracts the auth exempt-path logic into utils/exemptPaths.ts for reuse."
+  },
+  {
+    "hash": "c6ee86d",
+    "subject": "Add authentication"
+  },
+  {
+    "hash": "db4ffbd",
+    "subject": "Make marketplace and store lookups resilient to rate-limiting failures",
+    "body": "Wrap marketplace and store promises in try/catch so 429/403/non-ok responses never bubble up and kill color/catalog API data. Return a marketplaceError field in JSON when the marketplace fetch fails so the UI can display it without losing colors and catalog info. Make the initial idItem search non-critical: if the search endpoint fails, still return colors, catalogItem, subsets, and store items from the BrickLink API client. Update the Inventory island to read marketplaceError from all three fetch responses and surface it in the existing error banner."
+  },
+  {
+    "hash": "916f12a",
+    "subject": "Add log level filtering to admin logs page",
+    "body": "Update @kitsonk/logtape-kv-sink to ^0.2.1 and @logtape/logtape to ^2.1.1 to gain level filtering support in listLogRecords(). Add interactive level filter badges for trace, debug, info, warning, error, and fatal levels via a new LogLevelFilter island with client-side pending state management. Pending changes show a primary ring outline; the Apply button is disabled and ghost-styled when no changes are pending, enabled and primary-styled when there are differences. Preserves active level filters across pagination (Newer/Older/Latest)."
+  },
+  {
     "hash": "eeeadbf",
     "subject": "Add local shipping method overrides for orders",
     "body": "Introduce LocalShippingOverride type and Deno KV storage. Add patchOrderShipping utility that applies local overrides to fetched BLOrder objects. Create PUT /api/orders/{orderId}/shipping-method endpoint for persisting overrides. Update ShipList island: shipping method is now an editable select backed by cached BL methods. Patch order shipping on retrieval in ship-list, print-labels, pick-list, order detail, drive-thru, and the orders API endpoint. Show a 'local' badge on the order detail page when an override is active. Drive-thru template rules now evaluate against the locally overridden method."
