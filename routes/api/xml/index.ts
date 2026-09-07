@@ -1,4 +1,4 @@
-import { stringify, type stringifyable } from "@libs/xml";
+import { stringify, type Stringifyable } from "@libs/xml";
 import { define } from "@/utils/fresh.ts";
 
 export const handler = define.handlers({
@@ -13,7 +13,7 @@ export const handler = define.handlers({
       return new Response("Body must be a JSON object", { status: 400 });
     }
     try {
-      const xml = stringify(body as stringifyable);
+      const xml = stringify(body as Stringifyable);
       return new Response(xml, { headers: { "content-type": "application/xml; charset=utf-8" } });
     } catch (err) {
       return new Response(String(err), { status: 422 });

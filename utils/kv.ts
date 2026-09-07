@@ -271,21 +271,28 @@ export async function saveMarketplaceCache(
 
 const STORE_ITEMS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-function storeItemsCacheKey(idItem: number, colorId: number | null): Deno.KvKey {
-  return ["store_items_cache", idItem, colorId ?? "all"];
+function storeItemsCacheKey(itemType: string, itemNo: string, colorId: number | null): Deno.KvKey {
+  return ["store_items_cache", itemType, itemNo.toLowerCase(), colorId ?? "all"];
 }
 
-export async function getStoreItemsCache(idItem: number, colorId: number | null): Promise<unknown[] | null> {
-  const result = await (await kv()).get<unknown[]>(storeItemsCacheKey(idItem, colorId));
+export async function getStoreItemsCache(
+  itemType: string,
+  itemNo: string,
+  colorId: number | null,
+): Promise<unknown[] | null> {
+  const result = await (await kv()).get<unknown[]>(storeItemsCacheKey(itemType, itemNo, colorId));
   return result.value;
 }
 
 export async function saveStoreItemsCache(
-  idItem: number,
+  itemType: string,
+  itemNo: string,
   colorId: number | null,
   items: unknown[],
 ): Promise<void> {
-  await (await kv()).set(storeItemsCacheKey(idItem, colorId), items, { expireIn: STORE_ITEMS_CACHE_TTL_MS });
+  await (await kv()).set(storeItemsCacheKey(itemType, itemNo, colorId), items, {
+    expireIn: STORE_ITEMS_CACHE_TTL_MS,
+  });
 }
 
 // CRM Customers

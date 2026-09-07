@@ -25,7 +25,6 @@ function bricklinkAjaxHeaders(
     headers: {
       "accept": "application/json, text/javascript, */*; q=0.01",
       "accept-language": "en-AU,en;q=0.9",
-      "origin": "https://www.bricklink.com",
       "priority": "u=1, i",
       "referer": bricklinkCatalogUrl(itemType, itemNo),
       "sec-ch-ua": '"Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
@@ -43,10 +42,17 @@ function bricklinkAjaxHeaders(
 
 async function fetchWithRetry(url: URL, init: RequestInit): Promise<Response> {
   const resp = await fetch(url, init);
-  if (resp.status === 403) {
-    logger.debug`Got 403 from ${url.pathname}, retrying after 2s`;
-    await new Promise((r) => setTimeout(r, 2000));
+  if (resp.status === 429) {
+    const retryAfter = parseInt(resp.headers.get("retry-after") ?? "", 10);
+    const delayMs = (isNaN(retryAfter) ? 5 : retryAfter) * 1000 + Math.random() * 1000;
+    logger.warn`Got 429 from ${url.pathname}, retrying after ${Math.round(delayMs)}ms`;
+    const { promise, resolve } = Promise.withResolvers<void>();
+    setTimeout(resolve, delayMs);
+    await promise;
     return fetch(url, init);
+  }
+  if (resp.status === 403) {
+    logger.warn`Got 403 from ${url.pathname}; not retrying (WAF block)`;
   }
   return resp;
 }
@@ -168,29 +174,30 @@ export const handler = define.handlers({
       }
     })();
 
-    // Phase 2: Store items – fully resilient to network and HTTP errors.
+    // Phase 2: Store items – fetch the store's own lots through the official
+    // BrickLink Store API. The store.bricklink.com scrape is WAF-blocked for
+    // server-side fetch (needs browser session cookies + aws-waf-token).
     const storePromise = listOnly ? Promise.resolve(null) : (async () => {
-      if (!idItem) return [];
+      if (!client) return [];
       try {
-        const cached = await getStoreItemsCache(idItem, colorIdNum);
+        const cached = await getStoreItemsCache(itemtype, itemid, colorIdNum);
         if (cached) {
           logger.debug`Store items cache hit for ${itemid} color=${colorIdNum ?? "all"}`;
           return cached;
         }
-        const storeUrl = new URL("https://store.bricklink.com/ajax/clone/store/searchitems.ajax");
-        storeUrl.searchParams.set("sid", "4245762");
-        storeUrl.searchParams.set("itemID", String(idItem));
-        if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
-          storeUrl.searchParams.set("colorID", String(colorIdNum));
-        }
-        const resp = await fetchWithRetry(storeUrl, bricklinkAjaxHeaders(itemtype, itemid, "same-site"));
-        if (!resp.ok) {
-          logger.debug`Store search returned HTTP ${resp.status} for ${itemid}, returning empty`;
-          return [];
-        }
-        const json = await resp.json() as { result?: { groups?: Array<{ items?: unknown[] }> } };
-        const items = json?.result?.groups?.[0]?.items ?? [];
-        await saveStoreItemsCache(idItem, colorIdNum, items);
+        const inventories = await client.getStoreInventories(
+          itemtype,
+          colorIdNum && colorIdNum > 0 ? colorIdNum : undefined,
+        );
+        const items = inventories
+          .filter((inv) => inv.item.no.toLowerCase() === itemid.toLowerCase())
+          .map((inv) => ({
+            invQty: inv.quantity,
+            nativePrice: `AU ${parseFloat(inv.unit_price).toFixed(2)}`,
+            invNew: inv.new_or_used === "N" ? "New" : "Used",
+            invDescription: inv.description,
+          }));
+        await saveStoreItemsCache(itemtype, itemid, colorIdNum, items);
         return items;
       } catch (err) {
         logger.warn`Store fetch failed for ${itemid}: ${String(err)}`;

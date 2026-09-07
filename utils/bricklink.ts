@@ -1,6 +1,7 @@
 import type {
   BLCatalogItem,
   BLColor,
+  BLInventory,
   BLItemColor,
   BLItemImage,
   BLMemberRating,
@@ -165,6 +166,13 @@ export class BricklinkClient {
   getSubsets(itemType: string, itemNo: string): Promise<BLSubsetEntry[]> {
     const apiType = ITEM_TYPE_API[itemType] ?? itemType;
     return this.get<BLSubsetEntry[]>(`/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/subsets`);
+  }
+
+  async getStoreInventories(itemType: string, colorId?: number): Promise<BLInventory[]> {
+    const query: Record<string, string> = { item_type: (ITEM_TYPE_API[itemType] ?? itemType).toLowerCase() };
+    if (colorId !== undefined) query.color_id = String(colorId);
+    const data = await this.get<BLInventory[] | null>("/inventories", query);
+    return data ?? [];
   }
 
   getMemberRating(username: string): Promise<BLMemberRating> {

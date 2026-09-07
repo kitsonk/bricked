@@ -419,3 +419,14 @@ export interface BricklinkSearchResult {
   procssingTime: number;
   strRefNo: string;
 }
+
+/** A store inventory lot from GET /inventories. */
+export interface BLInventory {
+  inventory_id: number;
+  item: { no: string; name: string; type: string };
+  color_id: number;
+  quantity: number;
+  new_or_used: string;
+  unit_price: string;
+  description: string;
+}
