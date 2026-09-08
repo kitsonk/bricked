@@ -5,6 +5,7 @@ import {
   getCredentials,
   getMarketplaceCache,
   getStoreItemsCache,
+  isMarketplaceCacheFresh,
   saveBricklinkItemSearch,
   saveMarketplaceCache,
   saveStoreItemsCache,
@@ -40,21 +41,76 @@ function bricklinkAjaxHeaders(
   };
 }
 
-async function fetchWithRetry(url: URL, init: RequestInit): Promise<Response> {
-  const resp = await fetch(url, init);
-  if (resp.status === 429) {
-    const retryAfter = parseInt(resp.headers.get("retry-after") ?? "", 10);
-    const delayMs = (isNaN(retryAfter) ? 5 : retryAfter) * 1000 + Math.random() * 1000;
-    logger.warn`Got 429 from ${url.pathname}, retrying after ${Math.round(delayMs)}ms`;
+export function computeBackoffDelay(
+  attempt: number,
+  retryAfterSec: number | null,
+  jitterMs = Math.random() * 1000,
+): number {
+  const retryMs = retryAfterSec !== null && Number.isFinite(retryAfterSec) ? retryAfterSec * 1000 : 0;
+  return Math.min(Math.max(retryMs, 2000 * 2 ** attempt), 30000) + jitterMs;
+}
+
+const BRICKLINK_AJAX_COOLDOWN_MS = 60_000;
+let bricklinkAjaxCoolUntilMs = 0;
+
+/** True while the bricklink.com/ajax host is in a cooldown window after a recent 429/403. */
+export function isBricklinkAjaxCoolingDown(nowMs = Date.now()): boolean {
+  return nowMs < bricklinkAjaxCoolUntilMs;
+}
+
+/** Put the bricklink.com/ajax host into a cooldown window after observing a 429/403. */
+export function noteBricklinkAjaxThrottle(nowMs = Date.now()): void {
+  bricklinkAjaxCoolUntilMs = nowMs + BRICKLINK_AJAX_COOLDOWN_MS;
+}
+
+async function fetchWithBackoff(url: URL, init: RequestInit, maxAttempts = 3): Promise<Response> {
+  for (let attempt = 0;; attempt++) {
+    let resp: Response;
+    try {
+      resp = await fetch(url, init);
+    } catch (err) {
+      if (attempt + 1 >= maxAttempts) throw err;
+      const delayMs = computeBackoffDelay(attempt, null);
+      logger.warn`Fetch to ${url.pathname} failed (attempt ${attempt + 1}), retrying: ${String(err)}`;
+      const { promise, resolve } = Promise.withResolvers<void>();
+      setTimeout(resolve, delayMs);
+      await promise;
+      continue;
+    }
+    if (resp.status === 403) {
+      noteBricklinkAjaxThrottle();
+      logger.warn`Got 403 from ${url.pathname}; not retrying (WAF block)`;
+      return resp;
+    }
+    if (resp.status !== 429) return resp;
+    noteBricklinkAjaxThrottle();
+    if (attempt + 1 >= maxAttempts) {
+      logger.warn`Got 429 from ${url.pathname} on final attempt; returning 429 to caller`;
+      return resp;
+    }
+    const retryAfterRaw = parseInt(resp.headers.get("retry-after") ?? "", 10);
+    const retryAfterSec = Number.isNaN(retryAfterRaw) || retryAfterRaw < 0 ? null : retryAfterRaw;
+    const delayMs = computeBackoffDelay(attempt, retryAfterSec);
+    logger.warn`Got 429 from ${url.pathname} on attempt ${attempt + 1}, retrying after ${Math.round(delayMs)}ms`;
     const { promise, resolve } = Promise.withResolvers<void>();
     setTimeout(resolve, delayMs);
     await promise;
-    return fetch(url, init);
   }
-  if (resp.status === 403) {
-    logger.warn`Got 403 from ${url.pathname}; not retrying (WAF block)`;
+}
+
+const inflightUpstream = new Map<string, Promise<unknown>>();
+
+/** Deduplicate concurrent upstream fetches for the same key (double-clicks, color/page races). */
+async function coalesced<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = inflightUpstream.get(key);
+  if (existing) return existing as Promise<T>;
+  const promise = fn();
+  inflightUpstream.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    inflightUpstream.delete(key);
   }
-  return resp;
 }
 
 export const handler = define.handlers({
@@ -80,19 +136,20 @@ export const handler = define.handlers({
     const cachedSearch = await getBricklinkItemSearch(itemid);
     if (cachedSearch) {
       searchResult = cachedSearch;
+    } else if (isBricklinkAjaxCoolingDown()) {
+      logger.debug`Search skipped for ${itemid}: bricklink ajax cooldown active`;
     } else {
       const searchUrl = new URL("https://www.bricklink.com/ajax/clone/search/searchproduct.ajax");
       searchUrl.searchParams.set("q", itemid);
       try {
-        const searchResp = await fetchWithRetry(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
-        if (searchResp.ok) {
-          const json = await searchResp.json() as BricklinkSearchResult;
-          if (json.returnCode === 0) {
-            await saveBricklinkItemSearch(itemid, json);
-            searchResult = json;
-          }
-        } else {
-          logger.warn`Search upstream HTTP ${searchResp.status} for ${itemid}`;
+        const json = await coalesced(`search:${itemid.toLowerCase()}`, async () => {
+          const resp = await fetchWithBackoff(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
+          if (!resp.ok) throw new Error(`Search upstream HTTP ${resp.status}`);
+          return await resp.json() as BricklinkSearchResult;
+        });
+        if (json.returnCode === 0) {
+          await saveBricklinkItemSearch(itemid, json);
+          searchResult = json;
         }
       } catch (err) {
         logger.warn`Search fetch failed for ${itemid}: ${String(err)}`;
@@ -145,14 +202,26 @@ export const handler = define.handlers({
         return {
           data: { list: [], total_count: 0 } as Record<string, unknown>,
           error: "Item not found" as string | null,
+          stale: false,
+          staleAt: null as string | null,
         };
       }
-      try {
-        const cached = await getMarketplaceCache(idItem, colorIdNum, page);
-        if (cached) {
-          logger.debug`Marketplace cache hit for ${itemid} color=${colorIdNum ?? "all"} page=${page}`;
-          return { data: cached as Record<string, unknown>, error: null as string | null };
-        }
+      const cached = await getMarketplaceCache(idItem, colorIdNum, page);
+      if (cached && isMarketplaceCacheFresh(cached.savedAt)) {
+        logger.debug`Marketplace cache hit (fresh) for ${itemid} color=${colorIdNum ?? "all"} page=${page}`;
+        return {
+          data: cached.data as Record<string, unknown>,
+          error: null as string | null,
+          stale: false,
+          staleAt: null as string | null,
+        };
+      }
+      let upstreamError: string | null = null;
+      let upstreamData: Record<string, unknown> | null = null;
+      if (isBricklinkAjaxCoolingDown()) {
+        logger.debug`Marketplace skipped for ${itemid}: bricklink ajax cooldown active`;
+        upstreamError = "BrickLink ajax endpoint cooling down; upstream skipped";
+      } else {
         const marketplaceUrl = new URL("https://www.bricklink.com/ajax/clone/catalogifs.ajax");
         marketplaceUrl.searchParams.set("itemid", String(idItem));
         marketplaceUrl.searchParams.set("loc", "AU");
@@ -161,17 +230,43 @@ export const handler = define.handlers({
         if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
           marketplaceUrl.searchParams.set("color", String(colorIdNum));
         }
-        const resp = await fetchWithRetry(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid));
-        if (!resp.ok) {
-          throw new Error(`Upstream HTTP ${resp.status}`);
+        try {
+          upstreamData = await coalesced(
+            `marketplace:${idItem}:${colorIdNum ?? "all"}:${page}`,
+            async () => {
+              const resp = await fetchWithBackoff(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid));
+              if (!resp.ok) throw new Error(`Upstream HTTP ${resp.status}`);
+              return await resp.json() as Record<string, unknown>;
+            },
+          );
+        } catch (err) {
+          upstreamError = String(err);
+          logger.warn`Marketplace fetch failed for ${itemid}: ${upstreamError}`;
         }
-        const data = await resp.json();
-        await saveMarketplaceCache(idItem, colorIdNum, page, data);
-        return { data: data as Record<string, unknown>, error: null as string | null };
-      } catch (err) {
-        logger.warn`Marketplace fetch failed for ${itemid}: ${String(err)}`;
-        return { data: { list: [], total_count: 0 } as Record<string, unknown>, error: String(err) as string | null };
       }
+      if (upstreamData !== null) {
+        await saveMarketplaceCache(idItem, colorIdNum, page, upstreamData);
+        return {
+          data: upstreamData,
+          error: null as string | null,
+          stale: false,
+          staleAt: null as string | null,
+        };
+      }
+      if (cached) {
+        return {
+          data: cached.data as Record<string, unknown>,
+          error: upstreamError as string | null,
+          stale: true,
+          staleAt: cached.savedAt,
+        };
+      }
+      return {
+        data: { list: [], total_count: 0 } as Record<string, unknown>,
+        error: upstreamError as string | null,
+        stale: false,
+        staleAt: null as string | null,
+      };
     })();
 
     // Phase 2: Store items – fetch the store's own lots through the official
@@ -205,7 +300,12 @@ export const handler = define.handlers({
       }
     })();
 
-    let marketplaceResult: { data: Record<string, unknown>; error: string | null };
+    let marketplaceResult: {
+      data: Record<string, unknown>;
+      error: string | null;
+      stale: boolean;
+      staleAt: string | null;
+    };
     let storeItems: unknown[] | null;
     let colors: { color_id: number; color_name: string }[];
     let catalogItem: BLCatalogItem | null;
@@ -242,6 +342,7 @@ export const handler = define.handlers({
       idItem,
       pageSize: MARKETPLACE_PAGE_SIZE,
       ...(marketplaceResult.error ? { marketplaceError: marketplaceResult.error } : {}),
+      ...(marketplaceResult.stale ? { marketplaceStale: true, marketplaceStaleAt: marketplaceResult.staleAt } : {}),
       ...(!listOnly && storeItems != null ? { storeItems } : {}),
     });
   },

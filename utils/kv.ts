@@ -241,19 +241,34 @@ export async function listCachedOrdersByBuyer(buyerName: string): Promise<BLOrde
 
 // Marketplace Cache
 
-const MARKETPLACE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MARKETPLACE_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 function marketplaceCacheKey(idItem: number, colorId: number | null, page: number): Deno.KvKey {
   return ["marketplace_cache", idItem, colorId ?? "all", page];
+}
+
+export interface MarketplaceCacheEntry {
+  data: unknown;
+  savedAt: string; // ISO-8601
 }
 
 export async function getMarketplaceCache(
   idItem: number,
   colorId: number | null,
   page: number,
-): Promise<unknown | null> {
+): Promise<{ data: unknown; savedAt: string | null } | null> {
   const result = await (await kv()).get<unknown>(marketplaceCacheKey(idItem, colorId, page));
-  return result.value;
+  const value = result.value;
+  if (value === null || value === undefined) return null;
+  if (
+    typeof value === "object" && "data" in value && "savedAt" in value &&
+    typeof (value as MarketplaceCacheEntry).savedAt === "string"
+  ) {
+    const entry = value as MarketplaceCacheEntry;
+    return { data: entry.data, savedAt: entry.savedAt };
+  }
+  // Legacy raw payload written before entries were wrapped — usable only as stale fallback.
+  return { data: value, savedAt: null };
 }
 
 export async function saveMarketplaceCache(
@@ -262,9 +277,15 @@ export async function saveMarketplaceCache(
   page: number,
   data: unknown,
 ): Promise<void> {
-  await (await kv()).set(marketplaceCacheKey(idItem, colorId, page), data, {
-    expireIn: MARKETPLACE_CACHE_TTL_MS,
+  const entry: MarketplaceCacheEntry = { data, savedAt: new Date().toISOString() };
+  // Hard 24h expiry bounds KV growth; freshness is judged by savedAt, not expiry.
+  await (await kv()).set(marketplaceCacheKey(idItem, colorId, page), entry, {
+    expireIn: 24 * 60 * 60 * 1000,
   });
+}
+
+export function isMarketplaceCacheFresh(savedAt: string | null, nowMs = Date.now()): boolean {
+  return savedAt !== null && nowMs - Date.parse(savedAt) < MARKETPLACE_CACHE_TTL_MS;
 }
 
 // Store Items Cache

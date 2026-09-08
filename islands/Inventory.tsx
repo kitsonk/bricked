@@ -91,6 +91,8 @@ export default function Inventory() {
   const marketplaceLoading = useSignal(false);
   const storeLoading = useSignal(false);
   const marketplaceError = useSignal<string | null>(null);
+  const marketplaceStale = useSignal(false);
+  const marketplaceStaleAt = useSignal<string | null>(null);
   const marketplacePage = useSignal(1);
   const marketplaceTotalCount = useSignal<number | null>(null);
   const marketplacePageSize = useSignal<number>(10);
@@ -374,6 +376,8 @@ export default function Inventory() {
     marketplaceLoading.value = true;
     storeLoading.value = true;
     marketplaceError.value = null;
+    marketplaceStale.value = false;
+    marketplaceStaleAt.value = null;
     marketplaceItems.value = null;
     itemColors.value = [];
     selectedColorId.value = null;
@@ -395,6 +399,8 @@ export default function Inventory() {
       marketplaceTotalCount.value = json.total_count ?? null;
       marketplacePageSize.value = json.pageSize ?? 10;
       marketplaceError.value = json.marketplaceError ?? null;
+      marketplaceStale.value = json.marketplaceStale ?? false;
+      marketplaceStaleAt.value = json.marketplaceStaleAt ?? null;
       itemColors.value = json.colors ?? [];
       catalogItem.value = json.catalogItem ?? null;
       partCount.value = json.partCount ?? null;
@@ -424,6 +430,8 @@ export default function Inventory() {
     marketplaceLoading.value = true;
     storeLoading.value = true;
     marketplaceError.value = null;
+    marketplaceStale.value = false;
+    marketplaceStaleAt.value = null;
     marketplaceItems.value = null;
     storeItems.value = null;
     marketplacePage.value = 1;
@@ -442,6 +450,8 @@ export default function Inventory() {
       marketplaceTotalCount.value = json.total_count ?? null;
       marketplacePageSize.value = json.pageSize ?? 10;
       marketplaceError.value = json.marketplaceError ?? null;
+      marketplaceStale.value = json.marketplaceStale ?? false;
+      marketplaceStaleAt.value = json.marketplaceStaleAt ?? null;
       storeItems.value = json.storeItems ?? [];
       if (json.imageUrl) colorImageUrl.value = json.imageUrl;
     } catch (err) {
@@ -457,6 +467,8 @@ export default function Inventory() {
     if (!id) return;
     marketplaceLoading.value = true;
     marketplaceError.value = null;
+    marketplaceStale.value = false;
+    marketplaceStaleAt.value = null;
     try {
       const colorParam = selectedColorId.value !== null ? `&colorid=${selectedColorId.value}` : "&colorid=all";
       const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
@@ -469,6 +481,8 @@ export default function Inventory() {
       marketplaceTotalCount.value = json.total_count ?? null;
       marketplacePageSize.value = json.pageSize ?? 10;
       marketplaceError.value = json.marketplaceError ?? null;
+      marketplaceStale.value = json.marketplaceStale ?? false;
+      marketplaceStaleAt.value = json.marketplaceStaleAt ?? null;
       marketplacePage.value = page;
     } catch (err) {
       marketplaceError.value = String(err);
@@ -939,6 +953,15 @@ export default function Inventory() {
               <div role="alert" class="alert alert-error mb-4">
                 <span class="iconify lucide--alert-circle size-5"></span>
                 <div>{marketplaceError.value}</div>
+              </div>
+            )}
+            {marketplaceStale.value && (
+              <div role="alert" class="alert alert-warning mb-4">
+                <span class="iconify lucide--alert-circle size-5"></span>
+                <div>
+                  Marketplace data may be outdated — showing cached results
+                  {marketplaceStaleAt.value ? ` (as of ${new Date(marketplaceStaleAt.value).toLocaleString()})` : ""}
+                </div>
               </div>
             )}
             {marketplaceLoading.value && marketplaceItems.value === null
