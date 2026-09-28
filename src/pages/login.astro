@@ -1,0 +1,72 @@
+---
+import Shell from "../layouts/Shell.astro";
+import { loginGet, loginPost } from "@/routes/login.ts";
+
+const result = Astro.request.method === "POST" ? await loginPost(Astro) : loginGet(Astro);
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { error, from, username, authDisabled } = result.data;
+---
+<Shell>
+  <div class="flex min-h-screen items-center justify-center bg-base-200 p-4">
+    <div class="card w-full max-w-sm border border-base-content/10 bg-base-100 shadow-lg">
+      <div class="card-body">
+        <div class="mb-2 flex items-center gap-3">
+          <img alt="bricked Logo" class="h-9 w-9" src="/logo.svg" />
+          <span class="text-xl font-semibold">bricked</span>
+        </div>
+        <h1 class="card-title text-lg">Sign in</h1>
+        <p class="mb-2 text-sm text-base-content/60">
+          Enter your credentials to access the dashboard.
+        </p>
+        {
+          authDisabled && (
+            <div role="alert" class="alert alert-warning mb-4">
+              <span class="iconify lucide--alert-triangle size-5"></span>
+              <div class="text-sm">
+                Authentication is not configured. Set <code>APP_USERNAME</code>, <code>APP_PASSWORD</code> and{" "}
+                <code>SESSION_SECRET</code> to enable login.
+              </div>
+            </div>
+          )
+        }
+        {
+          error && (
+            <div role="alert" class="alert alert-error mb-4">
+              <span class="iconify lucide--alert-circle size-5"></span>
+              <span class="text-sm">{error}</span>
+            </div>
+          )
+        }
+        <form method="POST" class="space-y-3" data-astro-reload>
+          <input type="hidden" name="from" value={from} />
+          <label class="floating-label">
+            <span>Username</span>
+            <input
+              type="text"
+              name="username"
+              class="input input-bordered w-full"
+              autocomplete="username"
+              required
+              value={username}
+            />
+          </label>
+          <label class="floating-label">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              class="input input-bordered w-full"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          <button type="submit" class="btn btn-primary w-full">Sign in</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</Shell>

@@ -1,0 +1,19 @@
+---
+import Shell from "../../layouts/Shell.astro";
+import Frame from "../../layouts/Frame.astro";
+import Inventory from "@/islands/Inventory.tsx";
+import { loadInventory } from "@/routes/inventory/index.ts";
+
+const result = loadInventory();
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+---
+<Shell>
+  <Frame>
+    <h1 class="text-2xl font-bold mb-6">Inventory</h1>
+    <Inventory client:load />
+  </Frame>
+</Shell>

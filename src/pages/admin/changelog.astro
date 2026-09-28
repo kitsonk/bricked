@@ -1,0 +1,38 @@
+---
+import Shell from "../../layouts/Shell.astro";
+import Frame from "../../layouts/Frame.astro";
+import { loadChangelog } from "@/routes/admin/changelog.ts";
+
+const result = loadChangelog();
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { changes } = result.data;
+---
+<Shell>
+  <Frame>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Change Log</h1>
+      <span class="text-sm text-base-content/50">{changes.length} entries</span>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      {
+        changes.map((entry, i) => (
+          <details class="collapse collapse-arrow bg-base-100 border border-base-300" open={i === 0}>
+            <summary class="collapse-title font-semibold text-sm">
+              {entry.subject}
+            </summary>
+            <div class="collapse-content text-sm text-base-content/70">
+              {entry.body
+                ? entry.body.split("\n\n").map((para, j) => <p class={j > 0 ? "mt-2" : ""}>{para}</p>)
+                : <p class="italic text-base-content/40">No additional details.</p>}
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </Frame>
+</Shell>

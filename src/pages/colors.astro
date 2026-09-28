@@ -1,0 +1,19 @@
+---
+import Shell from "../layouts/Shell.astro";
+import Frame from "../layouts/Frame.astro";
+import ColorsIsland from "@/islands/Colors.tsx";
+import { loadColors } from "@/routes/colors.ts";
+
+const result = await loadColors();
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { colors, meta } = result.data;
+---
+<Shell>
+  <Frame>
+    <ColorsIsland initialColors={colors} initialMeta={meta} client:load />
+  </Frame>
+</Shell>

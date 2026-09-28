@@ -4,9 +4,7 @@ const EXEMPT_PATHS: ReadonlySet<string> = new Set([
 ]);
 
 const EXEMPT_PREFIXES: readonly string[] = [
-  "/_frsh/",
-  "/static/",
-  "/assets/",
+  "/_astro/",
   "/favicon",
   "/logo",
   "/robots.txt",

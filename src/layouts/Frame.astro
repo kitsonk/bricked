@@ -1,0 +1,47 @@
+---
+import SidebarPersist from "@/islands/SidebarPersist.tsx";
+import { Footer } from "@/components/Footer.tsx";
+import { Sidebar } from "@/components/Sidebar.tsx";
+import { Topbar } from "@/components/Topbar.tsx";
+---
+<div class="size-full">
+  <div class="flex">
+    <input
+      aria-label="Toggle layout sidebar"
+      class="hidden"
+      id="layout-sidebar-toggle-trigger"
+      type="checkbox"
+    />
+    <input
+      aria-label="Dense layout sidebar"
+      class="hidden"
+      id="layout-sidebar-hover-trigger"
+      type="checkbox"
+    />
+    <SidebarPersist client:load />
+    <div class="bg-base-300 h-screen w-1" id="layout-sidebar-hover"></div>
+    <div class="overflow-hidden" id="layout-sidebar" transition:persist>
+      <Sidebar />
+    </div>
+    <label for="layout-sidebar-toggle-trigger" id="layout-sidebar-backdrop">
+    </label>
+
+    <div class="flex h-screen min-w-0 grow flex-col overflow-auto">
+      <div id="layout-topbar" transition:persist>
+        <div class="h-full">
+          <Topbar />
+        </div>
+      </div>
+      <div id="layout-content">
+        <div class="p-3 sm:p-6">
+          <slot />
+        </div>
+      </div>
+      <div class="px-4 py-1">
+        <div class="h-full">
+          <Footer />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

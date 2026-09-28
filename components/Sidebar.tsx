@@ -1,8 +1,6 @@
-function MenuItem(
-  { icon, label, href, fPartial }: { icon: string; label: string; href: string; fPartial?: string },
-) {
+function MenuItem({ icon, label, href }: { icon: string; label: string; href: string }) {
   return (
-    <a class="menu-item" href={href} {...(fPartial ? { "f-partial": fPartial } : {})}>
+    <a class="menu-item" href={href}>
       <span class={`iconify lucide--${icon} size-4`}></span>
       <span class="grow">{label}</span>
     </a>
@@ -30,40 +28,25 @@ export function Sidebar() {
         </label>
         <p class="menu-label mt-2 px-2.5">Workflow</p>
         <div class="mt-2">
-          <MenuItem icon="house" label="Home" href="/" fPartial="/partials/home" />
-          <MenuItem icon="shopping-bag" label="Orders" href="/orders" fPartial="/partials/orders" />
-          <MenuItem icon="warehouse" label="Inventory" href="/inventory" fPartial="/partials/inventory" />
-          <MenuItem icon="users" label="Customers" href="/customers" fPartial="/partials/customers" />
+          <MenuItem icon="house" label="Home" href="/" />
+          <MenuItem icon="shopping-bag" label="Orders" href="/orders" />
+          <MenuItem icon="warehouse" label="Inventory" href="/inventory" />
+          <MenuItem icon="users" label="Customers" href="/customers" />
         </div>
         <p class="menu-label mt-4 px-2.5">Settings</p>
         <div class="mt-2">
-          <MenuItem icon="settings" label="Environment" href="/environment" fPartial="/partials/environment" />
-          <MenuItem icon="map-pin" label="Configuration" href="/configuration" fPartial="/partials/configuration" />
-          <MenuItem
-            icon="truck"
-            label="Shipping Methods"
-            href="/shipping-methods"
-            fPartial="/partials/shipping-methods"
-          />
-          <MenuItem icon="package" label="Package Types" href="/package-types" fPartial="/partials/package-types" />
-          <MenuItem icon="palette" label="Colors" href="/colors" fPartial="/partials/colors" />
-          <MenuItem
-            icon="send"
-            label="Drive Thru Templates"
-            href="/drive-thru/templates"
-            fPartial="/partials/drive-thru/templates"
-          />
-          <MenuItem
-            icon="list-checks"
-            label="Drive Thru Rules"
-            href="/drive-thru/rules"
-            fPartial="/partials/drive-thru/rules"
-          />
+          <MenuItem icon="settings" label="Environment" href="/environment" />
+          <MenuItem icon="map-pin" label="Configuration" href="/configuration" />
+          <MenuItem icon="truck" label="Shipping Methods" href="/shipping-methods" />
+          <MenuItem icon="package" label="Package Types" href="/package-types" />
+          <MenuItem icon="palette" label="Colors" href="/colors" />
+          <MenuItem icon="send" label="Drive Thru Templates" href="/drive-thru/templates" />
+          <MenuItem icon="list-checks" label="Drive Thru Rules" href="/drive-thru/rules" />
         </div>
         <p class="menu-label mt-4 px-2.5">Admin</p>
         <div class="mt-2">
-          <MenuItem icon="scroll" label="Logs" href="/admin/logs" fPartial="/partials/admin/logs" />
-          <MenuItem icon="history" label="Change Log" href="/admin/changelog" fPartial="/partials/admin/changelog" />
+          <MenuItem icon="scroll" label="Logs" href="/admin/logs" />
+          <MenuItem icon="history" label="Change Log" href="/admin/changelog" />
         </div>
       </div>
     </div>

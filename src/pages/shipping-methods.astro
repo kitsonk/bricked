@@ -1,0 +1,33 @@
+---
+import Shell from "../layouts/Shell.astro";
+import Frame from "../layouts/Frame.astro";
+import ShippingMethods from "@/islands/ShippingMethods.tsx";
+import { loadShippingMethods } from "@/routes/shipping-methods.ts";
+
+const result = await loadShippingMethods();
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { methods, error } = result.data;
+---
+<Shell>
+  <Frame>
+    <div>
+      <h1 class="text-2xl font-bold mb-6">Shipping Methods</h1>
+      {
+        error && (
+          <div role="alert" class="alert alert-error mb-6">
+            <span class="iconify lucide--alert-circle size-5"></span>
+            <div>
+              <div class="font-medium">Failed to load shipping methods</div>
+              <div class="text-sm">{error}</div>
+            </div>
+          </div>
+        )
+      }
+      <ShippingMethods initialMethods={methods} client:load />
+    </div>
+  </Frame>
+</Shell>

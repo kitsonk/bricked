@@ -1,0 +1,27 @@
+---
+import Shell from "../../layouts/Shell.astro";
+import Frame from "../../layouts/Frame.astro";
+import DriveThruRules from "@/islands/DriveThruRules.tsx";
+import { loadDriveThruRules } from "@/routes/drive-thru/rules.ts";
+
+const result = await loadDriveThruRules();
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { rules, templates } = result.data;
+---
+<Shell>
+  <Frame>
+    <div class="max-w-3xl">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold">Drive Thru Rules</h1>
+        <p class="text-sm text-base-content/60 mt-1">
+          Define rules to automatically select the right Drive Thru template based on order and customer properties.
+        </p>
+      </div>
+      <DriveThruRules initialRules={rules} templates={templates} client:load />
+    </div>
+  </Frame>
+</Shell>

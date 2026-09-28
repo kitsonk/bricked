@@ -1,9 +1,8 @@
-import type { Context } from "fresh";
-import type { State } from "@/utils/fresh.ts";
 import { isAuthEnabled } from "@/utils/auth.ts";
 import { isBotProbe, isExemptPath } from "@/utils/exemptPaths.ts";
 import { getClientIp, isBanned, recordUnauth } from "@/utils/banlist.ts";
 import { getLogger } from "@/utils/log.ts";
+import type { RespondingMiddleware } from "@/middleware/types.ts";
 
 const logger = getLogger(["bricked", "banlist", "middleware"]);
 
@@ -28,47 +27,45 @@ function probeResponse(): Response {
   return new Response("Not Found", { status: 404, headers: PROBE_RESPONSE_HEADERS });
 }
 
-export default function banlist(): (ctx: Context<State>) => Promise<Response> {
-  return async function banlistMiddleware(ctx: Context<State>): Promise<Response> {
-    const pathname = ctx.url.pathname;
+export const banlist: RespondingMiddleware = async (context, next) => {
+  const pathname = context.url.pathname;
 
-    if (isBotProbe(pathname)) {
-      // Fast 404 — never hit auth, KV, or downstream handlers for known junk paths.
-      return probeResponse();
-    }
+  if (isBotProbe(pathname)) {
+    // Fast 404 — never hit auth, KV, or downstream handlers for known junk paths.
+    return probeResponse();
+  }
 
-    if (!isAuthEnabled()) {
-      return await ctx.next();
-    }
+  if (!isAuthEnabled()) {
+    return await next();
+  }
 
-    if (isExemptPath(pathname)) {
-      return await ctx.next();
-    }
+  if (isExemptPath(pathname)) {
+    return await next();
+  }
 
-    const ip = getClientIp(ctx.req);
-    if (!ip) {
-      // Without a usable IP, do not record or block — let auth do its thing.
-      return await ctx.next();
-    }
+  const ip = getClientIp(context.request);
+  if (!ip) {
+    // Without a usable IP, do not record or block — let auth do its thing.
+    return await next();
+  }
 
-    if (await isBanned(ip)) {
-      logger.info("Banlist: blocked {ip} on {method} {path}", {
-        ip,
-        method: ctx.req.method,
-        path: pathname,
-      });
-      return bannedResponse();
-    }
+  if (await isBanned(ip)) {
+    logger.info("Banlist: blocked {ip} on {method} {path}", {
+      ip,
+      method: context.request.method,
+      path: pathname,
+    });
+    return bannedResponse();
+  }
 
-    const res = await ctx.next();
+  const res = await next();
 
-    if (res.status === 401 || res.status === 302) {
-      // Fire-and-forget — do not block the response on KV I/O.
-      void recordUnauth(ip).catch((err) => {
-        logger.error("Banlist: recordUnauth failed for {ip}: {err}", { ip, err: String(err) });
-      });
-    }
+  if (res.status === 401 || res.status === 302) {
+    // Fire-and-forget — do not block the response on KV I/O.
+    void recordUnauth(ip).catch((err) => {
+      logger.error("Banlist: recordUnauth failed for {ip}: {err}", { ip, err: String(err) });
+    });
+  }
 
-    return res;
-  };
-}
+  return res;
+};

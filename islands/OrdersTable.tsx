@@ -161,7 +161,6 @@ export default function OrdersTable(
                     <a
                       class="link"
                       href={`/customers/${order.buyer_name}`}
-                      f-partial={`/partials/customers/${order.buyer_name}`}
                     >
                       {order.buyer_name}
                     </a>

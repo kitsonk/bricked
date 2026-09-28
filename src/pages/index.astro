@@ -1,0 +1,79 @@
+---
+import Shell from "../layouts/Shell.astro";
+import Frame from "../layouts/Frame.astro";
+import { loadHome } from "@/routes/index.ts";
+
+const result = await loadHome();
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { unfiledOrderCount, customerCount, error } = result.data;
+---
+<Shell>
+  <Frame>
+    <div class="flex flex-col items-center py-12">
+      <img alt="bricked Logo" class="mb-6 h-24 w-24" src="/logo.svg" />
+      <h1 class="text-5xl font-bold tracking-tight">bricked</h1>
+      <p class="mt-2 text-lg text-base-content/60">BrickLink store management</p>
+    </div>
+    {
+      error && (
+        <div role="alert" class="alert alert-error mx-auto mb-6 max-w-3xl">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <div>
+            <div class="font-medium">Failed to load dashboard data</div>
+            <div class="text-sm">{error}</div>
+          </div>
+        </div>
+      )
+    }
+    <div class="mx-auto grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3">
+      <a
+        href="/orders"
+        class="card border border-base-content/10 bg-base-200 transition-colors hover:border-primary/40 hover:bg-base-300"
+      >
+        <div class="card-body items-center text-center">
+          <span class="iconify lucide--shopping-bag mb-1 size-8 text-primary"></span>
+          <h2 class="card-title">Orders</h2>
+          {unfiledOrderCount > 0
+            ? (
+              <>
+                <p class="text-4xl font-bold tabular-nums">{unfiledOrderCount}</p>
+                <p class="text-sm text-base-content/60">unfiled orders</p>
+              </>
+            )
+            : <p class="text-sm text-base-content/60">All caught up</p>}
+        </div>
+      </a>
+      <a
+        href="/inventory"
+        class="card border border-base-content/10 bg-base-200 transition-colors hover:border-primary/40 hover:bg-base-300"
+      >
+        <div class="card-body items-center text-center">
+          <span class="iconify lucide--warehouse mb-1 size-8 text-primary"></span>
+          <h2 class="card-title">Inventory</h2>
+          <p class="text-sm text-base-content/60">Browse your parts</p>
+        </div>
+      </a>
+      <a
+        href="/customers"
+        class="card border border-base-content/10 bg-base-200 transition-colors hover:border-primary/40 hover:bg-base-300"
+      >
+        <div class="card-body items-center text-center">
+          <span class="iconify lucide--users mb-1 size-8 text-primary"></span>
+          <h2 class="card-title">Customers</h2>
+          {customerCount > 0
+            ? (
+              <>
+                <p class="text-4xl font-bold tabular-nums">{customerCount}</p>
+                <p class="text-sm text-base-content/60">customers</p>
+              </>
+            )
+            : <p class="text-sm text-base-content/60">No customers yet</p>}
+        </div>
+      </a>
+    </div>
+  </Frame>
+</Shell>

@@ -1,0 +1,27 @@
+---
+import Shell from "../../layouts/Shell.astro";
+import Frame from "../../layouts/Frame.astro";
+import CustomersTable from "@/islands/CustomersTable.tsx";
+import { loadCustomers } from "@/routes/customers/index.ts";
+
+const result = await loadCustomers(Astro);
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { customers, nextCursor, currentCursor, history, buyerFilter, lastRefreshedAt } = result.data;
+---
+<Shell>
+  <Frame>
+    <CustomersTable
+      initialCustomers={customers}
+      nextCursor={nextCursor}
+      currentCursor={currentCursor}
+      history={history}
+      buyerFilter={buyerFilter}
+      lastRefreshedAt={lastRefreshedAt}
+      client:load
+    />
+  </Frame>
+</Shell>

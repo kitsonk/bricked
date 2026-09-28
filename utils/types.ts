@@ -430,3 +430,26 @@ export interface BLInventory {
   unit_price: string;
   description: string;
 }
+
+export type ImportedItemType = "S" | "P" | "M" | "B" | "G" | "C" | "I" | "O";
+export type ImportedItemCondition = "N" | "U";
+
+/** A single BrickLink inventory `<ITEM>` parsed out of an uploaded LDraw XML export. */
+export type ImportedItem = {
+  ITEMTYPE: ImportedItemType;
+  ITEMID: string;
+  COLOR?: number;
+  COLOR_NAME?: string;
+  PRICE: number;
+  QTY: number;
+  CONDITION: ImportedItemCondition;
+  DESCRIPTION: string;
+  REMARKS: string;
+};
+
+/** Outcome of a CRM order-history CSV import. */
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  errors: { row: number; reason: string }[];
+}

@@ -1,0 +1,61 @@
+---
+import Shell from "../layouts/Shell.astro";
+import Frame from "../layouts/Frame.astro";
+import ShipList from "@/islands/ShipList.tsx";
+import { loadShipList } from "@/routes/ship-list.ts";
+
+const result = await loadShipList(Astro);
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { orders, packageTypes, addresses, trackingMethodIds, printLabelMethodIds, shippingMethods, error } = result.data;
+---
+<Shell>
+  <Frame>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Prepare to Ship</h1>
+      <a href="/orders" class="btn btn-ghost btn-sm">
+        <span class="iconify lucide--arrow-left size-4"></span>
+        Back to Orders
+      </a>
+    </div>
+
+    {
+      error && (
+        <div role="alert" class="alert alert-error mb-6">
+          <span class="iconify lucide--alert-circle size-5"></span>
+          <div>
+            <div class="font-medium">Failed to load orders</div>
+            <div class="text-sm">{error}</div>
+          </div>
+        </div>
+      )
+    }
+
+    {
+      !error && orders.length === 0 && (
+        <div class="text-center py-16 text-base-content/50">
+          <span class="iconify lucide--truck size-12 block mx-auto mb-3"></span>
+          <p class="font-medium">No orders selected</p>
+          <a href="/orders" class="btn btn-ghost btn-sm mt-4">Back to Orders</a>
+        </div>
+      )
+    }
+
+    {
+      orders.length > 0 && (
+        <ShipList
+          orders={orders}
+          packageTypes={packageTypes}
+          addresses={addresses}
+          trackingMethodIds={trackingMethodIds}
+          printLabelMethodIds={printLabelMethodIds}
+          shippingMethods={shippingMethods}
+          client:load
+        />
+      )
+    }
+  </Frame>
+</Shell>

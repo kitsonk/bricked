@@ -1,0 +1,20 @@
+---
+import Shell from "../layouts/Shell.astro";
+import Frame from "../layouts/Frame.astro";
+import Configuration from "@/islands/Configuration.tsx";
+import { loadConfiguration } from "@/routes/configuration.ts";
+
+const result = await loadConfiguration();
+if (result.kind !== "data") {
+  if (result.kind === "redirect") return Astro.redirect(result.to);
+  if (result.kind === "notFound") return new Response("Not found", { status: 404 });
+  return result.response;
+}
+const { address } = result.data;
+---
+<Shell>
+  <Frame>
+    <h1 class="text-2xl font-bold mb-6">Configuration</h1>
+    <Configuration initialAddress={address} client:load />
+  </Frame>
+</Shell>

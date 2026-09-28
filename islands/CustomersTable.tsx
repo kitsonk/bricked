@@ -1,8 +1,7 @@
 import { type TargetedEvent } from "preact";
 import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
-import type { Customer } from "@/utils/types.ts";
-import type { ImportResult } from "@/routes/api/crm/import.ts";
+import type { Customer, ImportResult } from "@/utils/types.ts";
 import { formatAmount, humanTime } from "@/utils/format.ts";
 
 interface Props {

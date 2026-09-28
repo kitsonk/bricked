@@ -1,5 +1,5 @@
+import type { APIContext } from "astro";
 import { stringify } from "@std/csv";
-import { define } from "@/utils/fresh.ts";
 import type { AusPostAddress } from "@/utils/types.ts";
 
 interface ManifestRow {
@@ -34,45 +34,43 @@ const COLUMNS = [
   "Extra Cover Amount",
 ];
 
-export const handler = define.handlers({
-  async POST(ctx) {
-    const rows: ManifestRow[] = await ctx.req.json();
+export async function POST({ request }: APIContext): Promise<Response> {
+  const rows: ManifestRow[] = await request.json();
 
-    const auRows = rows.filter((r) => r.countryCode === "AU");
+  const auRows = rows.filter((r) => r.countryCode === "AU");
 
-    const data = auRows.map((r) => ({
-      "Send From Name": "Simon Burrows",
-      "Send From Address Line 1": "U1/4 Plummer Court",
-      "Send From Suburb": "MENTONE",
-      "Send From State": "VIC",
-      "Send From Postcode": "3194",
-      "Deliver To Name": r.address.recipientName,
-      "Deliver To Address Line 1": r.address.addressLine1.slice(0, 40),
-      "Deliver To Address Line 2": r.address.addressLine2.slice(0, 40),
-      "Deliver To Suburb": r.address.suburb.toUpperCase(),
-      "Deliver To State": r.address.state.toUpperCase(),
-      "Deliver To Postcode": r.address.postcode,
-      "Item Packaging Type": "OWN_PACKAGING",
-      "Item Delivery Service": "PP",
-      "Item Length": r.lengthCm,
-      "Item Width": r.widthCm,
-      "Item Height": r.heightCm,
-      "Item Weight": r.weightKg,
-      "Extra Cover Amount": r.extraCover === "0" ? "" : r.extraCover,
-    }));
+  const data = auRows.map((r) => ({
+    "Send From Name": "Simon Burrows",
+    "Send From Address Line 1": "U1/4 Plummer Court",
+    "Send From Suburb": "MENTONE",
+    "Send From State": "VIC",
+    "Send From Postcode": "3194",
+    "Deliver To Name": r.address.recipientName,
+    "Deliver To Address Line 1": r.address.addressLine1.slice(0, 40),
+    "Deliver To Address Line 2": r.address.addressLine2.slice(0, 40),
+    "Deliver To Suburb": r.address.suburb.toUpperCase(),
+    "Deliver To State": r.address.state.toUpperCase(),
+    "Deliver To Postcode": r.address.postcode,
+    "Item Packaging Type": "OWN_PACKAGING",
+    "Item Delivery Service": "PP",
+    "Item Length": r.lengthCm,
+    "Item Width": r.widthCm,
+    "Item Height": r.heightCm,
+    "Item Weight": r.weightKg,
+    "Extra Cover Amount": r.extraCover === "0" ? "" : r.extraCover,
+  }));
 
-    const csv = stringify(data, { columns: COLUMNS });
+  const csv = stringify(data, { columns: COLUMNS });
 
-    const now = new Date();
-    const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${
-      String(now.getDate()).padStart(2, "0")
-    }`;
+  const now = new Date();
+  const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${
+    String(now.getDate()).padStart(2, "0")
+  }`;
 
-    return new Response(csv, {
-      headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="auspost-manifest-${date}.csv"`,
-      },
-    });
-  },
-});
+  return new Response(csv, {
+    headers: {
+      "Content-Type": "text/csv",
+      "Content-Disposition": `attachment; filename="auspost-manifest-${date}.csv"`,
+    },
+  });
+}
