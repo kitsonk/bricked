@@ -33,7 +33,9 @@ const PAGE_ROUTES = [
   { path: "/package-types", marker: 'placeholder="Small box"', islands: 2 },
   { path: "/inventory", marker: "Marketplace Items", islands: 2 },
   { path: "/admin/logs", marker: "Showing latest entries", islands: 2 },
-  { path: "/shipping-methods", marker: "Failed to load shipping methods", islands: 2 },
+  // The shipping-methods endpoint is not auth-gated, so this page reaches its success branch even
+  // with dummy credentials. Assert the template's own heading, which renders in both branches.
+  { path: "/shipping-methods", marker: '<h1 class="text-2xl font-bold mb-6">Shipping Methods</h1>', islands: 2 },
   { path: "/drive-thru/rules", marker: "Define rules to automatically select", islands: 2 },
   { path: "/drive-thru/templates", marker: "Templates are used to preview", islands: 2 },
   { path: "/orders", marker: "Failed to load orders", islands: 3 },
