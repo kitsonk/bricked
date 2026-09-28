@@ -1,5 +1,10 @@
 [
   {
+    "hash": "2f9fbdf",
+    "subject": "Replace Fresh v2 with Astro 7 for SSR and routing",
+    "body": "Migrate the app from Fresh v2 to Astro 7 with the Deno adapter, keeping every URL, the SPA-feel navigation, the client-IP banlist, and the listening port. Each page is now a loader in routes/ plus a template in src/pages/; the 14 partial routes and their attributes are gone, and client-side navigation is handled by Astro's ClientRouter with the sidebar and topbar persisting across swaps. The server is started by src/serve.ts, which serves static assets first and reads PORT and HOST at runtime rather than baking them in at build time. Login and logout no longer fail with \"Cross-site POST form submissions are forbidden\" when the browser reports an opaque origin, and route smoke tests assert that every page renders its own content and hydrates its islands."
+  },
+  {
     "hash": "fb7288c",
     "subject": "Add view transitions for partial navigation",
     "body": "Enable f-view-transition on the AppFrame root alongside f-client-nav. Name #layout-sidebar and #layout-content regions so they animate independently, and disable the implicit root transition to avoid a compounding cross-fade flicker. Holds the old content snapshot static and fades only the new content in on top, eliminating the opacity dip where the background bleeds through. Respects prefers-reduced-motion by disabling all view-transition animations."
