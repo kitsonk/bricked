@@ -1,5 +1,25 @@
 [
   {
+    "hash": "d353d93",
+    "subject": "Migrate the app from Deno to Node.js",
+    "body": "Deno's runtime is being retired, so the app moves to Node: @astrojs/node in standalone mode owns the server, serving dist/client static-first and falling through to the Astro handler, which removes src/serve.ts and its hand-rolled Deno.serve. Persistence moves to the @deno/kv SQLite backend at KV_PATH (default kv.sqlite3), with a minimal globalThis.Deno shim in kv() for the packages that read Deno.KvU64 and Deno.Kv, so existing databases and U64 counters keep working.\n\nDeno.cron becomes node-cron pinned to UTC, the banlist reads Astro's clientAddress instead of Deno's remoteAddr (normalising IPv4-mapped addresses first), and unhandled rejections and errors are logged through process events. The toolchain is now pnpm, Biome, Vitest, and TypeScript 7, and JSR packages resolve through the npm:@jsr aliases that npx jsr add writes, so the Vite plugin feeding jsr: specifiers to Deno's resolver is gone. Both pnpm dev and pnpm start load .env with Node's --env-file-if-exists, and deno.json and deno.lock are deleted. Every route, the middleware order, the CSRF guard, and the PORT/HOST contract are unchanged."
+  },
+  {
+    "hash": "054db22",
+    "subject": "Assert the shipping-methods heading instead of its error text",
+    "body": "The smoke suite's marker for the shipping-methods page came from its error branch, which only renders when the BrickLink call fails. That endpoint is not auth-gated, so with the suite's dummy credentials the server reaches the success branch and the assertion failed. Assert the template's own heading, which renders either way."
+  },
+  {
+    "hash": "2ccc8a8",
+    "subject": "Harden marketplace AJAX fetches with backoff and stale-while-revalidate",
+    "body": "Throttling (429) and WAF blocks (403) from the BrickLink AJAX endpoints degraded marketplace lookups to empty results plus an error; the endpoint now degrades to slightly old data with a visible notice instead. Retries become fetchWithBackoff — 3 attempts, exponential backoff capped at 30s, Retry-After honoured, 403 never retried, network errors rethrown on the final attempt — plus a 60s host-level cooldown after any 429 or 403 that both callsites respect. Marketplace KV entries are wrapped as {data, savedAt} with a hard 24h expiry and judged fresh over a 15-minute TTL, legacy payloads remain a stale-only fallback, concurrent upstream fetches for the same key are coalesced, and stale responses carry marketplaceStale and marketplaceStaleAt so the Inventory island can warn alongside the table. Adds colocated tests for the backoff, freshness, and cooldown helpers."
+  },
+  {
+    "hash": "9d140f9",
+    "subject": "Replace store-subdomain scraping with the official BrickLink Store API",
+    "body": "The store.bricklink.com scrape always answers 403 to a server-side fetch, because the subdomain needs browser session cookies plus the aws-waf-token JS challenge that no header tweak satisfies. Store lots now come from the already-authenticated Store API: adds BLInventory and BricklinkClient.getStoreInventories, re-keys the store-items KV cache from the internal idItem to (itemType, itemNo, colorId), and rewrites storePromise to filter GET /inventories locally so it no longer depends on the throttlable www search endpoint. Retries now cover only 429 (Retry-After plus jitter), the bot-signal origin header is dropped from AJAX GETs, and stringifyable is renamed to Stringifyable for @libs/xml 8.0.0."
+  },
+  {
     "hash": "2f9fbdf",
     "subject": "Replace Fresh v2 with Astro 7 for SSR and routing",
     "body": "Migrate the app from Fresh v2 to Astro 7 with the Deno adapter, keeping every URL, the SPA-feel navigation, the client-IP banlist, and the listening port. Each page is now a loader in routes/ plus a template in src/pages/; the 14 partial routes and their attributes are gone, and client-side navigation is handled by Astro's ClientRouter with the sidebar and topbar persisting across swaps. The server is started by src/serve.ts, which serves static assets first and reads PORT and HOST at runtime rather than baking them in at build time. Login and logout no longer fail with \"Cross-site POST form submissions are forbidden\" when the browser reports an opaque origin, and route smoke tests assert that every page renders its own content and hydrates its islands."
