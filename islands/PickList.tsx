@@ -63,8 +63,8 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
   const pickedCount = picked.value.size;
   const nameByOrderId = new Map(orders.map((o) => [o.orderId, o.shippingName || o.buyerName]));
 
-  const allPacked = orders.length > 0 &&
-    orders.every((o) => o.status === "PACKED" || packedOrderIds.value.has(o.orderId));
+  const allPacked =
+    orders.length > 0 && orders.every((o) => o.status === "PACKED" || packedOrderIds.value.has(o.orderId));
   const shipListHref = `/ship-list?orders=${orders.map((o) => o.orderId).join(",")}`;
 
   return (
@@ -152,8 +152,7 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                       <span class="flex items-center gap-2">
                         <span
                           class={`iconify lucide--map-pin size-3.5 ${allPicked ? "text-success" : "text-primary"}`}
-                        >
-                        </span>
+                        ></span>
                         <span class={allPicked ? "line-through text-base-content/40" : ""}>{location}</span>
                         <span class="badge badge-xs badge-ghost">
                           {locationItems.length} lot{locationItems.length !== 1 ? "s" : ""}
@@ -207,7 +206,8 @@ export default function PickList({ items, orders }: { items: PickListItem[]; ord
                                 class="size-10 object-contain"
                                 loading="lazy"
                                 onError={(e) => {
-                                  e.currentTarget.parentElement!.style.display = "none";
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) parent.style.display = "none";
                                 }}
                               />
                             </button>

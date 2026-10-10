@@ -1,8 +1,18 @@
 import type { APIContext } from "astro";
 import { kv } from "@/utils/kv.ts";
 import { listLogRecords } from "@kitsonk/logtape-kv-sink";
-import type { LogLevel } from "@logtape/logtape";
+import type { LogLevel, LogRecord } from "@logtape/logtape";
 import type { PageResult } from "@/routes/pageResult.ts";
+
+/**
+ * `@kitsonk/logtape-kv-sink`'s generated declaration makes `AsyncLogRecordIterator` extend the bare
+ * `AsyncIterator` interface, which carries no `[Symbol.asyncIterator]`. The class does implement it
+ * at runtime, so restate the shape it actually has.
+ */
+type LogRecordIterator = AsyncIterable<LogRecord> & {
+  next(): Promise<IteratorResult<LogRecord, undefined>>;
+  readonly cursor: string;
+};
 
 const PAGE_SIZE = 20;
 const ALL_LEVELS: LogLevel[] = ["trace", "debug", "info", "warning", "error", "fatal"];
@@ -34,7 +44,7 @@ export async function loadLogs({ url }: APIContext): Promise<PageResult<LogsData
     limit: PAGE_SIZE,
     cursor,
     level: levels.length === ALL_LEVELS.length ? [] : levels,
-  });
+  }) as LogRecordIterator;
   const entries: SerializedLogEntry[] = [];
   for await (const record of iter) {
     entries.push({
@@ -63,7 +73,10 @@ export function pageUrl(cursor: string | null, history: string[], levels: LogLev
 }
 
 export function formatTimestamp(ts: number): string {
-  return new Date(ts).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+  return new Date(ts)
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d+Z$/, " UTC");
 }
 
 export function levelBadgeClass(level: string): string {

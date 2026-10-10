@@ -18,9 +18,12 @@ export async function PUT({ request, params }: APIContext): Promise<Response> {
     typeof methodName !== "string" ||
     methodName.trim() === ""
   ) {
-    return Response.json({ error: "methodId (positive integer) and methodName (non-empty string) are required" }, {
-      status: 400,
-    });
+    return Response.json(
+      { error: "methodId (positive integer) and methodName (non-empty string) are required" },
+      {
+        status: 400,
+      },
+    );
   }
 
   const override: LocalShippingOverride = {

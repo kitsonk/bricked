@@ -69,22 +69,21 @@ export function PartImageDialog({ item, onClose }: Props) {
               </div>
             </div>
             <div class="modal-action">
-              <a
-                href={catalogUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-primary btn-sm"
-              >
+              <a href={catalogUrl} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
                 Catalog Entry
                 <span class="iconify lucide--external-link size-4"></span>
               </a>
-              <button type="button" class="btn btn-ghost btn-sm" onClick={onClose}>Close</button>
+              <button type="button" class="btn btn-ghost btn-sm" onClick={onClose}>
+                Close
+              </button>
             </div>
           </>
         )}
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button type="submit" onClick={onClose}>close</button>
+        <button type="submit" onClick={onClose}>
+          close
+        </button>
       </form>
     </dialog>
   );

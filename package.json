@@ -1,0 +1,47 @@
+{
+  "name": "bricked",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env node_modules/astro/bin/astro.mjs dev",
+    "build": "astro build",
+    "start": "node --env-file-if-exists=.env dist/server/entry.mjs",
+    "check": "biome check . && tsc --noEmit",
+    "fmt": "biome check --write .",
+    "lint": "biome lint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run utils routes",
+    "test:smoke": "vitest run tests/ --testTimeout=300000"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.7",
+    "@astrojs/preact": "^6.0.5",
+    "@blaze/human-readable-timestamp": "npm:@jsr/blaze__human-readable-timestamp@^1.0.0",
+    "@deno/kv": "^0.14.0",
+    "@iconify-json/lucide": "^1.2.129",
+    "@iconify/tailwind4": "^1.2.3",
+    "@kitsonk/logtape-kv-sink": "npm:@jsr/kitsonk__logtape-kv-sink@^0.2.1",
+    "@libs/xml": "npm:@jsr/libs__xml@^8.0.1",
+    "@logtape/logtape": "npm:@jsr/logtape__logtape@^2.3.3",
+    "@preact/signals": "^2.11.2",
+    "@std/csv": "npm:@jsr/std__csv@^1.0.6",
+    "@std/http": "npm:@jsr/std__http@^1.1.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.5",
+    "daisyui": "^5.5.28",
+    "node-cron": "^4.6.0",
+    "preact": "^10.19.8",
+    "tailwindcss": "^4.3.3",
+    "tailwindcss-motion": "^1.1.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

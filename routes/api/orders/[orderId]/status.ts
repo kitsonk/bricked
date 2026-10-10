@@ -8,7 +8,7 @@ export async function PUT({ request, params }: APIContext): Promise<Response> {
     return Response.json({ error: "Not configured" }, { status: 401 });
   }
   const orderId = Number(params.orderId);
-  if (isNaN(orderId)) {
+  if (Number.isNaN(orderId)) {
     return Response.json({ error: "Invalid order ID" }, { status: 400 });
   }
   let status: string;

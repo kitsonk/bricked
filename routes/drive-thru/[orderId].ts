@@ -29,7 +29,7 @@ export async function loadDriveThru({ params }: APIContext): Promise<PageResult<
   }
 
   const orderId = Number(params.orderId);
-  if (isNaN(orderId)) {
+  if (Number.isNaN(orderId)) {
     return {
       kind: "data",
       data: {

@@ -23,7 +23,7 @@ export function OrderCard({ order, items, picked, packedOrderIds, packingOrderId
   const totalOrderPieces = orderItems.reduce((sum, i) => sum + (i.orderQuantities[order.orderId] ?? 0), 0);
   const pickedLots = orderItems.filter((i) => picked.has(itemKey(i))).length;
   const pickedPieces = orderItems.reduce(
-    (sum, i) => picked.has(itemKey(i)) ? sum + (i.orderQuantities[order.orderId] ?? 0) : sum,
+    (sum, i) => (picked.has(itemKey(i)) ? sum + (i.orderQuantities[order.orderId] ?? 0) : sum),
     0,
   );
   const done = pickedLots === totalLots && totalLots > 0;

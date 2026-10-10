@@ -15,10 +15,7 @@ export async function loadHome(): Promise<PageResult<HomeData>> {
   }
   try {
     const client = new BricklinkClient(creds);
-    const [orders, buyers] = await Promise.all([
-      client.getOrders("in", false),
-      getBuyerIndex(),
-    ]);
+    const [orders, buyers] = await Promise.all([client.getOrders("in", false), getBuyerIndex()]);
     return { kind: "data", data: { unfiledOrderCount: orders.length, customerCount: buyers.length, error: null } };
   } catch (err) {
     return { kind: "data", data: { unfiledOrderCount: 0, customerCount: 0, error: String(err) } };

@@ -4,8 +4,8 @@ import Frame from "../layouts/Frame.astro";
 
 // Read directly from the environment: this page is server-rendered only, so the values
 // are never shipped to the client.
-const isSet = (name: string) => Deno.env.get(name) ? "set" : "missing";
-const badge = (name: string) => `badge badge-sm mr-2 ${Deno.env.get(name) ? "badge-success" : "badge-warning"}`;
+const isSet = (name: string) => (process.env[name] ? "set" : "missing");
+const badge = (name: string) => `badge badge-sm mr-2 ${process.env[name] ? "badge-success" : "badge-warning"}`;
 ---
 <Shell>
   <Frame>
@@ -17,7 +17,7 @@ const badge = (name: string) => `badge badge-sm mr-2 ${Deno.env.get(name) ? "bad
           <h2 class="card-title text-lg">BrickLink API Credentials</h2>
           <p class="text-sm text-base-content/60 mb-4">
             Credentials are configured via environment variables. Set the following in your <code>.env</code>{" "}
-            file (local) or application configuration (Deno Deploy):
+            file (local) or the systemd unit's environment (production):
           </p>
           <ul class="text-sm font-mono space-y-1">
             <li><span class={badge("BRICKLINK_CONSUMER_KEY")}>{isSet("BRICKLINK_CONSUMER_KEY")}</span> BRICKLINK_CONSUMER_KEY</li>
@@ -44,7 +44,7 @@ const badge = (name: string) => `badge badge-sm mr-2 ${Deno.env.get(name) ? "bad
           <h2 class="card-title text-lg">AddressFinder Credentials</h2>
           <p class="text-sm text-base-content/60 mb-4">
             Used to verify and normalise Australian shipping addresses. Set the following in your <code>.env</code>{" "}
-            file (local) or application configuration (Deno Deploy):
+            file (local) or the systemd unit's environment (production):
           </p>
           <ul class="text-sm font-mono space-y-1">
             <li><span class={badge("ADDRESSFINDER_KEY")}>{isSet("ADDRESSFINDER_KEY")}</span> ADDRESSFINDER_KEY</li>
@@ -58,7 +58,7 @@ const badge = (name: string) => `badge badge-sm mr-2 ${Deno.env.get(name) ? "bad
           <h2 class="card-title text-lg">Sender Address</h2>
           <p class="text-sm text-base-content/60 mb-4">
             Sender address is configured via the <a href="/configuration" class="link">Configuration</a>{" "}
-            page and stored in Deno KV.
+            page and stored in the KV database.
           </p>
         </div>
       </div>

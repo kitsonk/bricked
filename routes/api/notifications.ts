@@ -1,5 +1,6 @@
 import { getCredentials, saveNotification } from "@/utils/kv.ts";
 import { BricklinkClient } from "@/utils/bricklink.ts";
+import type { BLNotification } from "@/utils/types.ts";
 import { getLogger } from "@/utils/log.ts";
 
 const logger = getLogger(["bricked", "api", "notifications"]);
@@ -15,7 +16,7 @@ export async function POST(): Promise<Response> {
   }
 
   const client = new BricklinkClient(creds);
-  let notifications;
+  let notifications: BLNotification[];
   try {
     notifications = await client.getNotifications();
   } catch (err) {
@@ -30,7 +31,7 @@ export async function POST(): Promise<Response> {
         ...n,
         id: crypto.randomUUID(),
         receivedAt,
-      })
+      }),
     ),
   );
 

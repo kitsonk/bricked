@@ -1,33 +1,33 @@
-import { assertEquals } from "jsr:@std/assert@1.0.19";
+import { expect, test } from "vitest";
 import { buildOAuthHeader, buildParamString, hmacSha1, percentEncode } from "@/utils/oauth.ts";
 
 // ---------------------------------------------------------------------------
 // percentEncode
 // ---------------------------------------------------------------------------
 
-Deno.test("percentEncode: leaves unreserved characters unchanged", () => {
-  assertEquals(percentEncode("abcABC123-._~"), "abcABC123-._~");
+test("percentEncode: leaves unreserved characters unchanged", () => {
+  expect(percentEncode("abcABC123-._~")).toEqual("abcABC123-._~");
 });
 
-Deno.test("percentEncode: encodes spaces and common special chars", () => {
-  assertEquals(percentEncode("hello world"), "hello%20world");
-  assertEquals(percentEncode("a=b&c=d"), "a%3Db%26c%3Dd");
-  assertEquals(percentEncode("http://example.com/path"), "http%3A%2F%2Fexample.com%2Fpath");
+test("percentEncode: encodes spaces and common special chars", () => {
+  expect(percentEncode("hello world")).toEqual("hello%20world");
+  expect(percentEncode("a=b&c=d")).toEqual("a%3Db%26c%3Dd");
+  expect(percentEncode("http://example.com/path")).toEqual("http%3A%2F%2Fexample.com%2Fpath");
 });
 
-Deno.test("percentEncode: encodes characters that encodeURIComponent leaves unencoded", () => {
+test("percentEncode: encodes characters that encodeURIComponent leaves unencoded", () => {
   // OAuth requires !'()* to be encoded; encodeURIComponent skips them.
-  assertEquals(percentEncode("!"), "%21");
-  assertEquals(percentEncode("'"), "%27");
-  assertEquals(percentEncode("("), "%28");
-  assertEquals(percentEncode(")"), "%29");
-  assertEquals(percentEncode("*"), "%2A");
+  expect(percentEncode("!")).toEqual("%21");
+  expect(percentEncode("'")).toEqual("%27");
+  expect(percentEncode("(")).toEqual("%28");
+  expect(percentEncode(")")).toEqual("%29");
+  expect(percentEncode("*")).toEqual("%2A");
 });
 
-Deno.test("percentEncode: uses uppercase hex digits", () => {
+test("percentEncode: uses uppercase hex digits", () => {
   // e.g. space → %20 not %2f
-  assertEquals(percentEncode("/"), "%2F");
-  assertEquals(percentEncode(":"), "%3A");
+  expect(percentEncode("/")).toEqual("%2F");
+  expect(percentEncode(":")).toEqual("%3A");
 });
 
 // ---------------------------------------------------------------------------
@@ -38,29 +38,29 @@ Deno.test("percentEncode: uses uppercase hex digits", () => {
 //   Key  : "Jefe"
 //   Data : "what do ya want for nothing?"
 //   HMAC : 0xeffcdf6ae5eb2fa2d27416d5f184df9c259a7c79
-Deno.test("hmacSha1: matches RFC 2202 test vector", async () => {
+test("hmacSha1: matches RFC 2202 test vector", async () => {
   const result = await hmacSha1("Jefe", "what do ya want for nothing?");
   // Base64 of the 20-byte digest above
-  assertEquals(result, "7/zfauXrL6LSdBbV8YTfnCWafHk=");
+  expect(result).toEqual("7/zfauXrL6LSdBbV8YTfnCWafHk=");
 });
 
 // ---------------------------------------------------------------------------
 // buildParamString
 // ---------------------------------------------------------------------------
 
-Deno.test("buildParamString: sorts by ascending byte value, not locale", () => {
+test("buildParamString: sorts by ascending byte value, not locale", () => {
   // OAuth requires byte-value ordering; locale-based sort can differ.
   const params = {
     z_param: "last",
     a_param: "first",
     m_param: "middle",
   };
-  assertEquals(buildParamString(params), "a_param=first&m_param=middle&z_param=last");
+  expect(buildParamString(params)).toEqual("a_param=first&m_param=middle&z_param=last");
 });
 
-Deno.test("buildParamString: percent-encodes keys and values", () => {
+test("buildParamString: percent-encodes keys and values", () => {
   const params = { "a key": "a value" };
-  assertEquals(buildParamString(params), "a%20key=a%20value");
+  expect(buildParamString(params)).toEqual("a%20key=a%20value");
 });
 
 // OAuth 1.0 community test vector (http://oauth.net/core/1.0/#anchor14):
@@ -69,7 +69,7 @@ Deno.test("buildParamString: percent-encodes keys and values", () => {
 //   Sorted params (oauth + query):
 //     file, oauth_consumer_key, oauth_nonce, oauth_signature_method,
 //     oauth_timestamp, oauth_token, oauth_version, size
-Deno.test("buildParamString: produces correct string for OAuth community test vector", () => {
+test("buildParamString: produces correct string for OAuth community test vector", () => {
   const params: Record<string, string> = {
     oauth_version: "1.0",
     oauth_consumer_key: "dpf43f3p2l4k3l03",
@@ -80,7 +80,8 @@ Deno.test("buildParamString: produces correct string for OAuth community test ve
     file: "vacation.jpg",
     size: "original",
   };
-  const expected = "file=vacation.jpg" +
+  const expected =
+    "file=vacation.jpg" +
     "&oauth_consumer_key=dpf43f3p2l4k3l03" +
     "&oauth_nonce=kllo9940pd9333jh" +
     "&oauth_signature_method=HMAC-SHA1" +
@@ -88,7 +89,7 @@ Deno.test("buildParamString: produces correct string for OAuth community test ve
     "&oauth_token=nnch734d00sl2jdk" +
     "&oauth_version=1.0" +
     "&size=original";
-  assertEquals(buildParamString(params), expected);
+  expect(buildParamString(params)).toEqual(expected);
 });
 
 // ---------------------------------------------------------------------------
@@ -106,7 +107,7 @@ Deno.test("buildParamString: produces correct string for OAuth community test ve
 //   URL             : http://photos.example.net/photos?file=vacation.jpg&size=original
 //   Expected sig    : tR3+Ty81lMeYAr/Fid0kMTYa/WM=
 
-Deno.test("buildOAuthHeader: produces correct signature for OAuth community test vector", async () => {
+test("buildOAuthHeader: produces correct signature for OAuth community test vector", async () => {
   const creds = {
     consumerKey: "dpf43f3p2l4k3l03",
     consumerSecret: "kd94hf93k423kf44",
@@ -125,5 +126,5 @@ Deno.test("buildOAuthHeader: produces correct signature for OAuth community test
   // tR3+Ty81lMeYAr/Fid0kMTYa/WM= → tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D
   const expectedSig = "tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D";
   const sigMatch = header.match(/oauth_signature="([^"]+)"/);
-  assertEquals(sigMatch?.[1], expectedSig, `Full header was: ${header}`);
+  expect(sigMatch?.[1], `Full header was: ${header}`).toEqual(expectedSig);
 });

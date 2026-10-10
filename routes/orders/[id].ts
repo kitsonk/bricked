@@ -21,7 +21,7 @@ export async function loadOrderDetail({ params }: APIContext): Promise<PageResul
     return { kind: "redirect", to: "/environment" };
   }
   const orderId = Number(params.id);
-  if (isNaN(orderId)) {
+  if (Number.isNaN(orderId)) {
     return { kind: "notFound" };
   }
   try {

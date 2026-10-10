@@ -10,9 +10,5 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function StatusBadge({ status, size = "sm" }: { status: string; size?: "xs" | "sm" | "md" }) {
   const sizeClass = size === "md" ? "" : `badge-${size}`;
-  return (
-    <span class={`badge ${sizeClass} ${STATUS_COLORS[status] ?? "badge-ghost"}`}>
-      {status}
-    </span>
-  );
+  return <span class={`badge ${sizeClass} ${STATUS_COLORS[status] ?? "badge-ghost"}`}>{status}</span>;
 }

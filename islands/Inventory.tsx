@@ -173,7 +173,7 @@ export default function Inventory() {
     if (editingId.value) {
       const existing = pending.value.find((i) => i.id === editingId.value);
       if (existing?.importStatus) updatedItem.importStatus = "success";
-      pending.value = pending.value.map((i) => i.id === editingId.value ? updatedItem : i);
+      pending.value = pending.value.map((i) => (i.id === editingId.value ? updatedItem : i));
       editingId.value = null;
     } else {
       pending.value = [...pending.value, updatedItem];
@@ -330,7 +330,7 @@ export default function Inventory() {
     const updatedItem = buildPendingItem();
     const existing = pending.value.find((i) => i.id === editingId.value);
     if (existing?.importStatus) updatedItem.importStatus = "success";
-    pending.value = pending.value.map((i) => i.id === editingId.value ? updatedItem : i);
+    pending.value = pending.value.map((i) => (i.id === editingId.value ? updatedItem : i));
     if (next) startEdit(next);
   }
 
@@ -389,9 +389,9 @@ export default function Inventory() {
     marketplacePage.value = 1;
     marketplaceTotalCount.value = null;
     try {
-      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
-        encodeURIComponent(itemType.value)
-      }&page=1`;
+      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(
+        itemType.value,
+      )}&page=1`;
       const resp = await fetch(url);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
@@ -440,9 +440,9 @@ export default function Inventory() {
     if (colorId === null) colorImageUrl.value = null;
     try {
       const colorParam = colorId !== null ? String(colorId) : "all";
-      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
-        encodeURIComponent(itemType.value)
-      }&colorid=${colorParam}&page=1`;
+      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(
+        itemType.value,
+      )}&colorid=${colorParam}&page=1`;
       const resp = await fetch(url);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
@@ -471,9 +471,9 @@ export default function Inventory() {
     marketplaceStaleAt.value = null;
     try {
       const colorParam = selectedColorId.value !== null ? `&colorid=${selectedColorId.value}` : "&colorid=all";
-      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${
-        encodeURIComponent(itemType.value)
-      }${colorParam}&page=${page}&list_only=true`;
+      const url = `/api/marketplace?itemid=${encodeURIComponent(id)}&itemtype=${encodeURIComponent(
+        itemType.value,
+      )}${colorParam}&page=${page}&list_only=true`;
       const resp = await fetch(url);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error ?? `HTTP ${resp.status}`);
@@ -520,7 +520,11 @@ export default function Inventory() {
                       value={itemType.value}
                       onChange={(e) => (itemType.value = e.currentTarget.value as ItemType)}
                     >
-                      {ITEM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      {ITEM_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
                     </select>
                   </fieldset>
                   <fieldset class="fieldset">
@@ -541,9 +545,11 @@ export default function Inventory() {
                         disabled={marketplaceLoading.value || !itemId.value.trim()}
                         onClick={fetchMarketplace}
                       >
-                        {marketplaceLoading.value
-                          ? <span class="loading loading-spinner loading-xs"></span>
-                          : <span class="iconify lucide--search size-4"></span>}
+                        {marketplaceLoading.value ? (
+                          <span class="loading loading-spinner loading-xs"></span>
+                        ) : (
+                          <span class="iconify lucide--search size-4"></span>
+                        )}
                       </button>
                     </div>
                   </fieldset>
@@ -563,7 +569,11 @@ export default function Inventory() {
                       <option value="all">All</option>
                       {itemColors.value
                         .filter((c) => c.color_id !== 0)
-                        .map((c) => <option key={c.color_id} value={String(c.color_id)}>{c.color_name}</option>)}
+                        .map((c) => (
+                          <option key={c.color_id} value={String(c.color_id)}>
+                            {c.color_name}
+                          </option>
+                        ))}
                     </select>
                   </fieldset>
                 </div>
@@ -624,9 +634,11 @@ export default function Inventory() {
                       disabled={!description.value}
                       onClick={copyDescription}
                     >
-                      {descCopied.value
-                        ? <span class="iconify lucide--check size-3.5 text-success"></span>
-                        : <span class="iconify lucide--copy size-3.5 opacity-50"></span>}
+                      {descCopied.value ? (
+                        <span class="iconify lucide--check size-3.5 text-success"></span>
+                      ) : (
+                        <span class="iconify lucide--copy size-3.5 opacity-50"></span>
+                      )}
                     </button>
                   </label>
                   <p
@@ -649,55 +661,49 @@ export default function Inventory() {
                   />
                 </fieldset>
                 <div class="flex justify-between items-center">
-                  {editingId.value
-                    ? (
-                      <div class="join">
-                        <button
-                          type="button"
-                          class="btn btn-error btn-sm join-item"
-                          onClick={deleteEditingItem}
-                        >
-                          <span class="iconify lucide--trash-2 size-4"></span>
-                          Delete Item
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn-error btn-sm join-item"
-                          onClick={deleteAndNext}
-                          disabled={!getNextPendingItem()}
-                          title="Delete and edit next item"
-                        >
-                          <span class="iconify lucide--chevron-right size-4"></span>
-                          Next
-                        </button>
-                      </div>
-                    )
-                    : <div />}
-                  {editingId.value
-                    ? (
-                      <div class="join">
-                        <button type="submit" class="btn btn-primary btn-sm join-item">
-                          <span class="iconify lucide--check size-4"></span>
-                          Update Item
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn-primary btn-sm join-item"
-                          onClick={updateAndNext}
-                          disabled={!getNextPendingItem()}
-                          title="Update and edit next item"
-                        >
-                          <span class="iconify lucide--chevron-right size-4"></span>
-                          Next
-                        </button>
-                      </div>
-                    )
-                    : (
-                      <button type="submit" class="btn btn-primary btn-sm">
-                        <span class="iconify lucide--plus size-4"></span>
-                        Add Item
+                  {editingId.value ? (
+                    <div class="join">
+                      <button type="button" class="btn btn-error btn-sm join-item" onClick={deleteEditingItem}>
+                        <span class="iconify lucide--trash-2 size-4"></span>
+                        Delete Item
                       </button>
-                    )}
+                      <button
+                        type="button"
+                        class="btn btn-error btn-sm join-item"
+                        onClick={deleteAndNext}
+                        disabled={!getNextPendingItem()}
+                        title="Delete and edit next item"
+                      >
+                        <span class="iconify lucide--chevron-right size-4"></span>
+                        Next
+                      </button>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                  {editingId.value ? (
+                    <div class="join">
+                      <button type="submit" class="btn btn-primary btn-sm join-item">
+                        <span class="iconify lucide--check size-4"></span>
+                        Update Item
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-primary btn-sm join-item"
+                        onClick={updateAndNext}
+                        disabled={!getNextPendingItem()}
+                        title="Update and edit next item"
+                      >
+                        <span class="iconify lucide--chevron-right size-4"></span>
+                        Next
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="submit" class="btn btn-primary btn-sm">
+                      <span class="iconify lucide--plus size-4"></span>
+                      Add Item
+                    </button>
+                  )}
                 </div>
               </form>
             </div>
@@ -707,8 +713,9 @@ export default function Inventory() {
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-lg font-semibold">
                 Pending Items
-                {pending.value.length > 0 &&
-                  <span class="badge badge-neutral badge-sm ml-2">{pending.value.length}</span>}
+                {pending.value.length > 0 && (
+                  <span class="badge badge-neutral badge-sm ml-2">{pending.value.length}</span>
+                )}
               </h2>
               <div class="flex gap-2">
                 <button
@@ -725,9 +732,11 @@ export default function Inventory() {
                   disabled={pending.value.length === 0 || copying.value}
                   onClick={copyXml}
                 >
-                  {copying.value
-                    ? <span class="loading loading-spinner loading-xs"></span>
-                    : <span class="iconify lucide--clipboard size-4"></span>}
+                  {copying.value ? (
+                    <span class="loading loading-spinner loading-xs"></span>
+                  ) : (
+                    <span class="iconify lucide--clipboard size-4"></span>
+                  )}
                   Copy XML
                 </button>
                 <button
@@ -750,201 +759,193 @@ export default function Inventory() {
                 <div>{copyError.value}</div>
               </div>
             )}
-            {pending.value.length === 0
-              ? (
-                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                  <span class="iconify lucide--inbox size-10 mb-2"></span>
-                  <p class="text-sm">No pending items. Add items above.</p>
-                </div>
-              )
-              : (
-                <div class="overflow-x-auto overflow-y-auto max-h-128 rounded-box border border-base-content/10">
-                  <table class="table table-sm">
-                    <thead class="sticky top-0 bg-base-100">
-                      <tr>
-                        <th>Type</th>
-                        <th>Item ID</th>
-                        <th>Color</th>
-                        <th class="text-right">Price</th>
-                        <th class="text-right">Qty</th>
-                        <th>Condition</th>
-                        <th>Description</th>
-                        <th>Remarks</th>
-                        <th class="w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pending.value.map((item) => (
-                        <tr
-                          key={item.id}
-                          ref={(el) => {
-                            if (el) rowRefs.current.set(item.id, el);
-                          }}
-                          class={editingId.value === item.id
+            {pending.value.length === 0 ? (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--inbox size-10 mb-2"></span>
+                <p class="text-sm">No pending items. Add items above.</p>
+              </div>
+            ) : (
+              <div class="overflow-x-auto overflow-y-auto max-h-128 rounded-box border border-base-content/10">
+                <table class="table table-sm">
+                  <thead class="sticky top-0 bg-base-100">
+                    <tr>
+                      <th>Type</th>
+                      <th>Item ID</th>
+                      <th>Color</th>
+                      <th class="text-right">Price</th>
+                      <th class="text-right">Qty</th>
+                      <th>Condition</th>
+                      <th>Description</th>
+                      <th>Remarks</th>
+                      <th class="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pending.value.map((item) => (
+                      <tr
+                        key={item.id}
+                        ref={(el) => {
+                          if (el) rowRefs.current.set(item.id, el);
+                        }}
+                        class={
+                          editingId.value === item.id
                             ? "bg-primary/10"
                             : item.importStatus === "warning"
-                            ? "bg-warning/10"
-                            : item.importStatus === "success"
-                            ? "bg-success/10"
-                            : ""}
-                        >
-                          <td>{TYPE_LABELS[item.ITEMTYPE]}</td>
-                          <td class="font-mono">{item.ITEMID}</td>
-                          <td class="text-sm">
-                            {item.COLOR_NAME ?? (item.COLOR !== undefined ? String(item.COLOR) : "—")}
-                          </td>
-                          <td class="text-right font-mono">{item.PRICE.toFixed(2)}</td>
-                          <td class="text-right font-mono">{item.QTY}</td>
-                          <td>{item.CONDITION === "N" ? "New" : "Used"}</td>
-                          <td class="text-base-content/70 text-sm max-w-48 truncate">{item.DESCRIPTION || "—"}</td>
-                          <td class="text-base-content/70 text-sm max-w-48 truncate">{item.REMARKS || "—"}</td>
-                          <td>
-                            <div class="flex gap-0.5">
-                              <button
-                                type="button"
-                                class="btn btn-ghost btn-xs btn-square text-primary"
-                                title="Edit"
-                                onClick={() => startEdit(item)}
-                              >
-                                <span class="iconify lucide--pencil size-3.5"></span>
-                              </button>
-                              <button
-                                type="button"
-                                class="btn btn-ghost btn-xs btn-square text-error"
-                                title="Remove"
-                                onClick={() => removeItem(item.id)}
-                              >
-                                <span class="iconify lucide--trash-2 size-3.5"></span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                              ? "bg-warning/10"
+                              : item.importStatus === "success"
+                                ? "bg-success/10"
+                                : ""
+                        }
+                      >
+                        <td>{TYPE_LABELS[item.ITEMTYPE]}</td>
+                        <td class="font-mono">{item.ITEMID}</td>
+                        <td class="text-sm">
+                          {item.COLOR_NAME ?? (item.COLOR !== undefined ? String(item.COLOR) : "—")}
+                        </td>
+                        <td class="text-right font-mono">{item.PRICE.toFixed(2)}</td>
+                        <td class="text-right font-mono">{item.QTY}</td>
+                        <td>{item.CONDITION === "N" ? "New" : "Used"}</td>
+                        <td class="text-base-content/70 text-sm max-w-48 truncate">{item.DESCRIPTION || "—"}</td>
+                        <td class="text-base-content/70 text-sm max-w-48 truncate">{item.REMARKS || "—"}</td>
+                        <td>
+                          <div class="flex gap-0.5">
+                            <button
+                              type="button"
+                              class="btn btn-ghost btn-xs btn-square text-primary"
+                              title="Edit"
+                              onClick={() => startEdit(item)}
+                            >
+                              <span class="iconify lucide--pencil size-3.5"></span>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-ghost btn-xs btn-square text-error"
+                              title="Remove"
+                              onClick={() => removeItem(item.id)}
+                            >
+                              <span class="iconify lucide--trash-2 size-3.5"></span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </div>
 
         <div class="space-y-8">
           <section>
             <h2 class="text-lg font-semibold mb-4">Item Overview</h2>
-            {catalogItem.value
-              ? (
-                <div class="border border-base-content/10 rounded-box p-4 flex gap-4 items-start">
-                  <button
-                    type="button"
-                    class="relative group cursor-zoom-in shrink-0"
-                    onClick={() => imageDialogRef.current?.showModal()}
-                    aria-label="View full image"
-                  >
-                    <img
-                      src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
-                      alt={decodeHtmlEntities(catalogItem.value.name)}
-                      class="w-24 h-24 object-contain rounded-box bg-base-200"
-                    />
-                    <div class="absolute inset-0 rounded-box bg-base-content/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span class="iconify lucide--zoom-in size-6 text-base-100"></span>
-                    </div>
-                  </button>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-start gap-2 mb-1">
-                      <h3 class="font-semibold text-base">
-                        <a
-                          href={bricklinkCatalogUrl(itemType.value, itemId.value.trim())}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="link link-hover inline-flex items-center gap-1"
-                        >
-                          {decodeHtmlEntities(catalogItem.value.name)}
-                          <span class="iconify lucide--external-link size-3.5 shrink-0"></span>
-                        </a>
-                      </h3>
-                      {catalogItem.value.is_obsolete && (
-                        <span class="badge badge-warning badge-sm shrink-0 mt-0.5">Obsolete</span>
-                      )}
-                    </div>
-                    <p class="text-sm text-base-content/70">{catalogItem.value.year_released}</p>
-                    {partCount.value !== null && <p class="text-sm text-base-content/70">{partCount.value} parts</p>}
+            {catalogItem.value ? (
+              <div class="border border-base-content/10 rounded-box p-4 flex gap-4 items-start">
+                <button
+                  type="button"
+                  class="relative group cursor-zoom-in shrink-0"
+                  onClick={() => imageDialogRef.current?.showModal()}
+                  aria-label="View full image"
+                >
+                  <img
+                    src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}
+                    alt={decodeHtmlEntities(catalogItem.value.name)}
+                    class="w-24 h-24 object-contain rounded-box bg-base-200"
+                  />
+                  <div class="absolute inset-0 rounded-box bg-base-content/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span class="iconify lucide--zoom-in size-6 text-base-100"></span>
                   </div>
+                </button>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start gap-2 mb-1">
+                    <h3 class="font-semibold text-base">
+                      <a
+                        href={bricklinkCatalogUrl(itemType.value, itemId.value.trim())}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="link link-hover inline-flex items-center gap-1"
+                      >
+                        {decodeHtmlEntities(catalogItem.value.name)}
+                        <span class="iconify lucide--external-link size-3.5 shrink-0"></span>
+                      </a>
+                    </h3>
+                    {catalogItem.value.is_obsolete && (
+                      <span class="badge badge-warning badge-sm shrink-0 mt-0.5">Obsolete</span>
+                    )}
+                  </div>
+                  <p class="text-sm text-base-content/70">{catalogItem.value.year_released}</p>
+                  {partCount.value !== null && <p class="text-sm text-base-content/70">{partCount.value} parts</p>}
                 </div>
-              )
-              : (
-                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                  <span class="iconify lucide--package size-10 mb-2"></span>
-                  <p class="text-sm">Item details will appear here after a lookup.</p>
-                </div>
-              )}
+              </div>
+            ) : (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--package size-10 mb-2"></span>
+                <p class="text-sm">Item details will appear here after a lookup.</p>
+              </div>
+            )}
           </section>
 
           <section>
             <h2 class="text-lg font-semibold mb-4">Store Items</h2>
-            {storeLoading.value
-              ? (
-                <div class="flex justify-center py-10">
-                  <span class="loading loading-spinner loading-md"></span>
-                </div>
-              )
-              : storeItems.value === null
-              ? (
-                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                  <span class="iconify lucide--store size-10 mb-2"></span>
-                  <p class="text-sm">Store items matching the item ID will appear here.</p>
-                </div>
-              )
-              : storeItems.value.length === 0
-              ? (
-                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                  <span class="iconify lucide--store size-10 mb-2"></span>
-                  <p class="text-sm">No store listings found for this item.</p>
-                </div>
-              )
-              : (
-                <div class="overflow-x-auto overflow-y-auto max-h-96 rounded-box border border-base-content/10">
-                  <table class="table table-sm">
-                    <thead class="sticky top-0 bg-base-100">
-                      <tr>
-                        <th class="text-right">Qty</th>
-                        <th class="text-right">Price</th>
-                        <th>Condition</th>
-                        <th>Description</th>
-                        <th class="w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {storeItems.value.map((item, i) => {
-                        const detailUrl = new URL("https://www.bricklink.com/v2/inventory_detail.page");
-                        if (storeItemId.value) detailUrl.searchParams.set("itemID", String(storeItemId.value));
-                        if (selectedColorId.value !== null && selectedColorId.value > 0) {
-                          detailUrl.searchParams.set("colorID", String(selectedColorId.value));
-                        }
-                        return (
-                          <tr key={i}>
-                            <td class="text-right font-mono">{item.invQty}</td>
-                            <td class="text-right font-mono">{formatPrice(item.nativePrice)}</td>
-                            <td>
-                              <ConditionBadge condition={item.invNew === "New" ? "N" : "U"} />
-                            </td>
-                            <td class="text-base-content/70 text-sm">{item.invDescription}</td>
-                            <td>
-                              <a
-                                href={detailUrl.toString()}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="btn btn-ghost btn-xs btn-square"
-                                title="View on BrickLink"
-                              >
-                                <span class="iconify lucide--external-link size-3.5"></span>
-                              </a>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            {storeLoading.value ? (
+              <div class="flex justify-center py-10">
+                <span class="loading loading-spinner loading-md"></span>
+              </div>
+            ) : storeItems.value === null ? (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--store size-10 mb-2"></span>
+                <p class="text-sm">Store items matching the item ID will appear here.</p>
+              </div>
+            ) : storeItems.value.length === 0 ? (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--store size-10 mb-2"></span>
+                <p class="text-sm">No store listings found for this item.</p>
+              </div>
+            ) : (
+              <div class="overflow-x-auto overflow-y-auto max-h-96 rounded-box border border-base-content/10">
+                <table class="table table-sm">
+                  <thead class="sticky top-0 bg-base-100">
+                    <tr>
+                      <th class="text-right">Qty</th>
+                      <th class="text-right">Price</th>
+                      <th>Condition</th>
+                      <th>Description</th>
+                      <th class="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {storeItems.value.map((item, i) => {
+                      const detailUrl = new URL("https://www.bricklink.com/v2/inventory_detail.page");
+                      if (storeItemId.value) detailUrl.searchParams.set("itemID", String(storeItemId.value));
+                      if (selectedColorId.value !== null && selectedColorId.value > 0) {
+                        detailUrl.searchParams.set("colorID", String(selectedColorId.value));
+                      }
+                      return (
+                        <tr key={i}>
+                          <td class="text-right font-mono">{item.invQty}</td>
+                          <td class="text-right font-mono">{formatPrice(item.nativePrice)}</td>
+                          <td>
+                            <ConditionBadge condition={item.invNew === "New" ? "N" : "U"} />
+                          </td>
+                          <td class="text-base-content/70 text-sm">{item.invDescription}</td>
+                          <td>
+                            <a
+                              href={detailUrl.toString()}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="btn btn-ghost btn-xs btn-square"
+                              title="View on BrickLink"
+                            >
+                              <span class="iconify lucide--external-link size-3.5"></span>
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
 
           <section>
@@ -964,28 +965,23 @@ export default function Inventory() {
                 </div>
               </div>
             )}
-            {marketplaceLoading.value && marketplaceItems.value === null
-              ? (
-                // Initial load or color change — no data yet, show centred spinner
-                <div class="flex justify-center py-10">
-                  <span class="loading loading-spinner loading-md"></span>
-                </div>
-              )
-              : marketplaceItems.value === null
-              ? (
-                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                  <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
-                  <p class="text-sm">Enter an item ID and click search to load marketplace listings.</p>
-                </div>
-              )
-              : marketplaceItems.value.length === 0
-              ? (
-                <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
-                  <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
-                  <p class="text-sm">No marketplace listings found.</p>
-                </div>
-              )
-              : (() => {
+            {marketplaceLoading.value && marketplaceItems.value === null ? (
+              // Initial load or color change — no data yet, show centred spinner
+              <div class="flex justify-center py-10">
+                <span class="loading loading-spinner loading-md"></span>
+              </div>
+            ) : marketplaceItems.value === null ? (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
+                <p class="text-sm">Enter an item ID and click search to load marketplace listings.</p>
+              </div>
+            ) : marketplaceItems.value.length === 0 ? (
+              <div class="flex flex-col items-center py-10 text-base-content/50 border border-base-content/10 rounded-box">
+                <span class="iconify lucide--shopping-cart size-10 mb-2"></span>
+                <p class="text-sm">No marketplace listings found.</p>
+              </div>
+            ) : (
+              (() => {
                 const totalPages = Math.ceil((marketplaceTotalCount.value ?? 0) / marketplacePageSize.value);
                 return (
                   // Wrap in relative so the loading overlay can cover table + pagination together
@@ -1039,8 +1035,9 @@ export default function Inventory() {
                         </button>
                         <span class="text-sm text-base-content/70">
                           Page {marketplacePage.value} of {totalPages}
-                          {marketplaceTotalCount.value !== null &&
-                            <span class="ml-1">({marketplaceTotalCount.value} total)</span>}
+                          {marketplaceTotalCount.value !== null && (
+                            <span class="ml-1">({marketplaceTotalCount.value} total)</span>
+                          )}
                         </span>
                         <button
                           type="button"
@@ -1055,7 +1052,8 @@ export default function Inventory() {
                     )}
                   </div>
                 );
-              })()}
+              })()
+            )}
           </section>
         </div>
       </div>
@@ -1084,16 +1082,12 @@ export default function Inventory() {
               {importPreviewItems.value.length === 0
                 ? "No items found in this file."
                 : `Found ${importPreviewItems.value.length} item${
-                  importPreviewItems.value.length === 1 ? "" : "s"
-                } to import.`}
+                    importPreviewItems.value.length === 1 ? "" : "s"
+                  } to import.`}
             </p>
           )}
           <div class="modal-action">
-            <button
-              type="button"
-              class="btn btn-ghost"
-              onClick={closeImportDialog}
-            >
+            <button type="button" class="btn btn-ghost" onClick={closeImportDialog}>
               Cancel
             </button>
             <button
@@ -1108,36 +1102,30 @@ export default function Inventory() {
           </div>
         </div>
         <form method="dialog" class="modal-backdrop">
-          <button type="submit" onClick={closeImportDialog}>close</button>
+          <button type="submit" onClick={closeImportDialog}>
+            close
+          </button>
         </form>
       </dialog>
 
       <dialog ref={deleteDialogRef} class="modal">
         <div class="modal-box">
           <h3 class="text-lg font-bold mb-4">Confirm Delete</h3>
-          <p class="mb-4">
-            This item has unsaved changes. Are you sure you want to delete it?
-          </p>
+          <p class="mb-4">This item has unsaved changes. Are you sure you want to delete it?</p>
           <div class="modal-action">
-            <button
-              type="button"
-              class="btn btn-ghost"
-              onClick={handleDeleteCancelled}
-            >
+            <button type="button" class="btn btn-ghost" onClick={handleDeleteCancelled}>
               Cancel
             </button>
-            <button
-              type="button"
-              class="btn btn-error"
-              onClick={handleDeleteConfirmed}
-            >
+            <button type="button" class="btn btn-error" onClick={handleDeleteConfirmed}>
               <span class="iconify lucide--trash-2 size-4"></span>
               Delete
             </button>
           </div>
         </div>
         <form method="dialog" class="modal-backdrop">
-          <button type="submit" onClick={handleDeleteCancelled}>close</button>
+          <button type="submit" onClick={handleDeleteCancelled}>
+            close
+          </button>
         </form>
       </dialog>
 
@@ -1145,7 +1133,9 @@ export default function Inventory() {
         <dialog ref={imageDialogRef} class="modal">
           <div class="modal-box flex flex-col items-center p-6 max-w-xl">
             <form method="dialog">
-              <button type="submit" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+              <button type="submit" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                ✕
+              </button>
             </form>
             <img
               src={`https:${colorImageUrl.value ?? catalogItem.value.image_url}`}

@@ -1,3 +1,5 @@
+import { KvU64, openKv } from "@deno/kv";
+import type { Kv, KvCommitResult, KvKey, KvListOptions } from "@deno/kv";
 import type {
   AusPostAddress,
   BLColor,
@@ -18,28 +20,38 @@ import type {
 } from "@/utils/types.ts";
 
 export function getCredentials(): BricklinkCredentials | null {
-  const consumerKey = Deno.env.get("BRICKLINK_CONSUMER_KEY");
-  const consumerSecret = Deno.env.get("BRICKLINK_CONSUMER_SECRET");
-  const tokenValue = Deno.env.get("BRICKLINK_TOKEN");
-  const tokenSecret = Deno.env.get("BRICKLINK_TOKEN_SECRET");
+  const consumerKey = process.env.BRICKLINK_CONSUMER_KEY;
+  const consumerSecret = process.env.BRICKLINK_CONSUMER_SECRET;
+  const tokenValue = process.env.BRICKLINK_TOKEN;
+  const tokenSecret = process.env.BRICKLINK_TOKEN_SECRET;
   if (!consumerKey || !consumerSecret || !tokenValue || !tokenSecret) return null;
   return { consumerKey, consumerSecret, tokenValue, tokenSecret };
 }
 
-let _kv: Deno.Kv | null = null;
+let _kv: Kv | null = null;
 
-export async function kv(): Promise<Deno.Kv> {
-  if (!_kv) _kv = await Deno.openKv();
+export async function kv(): Promise<Kv> {
+  if (!_kv) {
+    const instance = await openKv(process.env.KV_PATH ?? "kv.sqlite3");
+    // `@kitsonk/logtape-kv-sink` constructs `new Deno.KvU64(...)` and `@kitsonk/kv-toolbox` branches
+    // on `x instanceof Deno.Kv` (reached from blob writes). `@deno/kv` does not create a `Deno`
+    // global, so install exactly the two members those packages evaluate.
+    const g = globalThis as { Deno?: { KvU64?: unknown; Kv?: unknown } };
+    g.Deno ??= {};
+    g.Deno.KvU64 ??= KvU64;
+    g.Deno.Kv ??= Object.getPrototypeOf(instance).constructor;
+    _kv = instance;
+  }
   return _kv;
 }
 
 // Notifications are stored under ["notifications", <iso-timestamp>, <id>] so
 // they naturally sort chronologically when listed.
-function notificationKey(receivedAt: string, id: string): Deno.KvKey {
+function notificationKey(receivedAt: string, id: string): KvKey {
   return ["notifications", receivedAt, id];
 }
 
-export async function saveNotification(notification: StoredNotification): Promise<Deno.KvCommitResult> {
+export async function saveNotification(notification: StoredNotification): Promise<KvCommitResult> {
   return (await kv()).set(notificationKey(notification.receivedAt, notification.id), notification);
 }
 
@@ -54,7 +66,7 @@ export async function listNotifications(): Promise<StoredNotification[]> {
 
 // Drive Thru Templates
 
-function driveThruTemplateKey(id: string): Deno.KvKey {
+function driveThruTemplateKey(id: string): KvKey {
   return ["drive_thru_templates", id];
 }
 
@@ -72,7 +84,7 @@ export async function getDriveThruTemplate(id: string): Promise<DriveThruTemplat
   return result.value;
 }
 
-export async function saveDriveThruTemplate(template: DriveThruTemplate): Promise<Deno.KvCommitResult> {
+export async function saveDriveThruTemplate(template: DriveThruTemplate): Promise<KvCommitResult> {
   return (await kv()).set(driveThruTemplateKey(template.id), template);
 }
 
@@ -82,11 +94,11 @@ export async function deleteDriveThruTemplate(id: string): Promise<void> {
 
 // Drive Thru Sent Records
 
-function driveThruSentKey(orderId: number): Deno.KvKey {
+function driveThruSentKey(orderId: number): KvKey {
   return ["drive_thru_sent", orderId];
 }
 
-export async function recordDriveThruSent(record: DriveThruSentRecord): Promise<Deno.KvCommitResult> {
+export async function recordDriveThruSent(record: DriveThruSentRecord): Promise<KvCommitResult> {
   return (await kv()).set(driveThruSentKey(record.orderId), record);
 }
 
@@ -111,20 +123,20 @@ export interface ShippingMethodsCache {
   fetchedAt: string;
 }
 
-const SHIPPING_METHODS_CACHE_KEY: Deno.KvKey = ["shipping_methods_cache"];
+const SHIPPING_METHODS_CACHE_KEY: KvKey = ["shipping_methods_cache"];
 
 export async function getShippingMethodsCache(): Promise<ShippingMethodsCache | null> {
   const result = await (await kv()).get<ShippingMethodsCache>(SHIPPING_METHODS_CACHE_KEY);
   return result.value;
 }
 
-export async function saveShippingMethodsCache(cache: ShippingMethodsCache): Promise<Deno.KvCommitResult> {
+export async function saveShippingMethodsCache(cache: ShippingMethodsCache): Promise<KvCommitResult> {
   return (await kv()).set(SHIPPING_METHODS_CACHE_KEY, cache);
 }
 
 // Shipping Method Enrichment
 
-function shippingMethodEnrichmentKey(methodId: number): Deno.KvKey {
+function shippingMethodEnrichmentKey(methodId: number): KvKey {
   return ["shipping_method_enrichment", methodId];
 }
 
@@ -136,7 +148,7 @@ export async function getShippingMethodEnrichment(methodId: number): Promise<Shi
 export async function saveShippingMethodEnrichment(
   methodId: number,
   enrichment: ShippingMethodEnrichment,
-): Promise<Deno.KvCommitResult> {
+): Promise<KvCommitResult> {
   return (await kv()).set(shippingMethodEnrichmentKey(methodId), enrichment);
 }
 
@@ -155,7 +167,7 @@ export async function listShippingMethodEnrichments(): Promise<Map<number, Shipp
 
 // Package Types
 
-function packageTypeKey(id: string): Deno.KvKey {
+function packageTypeKey(id: string): KvKey {
   return ["package_type", id];
 }
 
@@ -173,7 +185,7 @@ export async function getPackageType(id: string): Promise<PackageType | null> {
   return result.value;
 }
 
-export async function savePackageType(packageType: PackageType): Promise<Deno.KvCommitResult> {
+export async function savePackageType(packageType: PackageType): Promise<KvCommitResult> {
   return (await kv()).set(packageTypeKey(packageType.id), packageType);
 }
 
@@ -183,7 +195,7 @@ export async function deletePackageType(id: string): Promise<void> {
 
 // Ship List Addresses
 
-function shipListAddressKey(orderId: number): Deno.KvKey {
+function shipListAddressKey(orderId: number): KvKey {
   return ["ship_list_address", orderId];
 }
 
@@ -192,24 +204,24 @@ export async function getShipListAddress(orderId: number): Promise<AusPostAddres
   return result.value;
 }
 
-export async function saveShipListAddress(orderId: number, address: AusPostAddress): Promise<Deno.KvCommitResult> {
+export async function saveShipListAddress(orderId: number, address: AusPostAddress): Promise<KvCommitResult> {
   return (await kv()).set(shipListAddressKey(orderId), address);
 }
 
 // Sender Address
 
-const SENDER_ADDRESS_KEY: Deno.KvKey = ["sender_address"];
+const SENDER_ADDRESS_KEY: KvKey = ["sender_address"];
 
 export async function getSenderAddress(): Promise<AusPostAddress | null> {
   const result = await (await kv()).get<AusPostAddress>(SENDER_ADDRESS_KEY);
   return result.value;
 }
 
-export async function saveSenderAddress(address: AusPostAddress): Promise<Deno.KvCommitResult> {
+export async function saveSenderAddress(address: AusPostAddress): Promise<KvCommitResult> {
   return (await kv()).set(SENDER_ADDRESS_KEY, address);
 }
 
-function orderCacheKey(orderId: number): Deno.KvKey {
+function orderCacheKey(orderId: number): KvKey {
   return ["order_cache", orderId];
 }
 
@@ -217,7 +229,7 @@ function orderCacheKey(orderId: number): Deno.KvKey {
  * Persist a BrickLink order summary to the local cache.
  * Only call this for non-PURGED orders — callers are responsible for the guard.
  */
-export async function saveOrderCache(order: BLOrderSummary): Promise<Deno.KvCommitResult> {
+export async function saveOrderCache(order: BLOrderSummary): Promise<KvCommitResult> {
   return (await kv()).set(orderCacheKey(order.order_id), order);
 }
 
@@ -234,16 +246,14 @@ export async function listCachedOrders(): Promise<BLOrderSummary[]> {
 /** Return all cached orders for a specific buyer, sorted newest first. */
 export async function listCachedOrdersByBuyer(buyerName: string): Promise<BLOrderSummary[]> {
   const all = await listCachedOrders();
-  return all
-    .filter((o) => o.buyer_name === buyerName)
-    .sort((a, b) => b.date_ordered.localeCompare(a.date_ordered));
+  return all.filter((o) => o.buyer_name === buyerName).sort((a, b) => b.date_ordered.localeCompare(a.date_ordered));
 }
 
 // Marketplace Cache
 
 const MARKETPLACE_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-function marketplaceCacheKey(idItem: number, colorId: number | null, page: number): Deno.KvKey {
+function marketplaceCacheKey(idItem: number, colorId: number | null, page: number): KvKey {
   return ["marketplace_cache", idItem, colorId ?? "all", page];
 }
 
@@ -261,7 +271,9 @@ export async function getMarketplaceCache(
   const value = result.value;
   if (value === null || value === undefined) return null;
   if (
-    typeof value === "object" && "data" in value && "savedAt" in value &&
+    typeof value === "object" &&
+    "data" in value &&
+    "savedAt" in value &&
     typeof (value as MarketplaceCacheEntry).savedAt === "string"
   ) {
     const entry = value as MarketplaceCacheEntry;
@@ -292,7 +304,7 @@ export function isMarketplaceCacheFresh(savedAt: string | null, nowMs = Date.now
 
 const STORE_ITEMS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-function storeItemsCacheKey(itemType: string, itemNo: string, colorId: number | null): Deno.KvKey {
+function storeItemsCacheKey(itemType: string, itemNo: string, colorId: number | null): KvKey {
   return ["store_items_cache", itemType, itemNo.toLowerCase(), colorId ?? "all"];
 }
 
@@ -318,11 +330,11 @@ export async function saveStoreItemsCache(
 
 // CRM Customers
 
-function customerKey(buyerName: string): Deno.KvKey {
+function customerKey(buyerName: string): KvKey {
   return ["crm_customer", buyerName];
 }
 
-export async function saveCustomer(customer: Customer): Promise<Deno.KvCommitResult> {
+export async function saveCustomer(customer: Customer): Promise<KvCommitResult> {
   return (await kv()).set(customerKey(customer.buyerName), customer);
 }
 
@@ -339,7 +351,7 @@ export interface CustomerPage {
 
 export async function listCustomers(limit = 20, cursor?: string): Promise<CustomerPage> {
   const db = await kv();
-  const listOptions: Deno.KvListOptions = { limit };
+  const listOptions: KvListOptions = { limit };
   if (cursor) listOptions.cursor = cursor;
 
   const iter = db.list<Customer>({ prefix: ["crm_customer"] }, listOptions);
@@ -363,11 +375,14 @@ export async function listCustomers(limit = 20, cursor?: string): Promise<Custom
 
 // Buyer Index
 
-const BUYER_INDEX_KEY: Deno.KvKey = ["crm_buyer_index"];
+const BUYER_INDEX_KEY: KvKey = ["crm_buyer_index"];
 
 /** Persist the sorted list of all known buyer names for use in filter UIs. */
-export async function saveBuyerIndex(buyers: string[]): Promise<Deno.KvCommitResult> {
-  return (await kv()).set(BUYER_INDEX_KEY, [...buyers].sort((a, b) => a.localeCompare(b)));
+export async function saveBuyerIndex(buyers: string[]): Promise<KvCommitResult> {
+  return (await kv()).set(
+    BUYER_INDEX_KEY,
+    [...buyers].sort((a, b) => a.localeCompare(b)),
+  );
 }
 
 /** Return the sorted list of all known buyer names, or an empty array if not yet built. */
@@ -378,7 +393,7 @@ export async function getBuyerIndex(): Promise<string[]> {
 
 // Order Message Count Cache
 
-function orderMessageCountCacheKey(orderId: number): Deno.KvKey {
+function orderMessageCountCacheKey(orderId: number): KvKey {
   return ["order_message_count_cache", orderId];
 }
 
@@ -387,41 +402,41 @@ export async function getOrderMessageCountCache(orderId: number): Promise<number
   return result.value;
 }
 
-export async function saveOrderMessageCountCache(orderId: number, count: number): Promise<Deno.KvCommitResult> {
+export async function saveOrderMessageCountCache(orderId: number, count: number): Promise<KvCommitResult> {
   return (await kv()).set(orderMessageCountCacheKey(orderId), count, { expireIn: 60_000 });
 }
 
 // CRM Metadata
 
-const CRM_META_KEY: Deno.KvKey = ["crm_meta"];
+const CRM_META_KEY: KvKey = ["crm_meta"];
 
 export async function getCrmMeta(): Promise<CrmMeta | null> {
   const result = await (await kv()).get<CrmMeta>(CRM_META_KEY);
   return result.value;
 }
 
-export async function saveCrmMeta(meta: CrmMeta): Promise<Deno.KvCommitResult> {
+export async function saveCrmMeta(meta: CrmMeta): Promise<KvCommitResult> {
   return (await kv()).set(CRM_META_KEY, meta);
 }
 
 // BrickLink Colors Cache
 
-function colorKey(colorId: number): Deno.KvKey {
+function colorKey(colorId: number): KvKey {
   return ["color", colorId];
 }
 
-const COLORS_META_KEY: Deno.KvKey = ["colors_meta"];
+const COLORS_META_KEY: KvKey = ["colors_meta"];
 
 export async function getColorsMeta(): Promise<ColorsMeta | null> {
   const result = await (await kv()).get<ColorsMeta>(COLORS_META_KEY);
   return result.value;
 }
 
-export async function saveColorsMeta(meta: ColorsMeta): Promise<Deno.KvCommitResult> {
+export async function saveColorsMeta(meta: ColorsMeta): Promise<KvCommitResult> {
   return (await kv()).set(COLORS_META_KEY, meta);
 }
 
-export async function saveColor(color: BLColor): Promise<Deno.KvCommitResult> {
+export async function saveColor(color: BLColor): Promise<KvCommitResult> {
   return (await kv()).set(colorKey(color.color_id), color);
 }
 
@@ -441,7 +456,7 @@ export async function listColors(): Promise<BLColor[]> {
 
 // BrickLink Catalog Search Cache
 
-function bricklinkItemSearchKey(itemId: string): Deno.KvKey {
+function bricklinkItemSearchKey(itemId: string): KvKey {
   return ["bricklink_item_search", itemId.toLowerCase()];
 }
 
@@ -450,20 +465,17 @@ export async function getBricklinkItemSearch(itemId: string): Promise<BricklinkS
   return result.value;
 }
 
-export async function saveBricklinkItemSearch(
-  itemId: string,
-  result: BricklinkSearchResult,
-): Promise<Deno.KvCommitResult> {
+export async function saveBricklinkItemSearch(itemId: string, result: BricklinkSearchResult): Promise<KvCommitResult> {
   return (await kv()).set(bricklinkItemSearchKey(itemId), result);
 }
 
 // Drive Thru Template Rules
 
-function templateRuleKey(id: string): Deno.KvKey {
+function templateRuleKey(id: string): KvKey {
   return ["drive_thru_rules", id];
 }
 
-const DEFAULT_TEMPLATE_KEY: Deno.KvKey = ["drive_thru_default_template"];
+const DEFAULT_TEMPLATE_KEY: KvKey = ["drive_thru_default_template"];
 
 export async function listTemplateRules(): Promise<TemplateRule[]> {
   const entries = (await kv()).list<TemplateRule>({ prefix: ["drive_thru_rules"] });
@@ -479,7 +491,7 @@ export async function getTemplateRule(id: string): Promise<TemplateRule | null> 
   return result.value;
 }
 
-export async function saveTemplateRule(rule: TemplateRule): Promise<Deno.KvCommitResult> {
+export async function saveTemplateRule(rule: TemplateRule): Promise<KvCommitResult> {
   return (await kv()).set(templateRuleKey(rule.id), rule);
 }
 
@@ -492,13 +504,13 @@ export async function getDefaultTemplateId(): Promise<string | null> {
   return result.value;
 }
 
-export async function setDefaultTemplateId(id: string): Promise<Deno.KvCommitResult> {
+export async function setDefaultTemplateId(id: string): Promise<KvCommitResult> {
   return (await kv()).set(DEFAULT_TEMPLATE_KEY, id);
 }
 
 // Local Shipping Method Overrides
 
-function orderShippingOverrideKey(orderId: number): Deno.KvKey {
+function orderShippingOverrideKey(orderId: number): KvKey {
   return ["order_shipping_override", orderId];
 }
 
@@ -507,10 +519,7 @@ export async function getShippingOverride(orderId: number): Promise<LocalShippin
   return result.value;
 }
 
-export async function saveShippingOverride(
-  orderId: number,
-  override: LocalShippingOverride,
-): Promise<Deno.KvCommitResult> {
+export async function saveShippingOverride(orderId: number, override: LocalShippingOverride): Promise<KvCommitResult> {
   return (await kv()).set(orderShippingOverrideKey(orderId), override);
 }
 

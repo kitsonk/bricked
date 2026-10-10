@@ -60,7 +60,7 @@ export default function PackageTypes({ initialItems }: { initialItems: PackageTy
       if (isNew) {
         items.value = [...items.value, json].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
       } else {
-        items.value = items.value.map((item) => item.id === editingId.value ? json : item);
+        items.value = items.value.map((item) => (item.id === editingId.value ? json : item));
       }
       closeDialog();
     } catch (err) {
@@ -98,59 +98,57 @@ export default function PackageTypes({ initialItems }: { initialItems: PackageTy
         </button>
       </div>
 
-      {items.value.length === 0
-        ? (
-          <div class="text-center py-16 text-base-content/50">
-            <span class="iconify lucide--package size-12 block mx-auto mb-3"></span>
-            <p class="font-medium">No package types</p>
-            <p class="text-sm mt-1">Add a package type to get started.</p>
-          </div>
-        )
-        : (
-          <div class="overflow-x-auto rounded-box border border-base-content/10">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Label</th>
-                  <th class="text-right">Length (cm)</th>
-                  <th class="text-right">Width (cm)</th>
-                  <th class="text-right">Height (cm)</th>
-                  <th class="w-16"></th>
+      {items.value.length === 0 ? (
+        <div class="text-center py-16 text-base-content/50">
+          <span class="iconify lucide--package size-12 block mx-auto mb-3"></span>
+          <p class="font-medium">No package types</p>
+          <p class="text-sm mt-1">Add a package type to get started.</p>
+        </div>
+      ) : (
+        <div class="overflow-x-auto rounded-box border border-base-content/10">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th class="text-right">Length (cm)</th>
+                <th class="text-right">Width (cm)</th>
+                <th class="text-right">Height (cm)</th>
+                <th class="w-16"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.value.map((item) => (
+                <tr key={item.id}>
+                  <td class="font-medium">{item.label}</td>
+                  <td class="text-right text-sm font-mono">{item.lengthCm.toFixed(1)}</td>
+                  <td class="text-right text-sm font-mono">{item.widthCm.toFixed(1)}</td>
+                  <td class="text-right text-sm font-mono">{item.heightCm.toFixed(1)}</td>
+                  <td>
+                    <div class="flex items-center gap-1 justify-end">
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-xs btn-square"
+                        title="Edit"
+                        onClick={() => openEdit(item)}
+                      >
+                        <span class="iconify lucide--pencil size-3.5"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-xs btn-square text-error"
+                        title="Delete"
+                        onClick={() => remove(item)}
+                      >
+                        <span class="iconify lucide--trash-2 size-3.5"></span>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {items.value.map((item) => (
-                  <tr key={item.id}>
-                    <td class="font-medium">{item.label}</td>
-                    <td class="text-right text-sm font-mono">{item.lengthCm.toFixed(1)}</td>
-                    <td class="text-right text-sm font-mono">{item.widthCm.toFixed(1)}</td>
-                    <td class="text-right text-sm font-mono">{item.heightCm.toFixed(1)}</td>
-                    <td>
-                      <div class="flex items-center gap-1 justify-end">
-                        <button
-                          type="button"
-                          class="btn btn-ghost btn-xs btn-square"
-                          title="Edit"
-                          onClick={() => openEdit(item)}
-                        >
-                          <span class="iconify lucide--pencil size-3.5"></span>
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn-ghost btn-xs btn-square text-error"
-                          title="Delete"
-                          onClick={() => remove(item)}
-                        >
-                          <span class="iconify lucide--trash-2 size-3.5"></span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <dialog ref={dialogRef} class="modal">
         <div class="modal-box">
@@ -209,7 +207,9 @@ export default function PackageTypes({ initialItems }: { initialItems: PackageTy
               </fieldset>
             </div>
             <div class="modal-action">
-              <button type="button" class="btn btn-ghost" onClick={closeDialog}>Cancel</button>
+              <button type="button" class="btn btn-ghost" onClick={closeDialog}>
+                Cancel
+              </button>
               <button type="submit" class="btn btn-primary" disabled={saving.value}>
                 {saving.value && <span class="loading loading-spinner loading-xs"></span>}
                 Save

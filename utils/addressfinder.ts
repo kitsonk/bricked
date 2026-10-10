@@ -20,8 +20,8 @@ interface AddressFinderResponse {
 }
 
 export function getAddressFinderCredentials(): { key: string; secret: string } | null {
-  const key = Deno.env.get("ADDRESSFINDER_KEY");
-  const secret = Deno.env.get("ADDRESSFINDER_SECRET");
+  const key = process.env.ADDRESSFINDER_KEY;
+  const secret = process.env.ADDRESSFINDER_SECRET;
   if (!key || !secret) return null;
   return { key, secret };
 }
@@ -31,21 +31,15 @@ export function getAddressFinderCredentials(): { key: string; secret: string } |
  * Returns null if the address could not be matched, throws on API errors.
  * Caller is responsible for ensuring country_code === "AU".
  */
-export async function verifyAustralianAddress(
-  address: AusPostAddress,
-): Promise<VerifiedAustralianAddress | null> {
+export async function verifyAustralianAddress(address: AusPostAddress): Promise<VerifiedAustralianAddress | null> {
   const creds = getAddressFinderCredentials();
   if (!creds) {
     throw new Error("AddressFinder credentials not configured (ADDRESSFINDER_KEY, ADDRESSFINDER_SECRET)");
   }
 
-  const q = [
-    address.addressLine1,
-    address.addressLine2,
-    address.suburb,
-    address.state,
-    address.postcode,
-  ].filter(Boolean).join(", ");
+  const q = [address.addressLine1, address.addressLine2, address.suburb, address.state, address.postcode]
+    .filter(Boolean)
+    .join(", ");
 
   const url = new URL(API_URL);
   url.searchParams.set("key", creds.key);

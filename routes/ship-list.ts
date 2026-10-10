@@ -42,7 +42,7 @@ export async function loadShipList({ url }: APIContext): Promise<PageResult<Ship
   const orderIds = orderParam
     .split(",")
     .map(Number)
-    .filter((n) => !isNaN(n) && n > 0);
+    .filter((n) => !Number.isNaN(n) && n > 0);
 
   if (orderIds.length === 0) return { kind: "redirect", to: "/orders" };
 
@@ -60,12 +60,8 @@ export async function loadShipList({ url }: APIContext): Promise<PageResult<Ship
     const orders = rawOrders;
     const shippingMethods = shippingMethodsCache?.methods ?? [];
 
-    const trackingMethodIds = [...enrichments.entries()]
-      .filter(([, e]) => e.hasTracking)
-      .map(([id]) => id);
-    const printLabelMethodIds = [...enrichments.entries()]
-      .filter(([, e]) => e.printLabel)
-      .map(([id]) => id);
+    const trackingMethodIds = [...enrichments.entries()].filter(([, e]) => e.hasTracking).map(([id]) => id);
+    const printLabelMethodIds = [...enrichments.entries()].filter(([, e]) => e.printLabel).map(([id]) => id);
 
     const addresses: Record<number, AusPostAddress> = {};
     orders.forEach((order, idx) => {

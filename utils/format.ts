@@ -30,7 +30,7 @@ const ITEM_TYPE_CODE: Record<string, string> = {
 
 export function bricklinkItemImageUrl(itemType: string, itemNo: string, colorId: number): string {
   const prefix = ITEM_TYPE_CODE[itemType] ?? itemType;
-  const typeCode = prefix + "N";
+  const typeCode = `${prefix}N`;
   const colorSegment = itemType === "PART" ? colorId : 0;
   return `https://img.bricklink.com/ItemImage/${typeCode}/${colorSegment}/${itemNo}.png`;
 }

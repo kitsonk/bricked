@@ -21,10 +21,8 @@ export function Sidebar() {
           title="Toggle sidebar hover"
           class="btn btn-circle btn-ghost btn-sm text-base-content/50 absolute inset-e-2 top-3.5 max-lg:hidden"
         >
-          <span class="iconify lucide--panel-left-close absolute size-4.5 opacity-100 transition-all duration-300 group-has-[[id=layout-sidebar-hover-trigger]:checked]/html:opacity-0">
-          </span>
-          <span class="iconify lucide--panel-left-dashed absolute size-4.5 opacity-0 transition-all duration-300 group-has-[[id=layout-sidebar-hover-trigger]:checked]/html:opacity-100">
-          </span>
+          <span class="iconify lucide--panel-left-close absolute size-4.5 opacity-100 transition-all duration-300 group-has-[[id=layout-sidebar-hover-trigger]:checked]/html:opacity-0"></span>
+          <span class="iconify lucide--panel-left-dashed absolute size-4.5 opacity-0 transition-all duration-300 group-has-[[id=layout-sidebar-hover-trigger]:checked]/html:opacity-100"></span>
         </label>
         <p class="menu-label mt-2 px-2.5">Workflow</p>
         <div class="mt-2">

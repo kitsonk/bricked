@@ -24,8 +24,8 @@ export async function POST({ request }: APIContext): Promise<Response> {
   const itemArray: Record<string, unknown>[] = Array.isArray(rawItems)
     ? rawItems
     : rawItems != null
-    ? [rawItems as Record<string, unknown>]
-    : [];
+      ? [rawItems as Record<string, unknown>]
+      : [];
   const items: ImportedItem[] = await Promise.all(
     itemArray.map(async (item) => {
       const colorNum = Number(item.COLOR ?? 0);

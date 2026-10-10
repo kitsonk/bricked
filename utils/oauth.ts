@@ -2,18 +2,14 @@ import type { BricklinkCredentials } from "@/utils/types.ts";
 
 export function percentEncode(str: string): string {
   // encodeURIComponent leaves !'()* unencoded; OAuth requires them encoded.
-  return encodeURIComponent(str).replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
+  return encodeURIComponent(str).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 }
 
 export async function hmacSha1(key: string, data: string): Promise<string> {
   const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(key),
-    { name: "HMAC", hash: "SHA-1" },
-    false,
-    ["sign"],
-  );
+  const cryptoKey = await crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-1" }, false, [
+    "sign",
+  ]);
   const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
   const bytes = new Uint8Array(sig);
   let binary = "";

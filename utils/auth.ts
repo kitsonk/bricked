@@ -47,13 +47,9 @@ function constantTimeEqual(a: string, b: string): boolean {
 
 async function hmacSha256(key: string, data: string): Promise<Uint8Array> {
   const enc = new TextEncoder();
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(key),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
+  const cryptoKey = await crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, [
+    "sign",
+  ]);
   const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
   return new Uint8Array(sig);
 }
@@ -67,13 +63,11 @@ export function getAuthConfig(): AuthConfig | null {
   if (cachedConfig !== undefined) {
     return cachedConfig;
   }
-  const username = Deno.env.get("APP_USERNAME");
-  const password = Deno.env.get("APP_PASSWORD");
-  const sessionSecret = Deno.env.get("SESSION_SECRET");
+  const username = process.env.APP_USERNAME;
+  const password = process.env.APP_PASSWORD;
+  const sessionSecret = process.env.SESSION_SECRET;
   if (!username || !password || !sessionSecret) {
-    logger.warn(
-      "APP_USERNAME, APP_PASSWORD, or SESSION_SECRET is not set — authentication is disabled.",
-    );
+    logger.warn("APP_USERNAME, APP_PASSWORD, or SESSION_SECRET is not set — authentication is disabled.");
     cachedConfig = null;
     return null;
   }
@@ -130,12 +124,7 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
   }
   const expectedSig = await hmacSha256(config.sessionSecret, bodyEncoded);
   if (sigBytes.length !== expectedSig.length) return null;
-  if (
-    !constantTimeEqual(
-      String.fromCharCode(...sigBytes),
-      String.fromCharCode(...expectedSig),
-    )
-  ) {
+  if (!constantTimeEqual(String.fromCharCode(...sigBytes), String.fromCharCode(...expectedSig))) {
     return null;
   }
   let body: string;

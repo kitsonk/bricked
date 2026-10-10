@@ -8,9 +8,6 @@ export type DriveThruRulesData = {
 };
 
 export async function loadDriveThruRules(): Promise<PageResult<DriveThruRulesData>> {
-  const [rules, templates] = await Promise.all([
-    listTemplateRules(),
-    listDriveThruTemplates(),
-  ]);
+  const [rules, templates] = await Promise.all([listTemplateRules(), listDriveThruTemplates()]);
   return { kind: "data", data: { rules, templates } };
 }

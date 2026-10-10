@@ -40,8 +40,8 @@ export default function LogLevelFilter({ appliedLevels }: LogLevelFilterProps) {
   };
 
   const appliedSet = new Set(appliedLevels);
-  const hasChanges = pendingLevels.size !== appliedSet.size ||
-    !ALL_LEVELS.every((l) => pendingLevels.has(l) === appliedSet.has(l));
+  const hasChanges =
+    pendingLevels.size !== appliedSet.size || !ALL_LEVELS.every((l) => pendingLevels.has(l) === appliedSet.has(l));
 
   return (
     <form method="GET" action="/admin/logs" class="mb-4">

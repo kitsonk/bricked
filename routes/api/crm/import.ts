@@ -12,7 +12,7 @@ function parseDate(value: string): string | null {
   if (!match) return null;
   const [, mm, dd, yyyy] = match;
   const date = new Date(`${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}T00:00:00.000Z`);
-  if (isNaN(date.getTime())) return null;
+  if (Number.isNaN(date.getTime())) return null;
   return date.toISOString();
 }
 
@@ -20,7 +20,7 @@ function parseDate(value: string): string | null {
 function parseValue(value: string): string | null {
   const stripped = value.trim().replace(/^\$/, "");
   const num = parseFloat(stripped);
-  if (isNaN(num)) return null;
+  if (Number.isNaN(num)) return null;
   return num.toFixed(4);
 }
 
@@ -64,10 +64,10 @@ export async function POST({ request }: APIContext): Promise<Response> {
     const row = rows[i];
     const rowNum = i + 2; // 1-based + header row
 
-    const orderIdRaw = row["order_id"]?.trim();
-    const buyerName = row["buyer_name"]?.trim();
-    const dateRaw = row["date_ordered"]?.trim();
-    const valueRaw = row["value"]?.trim();
+    const orderIdRaw = row.order_id?.trim();
+    const buyerName = row.buyer_name?.trim();
+    const dateRaw = row.date_ordered?.trim();
+    const valueRaw = row.value?.trim();
 
     if (!orderIdRaw || !buyerName || !dateRaw || !valueRaw) {
       result.errors.push({
@@ -78,7 +78,7 @@ export async function POST({ request }: APIContext): Promise<Response> {
     }
 
     const orderId = parseInt(orderIdRaw, 10);
-    if (isNaN(orderId) || orderId <= 0) {
+    if (Number.isNaN(orderId) || orderId <= 0) {
       result.errors.push({ row: rowNum, reason: `Invalid order_id: ${orderIdRaw}` });
       continue;
     }
@@ -125,7 +125,6 @@ export async function POST({ request }: APIContext): Promise<Response> {
     }
   }
 
-  logger
-    .debug`CRM import complete: imported=${result.imported} skipped=${result.skipped} errors=${result.errors.length}`;
+  logger.debug`CRM import complete: imported=${result.imported} skipped=${result.skipped} errors=${result.errors.length}`;
   return Response.json(result);
 }

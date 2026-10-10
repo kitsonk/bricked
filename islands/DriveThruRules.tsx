@@ -124,7 +124,7 @@ export default function DriveThruRules({
         name: formName.value.trim(),
         templateId: formTemplateId.value.trim(),
         conditions: cleanedConditions,
-        priority: creating ? maxPriority + 1 : rules.value.find((r) => r.id === editingId.value)?.priority ?? 0,
+        priority: creating ? maxPriority + 1 : (rules.value.find((r) => r.id === editingId.value)?.priority ?? 0),
       };
       const resp = await fetch(url, {
         method: creating ? "POST" : "PUT",
@@ -229,84 +229,82 @@ export default function DriveThruRules({
             </option>
           ))}
         </select>
-        <p class="label text-xs text-base-content/50">
-          The template used when no rules match.
-        </p>
+        <p class="label text-xs text-base-content/50">The template used when no rules match.</p>
       </fieldset>
 
-      {rules.value.length === 0
-        ? (
-          <div class="text-center py-12 text-base-content/50 mb-6">
-            <span class="iconify lucide--file-text size-12 block mx-auto mb-3"></span>
-            <p class="font-medium">No rules yet</p>
-            <p class="text-sm mt-1">Create a rule to automatically select templates based on order details.</p>
-          </div>
-        )
-        : (
-          <div class="space-y-3 mb-6">
-            {rules.value.map((rule, index) => (
-              <div key={rule.id} class="card bg-base-200">
-                <div class="card-body py-3 px-4">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                      <div class="font-medium flex items-center gap-2">
-                        <span class="badge badge-xs badge-ghost">{index + 1}</span>
-                        {rule.name}
-                      </div>
-                      <div class="text-sm text-base-content/60 mt-1">
-                        → {templates.find((t) => t.id === rule.templateId)?.name ?? "Unknown template"}
-                      </div>
-                      <div class="text-xs text-base-content/50 mt-1">
-                        {rule.conditions.map((c) =>
-                          `${FIELD_LABELS[c.field]} ${OPERATOR_LABELS[c.operator]} "${c.value}"`
-                        ).join(" AND ")}
-                      </div>
+      {rules.value.length === 0 ? (
+        <div class="text-center py-12 text-base-content/50 mb-6">
+          <span class="iconify lucide--file-text size-12 block mx-auto mb-3"></span>
+          <p class="font-medium">No rules yet</p>
+          <p class="text-sm mt-1">Create a rule to automatically select templates based on order details.</p>
+        </div>
+      ) : (
+        <div class="space-y-3 mb-6">
+          {rules.value.map((rule, index) => (
+            <div key={rule.id} class="card bg-base-200">
+              <div class="card-body py-3 px-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="font-medium flex items-center gap-2">
+                      <span class="badge badge-xs badge-ghost">{index + 1}</span>
+                      {rule.name}
                     </div>
-                    <div class="flex gap-1 shrink-0">
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-square"
-                        disabled={index === 0}
-                        onClick={() => moveRule(rule.id, "up")}
-                        aria-label="Move up"
-                      >
-                        <span class="iconify lucide--arrow-up size-4"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-square"
-                        disabled={index === rules.value.length - 1}
-                        onClick={() => moveRule(rule.id, "down")}
-                        aria-label="Move down"
-                      >
-                        <span class="iconify lucide--arrow-down size-4"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-square"
-                        onClick={() => openEdit(rule)}
-                        aria-label="Edit rule"
-                      >
-                        <span class="iconify lucide--pencil size-4"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-square text-error"
-                        disabled={deleting.value === rule.id}
-                        onClick={() => deleteRule(rule.id)}
-                        aria-label="Delete rule"
-                      >
-                        {deleting.value === rule.id
-                          ? <span class="loading loading-spinner loading-xs"></span>
-                          : <span class="iconify lucide--trash-2 size-4"></span>}
-                      </button>
+                    <div class="text-sm text-base-content/60 mt-1">
+                      → {templates.find((t) => t.id === rule.templateId)?.name ?? "Unknown template"}
                     </div>
+                    <div class="text-xs text-base-content/50 mt-1">
+                      {rule.conditions
+                        .map((c) => `${FIELD_LABELS[c.field]} ${OPERATOR_LABELS[c.operator]} "${c.value}"`)
+                        .join(" AND ")}
+                    </div>
+                  </div>
+                  <div class="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm btn-square"
+                      disabled={index === 0}
+                      onClick={() => moveRule(rule.id, "up")}
+                      aria-label="Move up"
+                    >
+                      <span class="iconify lucide--arrow-up size-4"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm btn-square"
+                      disabled={index === rules.value.length - 1}
+                      onClick={() => moveRule(rule.id, "down")}
+                      aria-label="Move down"
+                    >
+                      <span class="iconify lucide--arrow-down size-4"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm btn-square"
+                      onClick={() => openEdit(rule)}
+                      aria-label="Edit rule"
+                    >
+                      <span class="iconify lucide--pencil size-4"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm btn-square text-error"
+                      disabled={deleting.value === rule.id}
+                      onClick={() => deleteRule(rule.id)}
+                      aria-label="Delete rule"
+                    >
+                      {deleting.value === rule.id ? (
+                        <span class="loading loading-spinner loading-xs"></span>
+                      ) : (
+                        <span class="iconify lucide--trash-2 size-4"></span>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <button type="button" class="btn btn-primary" onClick={openNew}>
         <span class="iconify lucide--plus size-4"></span>
@@ -317,7 +315,9 @@ export default function DriveThruRules({
       <dialog ref={dialogRef} class="modal">
         <div class="modal-box max-w-2xl">
           <form method="dialog">
-            <button type="submit" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            <button type="submit" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+              ✕
+            </button>
           </form>
           <h3 class="text-lg font-bold mb-4">{isNew.value ? "New Rule" : "Edit Rule"}</h3>
 
@@ -346,7 +346,11 @@ export default function DriveThruRules({
               value={formTemplateId.value}
               onChange={(e) => (formTemplateId.value = e.currentTarget.value)}
             >
-              {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
             </select>
           </fieldset>
 
@@ -360,14 +364,22 @@ export default function DriveThruRules({
                     value={c.field}
                     onChange={(e) => updateCondition(i, { field: e.currentTarget.value as RuleField })}
                   >
-                    {FIELDS.map((f) => <option key={f} value={f}>{FIELD_LABELS[f]}</option>)}
+                    {FIELDS.map((f) => (
+                      <option key={f} value={f}>
+                        {FIELD_LABELS[f]}
+                      </option>
+                    ))}
                   </select>
                   <select
                     class="select select-sm"
                     value={c.operator}
                     onChange={(e) => updateCondition(i, { operator: e.currentTarget.value as RuleOperator })}
                   >
-                    {OPERATORS.map((o) => <option key={o} value={o}>{OPERATOR_LABELS[o]}</option>)}
+                    {OPERATORS.map((o) => (
+                      <option key={o} value={o}>
+                        {OPERATOR_LABELS[o]}
+                      </option>
+                    ))}
                   </select>
                   <input
                     type="text"
@@ -395,7 +407,9 @@ export default function DriveThruRules({
 
           <div class="modal-action">
             <form method="dialog">
-              <button type="submit" class="btn btn-ghost">Cancel</button>
+              <button type="submit" class="btn btn-ghost">
+                Cancel
+              </button>
             </form>
             <button type="button" class="btn btn-primary" disabled={saving.value} onClick={save}>
               {saving.value && <span class="loading loading-spinner loading-sm"></span>}

@@ -58,9 +58,7 @@ export async function loadOrders({ url }: APIContext): Promise<PageResult<Orders
     }
     const uniqueBuyers = [...new Set(orders.map((o) => o.buyer_name))];
     const buyerCustomers = await Promise.all(uniqueBuyers.map((b) => getCustomer(b)));
-    const buyerOrderCounts = Object.fromEntries(
-      uniqueBuyers.map((b, i) => [b, buyerCustomers[i]?.orderCount ?? 0]),
-    );
+    const buyerOrderCounts = Object.fromEntries(uniqueBuyers.map((b, i) => [b, buyerCustomers[i]?.orderCount ?? 0]));
     return {
       kind: "data",
       data: { orders, sentOrderIds, messageCounts, buyerOrderCounts, filter, dateSort, error: null },

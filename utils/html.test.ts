@@ -1,66 +1,66 @@
-import { assertEquals } from "jsr:@std/assert@1.0.19";
+import { expect, test } from "vitest";
 import { decodeHtml } from "@/utils/html.ts";
 
 // ---------------------------------------------------------------------------
 // Decimal numeric references
 // ---------------------------------------------------------------------------
 
-Deno.test("decodeHtml: decodes decimal numeric references", () => {
-  assertEquals(decodeHtml("&#40;"), "(");
-  assertEquals(decodeHtml("&#41;"), ")");
-  assertEquals(decodeHtml("&#38;"), "&");
+test("decodeHtml: decodes decimal numeric references", () => {
+  expect(decodeHtml("&#40;")).toEqual("(");
+  expect(decodeHtml("&#41;")).toEqual(")");
+  expect(decodeHtml("&#38;")).toEqual("&");
 });
 
-Deno.test("decodeHtml: decodes multiple decimal references in one string", () => {
-  assertEquals(decodeHtml("Plate&#44; Round 1&#47;2&#34;"), 'Plate, Round 1/2"');
+test("decodeHtml: decodes multiple decimal references in one string", () => {
+  expect(decodeHtml("Plate&#44; Round 1&#47;2&#34;")).toEqual('Plate, Round 1/2"');
 });
 
 // ---------------------------------------------------------------------------
 // Hex numeric references
 // ---------------------------------------------------------------------------
 
-Deno.test("decodeHtml: decodes lowercase hex numeric references", () => {
-  assertEquals(decodeHtml("&#x28;"), "(");
-  assertEquals(decodeHtml("&#x26;"), "&");
+test("decodeHtml: decodes lowercase hex numeric references", () => {
+  expect(decodeHtml("&#x28;")).toEqual("(");
+  expect(decodeHtml("&#x26;")).toEqual("&");
 });
 
-Deno.test("decodeHtml: decodes uppercase hex numeric references", () => {
-  assertEquals(decodeHtml("&#X28;"), "(");
-  assertEquals(decodeHtml("&#X2F;"), "/");
+test("decodeHtml: decodes uppercase hex numeric references", () => {
+  expect(decodeHtml("&#X28;")).toEqual("(");
+  expect(decodeHtml("&#X2F;")).toEqual("/");
 });
 
 // ---------------------------------------------------------------------------
 // Named character references
 // ---------------------------------------------------------------------------
 
-Deno.test("decodeHtml: decodes &amp;", () => {
-  assertEquals(decodeHtml("Brick &amp; Mortar"), "Brick & Mortar");
+test("decodeHtml: decodes &amp;", () => {
+  expect(decodeHtml("Brick &amp; Mortar")).toEqual("Brick & Mortar");
 });
 
-Deno.test("decodeHtml: decodes &lt; and &gt;", () => {
-  assertEquals(decodeHtml("&lt;3&gt;"), "<3>");
+test("decodeHtml: decodes &lt; and &gt;", () => {
+  expect(decodeHtml("&lt;3&gt;")).toEqual("<3>");
 });
 
-Deno.test("decodeHtml: decodes &quot;", () => {
-  assertEquals(decodeHtml("2&quot; Plate"), '2" Plate');
+test("decodeHtml: decodes &quot;", () => {
+  expect(decodeHtml("2&quot; Plate")).toEqual('2" Plate');
 });
 
-Deno.test("decodeHtml: decodes &apos;", () => {
-  assertEquals(decodeHtml("it&apos;s"), "it's");
+test("decodeHtml: decodes &apos;", () => {
+  expect(decodeHtml("it&apos;s")).toEqual("it's");
 });
 
 // ---------------------------------------------------------------------------
 // Edge cases
 // ---------------------------------------------------------------------------
 
-Deno.test("decodeHtml: returns plain strings unchanged", () => {
-  assertEquals(decodeHtml("Brick 1x2"), "Brick 1x2");
+test("decodeHtml: returns plain strings unchanged", () => {
+  expect(decodeHtml("Brick 1x2")).toEqual("Brick 1x2");
 });
 
-Deno.test("decodeHtml: handles empty string", () => {
-  assertEquals(decodeHtml(""), "");
+test("decodeHtml: handles empty string", () => {
+  expect(decodeHtml("")).toEqual("");
 });
 
-Deno.test("decodeHtml: handles mixed references and plain text", () => {
-  assertEquals(decodeHtml("Hinge&#44; Plate 1 x 2 &#40;2 fingers&#41;"), "Hinge, Plate 1 x 2 (2 fingers)");
+test("decodeHtml: handles mixed references and plain text", () => {
+  expect(decodeHtml("Hinge&#44; Plate 1 x 2 &#40;2 fingers&#41;")).toEqual("Hinge, Plate 1 x 2 (2 fingers)");
 });

@@ -25,10 +25,13 @@ export async function loadCustomerDetail({ params }: APIContext): Promise<PageRe
   const client = new BricklinkClient(creds);
 
   const [ratingResult, orders] = await Promise.all([
-    client.getMemberRating(username).then((r) => ({ ok: true as const, value: r })).catch((e) => ({
-      ok: false as const,
-      error: String(e),
-    })),
+    client
+      .getMemberRating(username)
+      .then((r) => ({ ok: true as const, value: r }))
+      .catch((e) => ({
+        ok: false as const,
+        error: String(e),
+      })),
     listCachedOrdersByBuyer(username),
   ]);
 

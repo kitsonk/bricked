@@ -25,15 +25,19 @@ function sortOrders(orders: BLOrderSummary[], dateSort: "asc" | "desc"): BLOrder
   });
 }
 
-export default function OrdersTable(
-  { orders, sentOrderIds, messageCounts, buyerOrderCounts, dateSort }: {
-    orders: BLOrderSummary[];
-    sentOrderIds: number[];
-    messageCounts?: Record<number, number>;
-    buyerOrderCounts: Record<string, number>;
-    dateSort: "asc" | "desc";
-  },
-) {
+export default function OrdersTable({
+  orders,
+  sentOrderIds,
+  messageCounts,
+  buyerOrderCounts,
+  dateSort,
+}: {
+  orders: BLOrderSummary[];
+  sentOrderIds: number[];
+  messageCounts?: Record<number, number>;
+  buyerOrderCounts: Record<string, number>;
+  dateSort: "asc" | "desc";
+}) {
   const sortedOrders = sortOrders(orders, dateSort);
   const selected = useSignal(new Set<number>());
   const sentSet = new Set(sentOrderIds);
@@ -49,9 +53,10 @@ export default function OrdersTable(
   }
 
   function toggleAll() {
-    selected.value = selected.value.size === sortedOrders.length && sortedOrders.length > 0
-      ? new Set()
-      : new Set(sortedOrders.map((o) => o.order_id));
+    selected.value =
+      selected.value.size === sortedOrders.length && sortedOrders.length > 0
+        ? new Set()
+        : new Set(sortedOrders.map((o) => o.order_id));
   }
 
   const allSelected = selected.value.size === sortedOrders.length && sortedOrders.length > 0;
@@ -158,16 +163,11 @@ export default function OrdersTable(
                     </td>
                   )}
                   <td class="font-medium">
-                    <a
-                      class="link"
-                      href={`/customers/${order.buyer_name}`}
-                    >
+                    <a class="link" href={`/customers/${order.buyer_name}`}>
                       {order.buyer_name}
                     </a>
                     {(buyerOrderCounts[order.buyer_name] ?? 0) > 0 && (
-                      <span class="text-base-content/50 font-normal ml-1">
-                        ({buyerOrderCounts[order.buyer_name]})
-                      </span>
+                      <span class="text-base-content/50 font-normal ml-1">({buyerOrderCounts[order.buyer_name]})</span>
                     )}
                   </td>
                   <td class="text-sm">{humanTime(order.date_ordered)}</td>

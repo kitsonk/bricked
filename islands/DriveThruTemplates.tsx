@@ -102,51 +102,51 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
         </div>
       )}
 
-      {templates.value.length === 0
-        ? (
-          <div class="text-center py-12 text-base-content/50 mb-6">
-            <span class="iconify lucide--file-text size-12 block mx-auto mb-3"></span>
-            <p class="font-medium">No templates yet</p>
-            <p class="text-sm mt-1">Create a template to use when sending Drive Thru messages.</p>
-          </div>
-        )
-        : (
-          <div class="space-y-3 mb-6">
-            {templates.value.map((t) => (
-              <div key={t.id} class="card bg-base-200">
-                <div class="card-body py-3 px-4">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                      <div class="font-medium">{t.name}</div>
-                      <div class="text-sm text-base-content/60 mt-1 line-clamp-2 whitespace-pre-wrap">{t.body}</div>
-                    </div>
-                    <div class="flex gap-1 shrink-0">
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-square"
-                        onClick={() => openEdit(t)}
-                        aria-label="Edit template"
-                      >
-                        <span class="iconify lucide--pencil size-4"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-ghost btn-sm btn-square text-error"
-                        disabled={deleting.value === t.id}
-                        onClick={() => deleteTemplate(t.id)}
-                        aria-label="Delete template"
-                      >
-                        {deleting.value === t.id
-                          ? <span class="loading loading-spinner loading-xs"></span>
-                          : <span class="iconify lucide--trash-2 size-4"></span>}
-                      </button>
-                    </div>
+      {templates.value.length === 0 ? (
+        <div class="text-center py-12 text-base-content/50 mb-6">
+          <span class="iconify lucide--file-text size-12 block mx-auto mb-3"></span>
+          <p class="font-medium">No templates yet</p>
+          <p class="text-sm mt-1">Create a template to use when sending Drive Thru messages.</p>
+        </div>
+      ) : (
+        <div class="space-y-3 mb-6">
+          {templates.value.map((t) => (
+            <div key={t.id} class="card bg-base-200">
+              <div class="card-body py-3 px-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="font-medium">{t.name}</div>
+                    <div class="text-sm text-base-content/60 mt-1 line-clamp-2 whitespace-pre-wrap">{t.body}</div>
+                  </div>
+                  <div class="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm btn-square"
+                      onClick={() => openEdit(t)}
+                      aria-label="Edit template"
+                    >
+                      <span class="iconify lucide--pencil size-4"></span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm btn-square text-error"
+                      disabled={deleting.value === t.id}
+                      onClick={() => deleteTemplate(t.id)}
+                      aria-label="Delete template"
+                    >
+                      {deleting.value === t.id ? (
+                        <span class="loading loading-spinner loading-xs"></span>
+                      ) : (
+                        <span class="iconify lucide--trash-2 size-4"></span>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
 
       <button type="button" class="btn btn-primary" onClick={openNew}>
         <span class="iconify lucide--plus size-4"></span>
@@ -157,7 +157,9 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
       <dialog ref={dialogRef} class="modal">
         <div class="modal-box">
           <form method="dialog">
-            <button type="submit" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            <button type="submit" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+              ✕
+            </button>
           </form>
           <h3 class="text-lg font-bold mb-4">{isNew.value ? "New Template" : "Edit Template"}</h3>
 
@@ -206,7 +208,9 @@ export default function DriveThruTemplates({ initialTemplates }: { initialTempla
 
           <div class="modal-action">
             <form method="dialog">
-              <button type="submit" class="btn btn-ghost">Cancel</button>
+              <button type="submit" class="btn btn-ghost">
+                Cancel
+              </button>
             </form>
             <button type="button" class="btn btn-primary" disabled={saving.value} onClick={save}>
               {saving.value && <span class="loading loading-spinner loading-sm"></span>}

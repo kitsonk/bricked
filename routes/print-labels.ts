@@ -33,7 +33,7 @@ export async function loadPrintLabels({ url }: APIContext): Promise<PageResult<P
   const orderIds = orderParam
     .split(",")
     .map(Number)
-    .filter((n) => !isNaN(n) && n > 0);
+    .filter((n) => !Number.isNaN(n) && n > 0);
 
   if (orderIds.length === 0) return { kind: "redirect", to: "/orders" };
 

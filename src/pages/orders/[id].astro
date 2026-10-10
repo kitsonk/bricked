@@ -16,18 +16,18 @@ if (result.kind !== "data") {
 }
 const { order, items, messages, customer, hasTracking, shippingOverridden, error } = result.data;
 
-const sortedMessages = [...messages].sort(
-  (a, b) => new Date(a.dateSent).getTime() - new Date(b.dateSent).getTime(),
-);
+const sortedMessages = [...messages].sort((a, b) => new Date(a.dateSent).getTime() - new Date(b.dateSent).getTime());
 const shippingAddress = order
   ? [
-    order.shipping.address.address1,
-    order.shipping.address.address2,
-    order.shipping.address.city,
-    order.shipping.address.state,
-    order.shipping.address.postal_code,
-    order.shipping.address.country_code,
-  ].filter(Boolean).join(", ")
+      order.shipping.address.address1,
+      order.shipping.address.address2,
+      order.shipping.address.city,
+      order.shipping.address.state,
+      order.shipping.address.postal_code,
+      order.shipping.address.country_code,
+    ]
+      .filter(Boolean)
+      .join(", ")
   : "";
 ---
 <Shell>

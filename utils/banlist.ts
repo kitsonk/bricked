@@ -1,3 +1,4 @@
+import type { KvKey } from "@deno/kv";
 import { kv } from "@/utils/kv.ts";
 import { getLogger } from "@/utils/log.ts";
 
@@ -9,7 +10,7 @@ const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_CACHE_MAX = 10_000;
 
 function readNumberEnv(name: string, fallback: number): number {
-  const raw = Deno.env.get(name);
+  const raw = process.env[name];
   if (!raw) return fallback;
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : fallback;
@@ -43,7 +44,7 @@ function cacheMax(): number {
 
 function trustForwardedFor(): boolean {
   if (_trustForwardedFor) return true;
-  const v = Deno.env.get("TRUST_FORWARDED_FOR");
+  const v = process.env.TRUST_FORWARDED_FOR;
   _trustForwardedFor = v === "1" || v === "true";
   return _trustForwardedFor;
 }
@@ -79,11 +80,11 @@ function cacheSet(ip: string, banned: boolean, ttl: number): void {
   cache.set(ip, { banned, expiresAt: Date.now() + ttl });
 }
 
-function banKey(ip: string): Deno.KvKey {
+function banKey(ip: string): KvKey {
   return ["banlist", ip];
 }
 
-function counterKey(ip: string): Deno.KvKey {
+function counterKey(ip: string): KvKey {
   return ["banlist_counter", ip];
 }
 
@@ -92,7 +93,7 @@ interface Counter {
   windowStart: number;
 }
 
-export function getClientIp(req: Request): string | null {
+export function getClientIp(req: Request, clientAddress?: string | null): string | null {
   if (trustForwardedFor()) {
     const xff = req.headers.get("x-forwarded-for");
     if (xff) {
@@ -102,28 +103,10 @@ export function getClientIp(req: Request): string | null {
     const xri = req.headers.get("x-real-ip")?.trim();
     if (xri) return xri;
   }
-  const remote = (req as unknown as { remoteAddr?: { hostname?: string; transport?: string } | string }).remoteAddr;
-  let addr: string | null = null;
-  if (typeof remote === "string") {
-    addr = remote;
-  } else if (remote && typeof remote === "object" && "hostname" in remote && typeof remote.hostname === "string") {
-    addr = remote.hostname;
-  }
-  if (!addr) return null;
-  return stripPort(addr);
-}
-
-function stripPort(addr: string): string {
-  if (addr.startsWith("[")) {
-    const end = addr.indexOf("]");
-    if (end >= 0) return addr.slice(1, end);
-    return addr.slice(1);
-  }
-  const lastColon = addr.lastIndexOf(":");
-  if (lastColon > 0 && addr.indexOf(":") === lastColon) {
-    return addr.slice(0, lastColon);
-  }
-  return addr;
+  // Astro sets `clientAddress` from `req.socket.remoteAddress`. Node reports IPv4 peers on a
+  // dual-stack socket in IPv4-mapped IPv6 form, so normalize back to the plain IPv4 the banlist
+  // keys used before the Deno -> Node cutover.
+  return clientAddress ? clientAddress.replace(/^::ffff:/, "") : null;
 }
 
 /** True if the given IP is currently banned. Cached in-memory. */

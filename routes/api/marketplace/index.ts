@@ -17,17 +17,13 @@ import { bricklinkCatalogUrl, MARKETPLACE_PAGE_SIZE } from "@/utils/format.ts";
 
 const logger = getLogger(["bricked", "marketplace"]);
 
-function bricklinkAjaxHeaders(
-  itemType: string,
-  itemNo: string,
-  site: "same-origin" | "same-site" = "same-origin",
-) {
+function bricklinkAjaxHeaders(itemType: string, itemNo: string, site: "same-origin" | "same-site" = "same-origin") {
   return {
     headers: {
-      "accept": "application/json, text/javascript, */*; q=0.01",
+      accept: "application/json, text/javascript, */*; q=0.01",
       "accept-language": "en-AU,en;q=0.9",
-      "priority": "u=1, i",
-      "referer": bricklinkCatalogUrl(itemType, itemNo),
+      priority: "u=1, i",
+      referer: bricklinkCatalogUrl(itemType, itemNo),
       "sec-ch-ua": '"Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
       "sec-ch-ua-mobile": "?0",
       "sec-ch-ua-platform": '"macOS"',
@@ -64,7 +60,7 @@ export function noteBricklinkAjaxThrottle(nowMs = Date.now()): void {
 }
 
 async function fetchWithBackoff(url: URL, init: RequestInit, maxAttempts = 3): Promise<Response> {
-  for (let attempt = 0;; attempt++) {
+  for (let attempt = 0; ; attempt++) {
     let resp: Response;
     try {
       resp = await fetch(url, init);
@@ -125,7 +121,7 @@ export async function GET({ url }: APIContext): Promise<Response> {
   const coloridParam = url.searchParams.get("colorid");
   const colorIdNum = coloridParam && coloridParam !== "all" ? parseInt(coloridParam, 10) : null;
   const pageParam = parseInt(url.searchParams.get("page") ?? "1", 10);
-  const page = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
+  const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
   // list_only=true → page navigation: skip store + image fetches, return only marketplace listing data
   const listOnly = url.searchParams.get("list_only") === "true";
 
@@ -144,7 +140,7 @@ export async function GET({ url }: APIContext): Promise<Response> {
       const json = await coalesced(`search:${itemid.toLowerCase()}`, async () => {
         const resp = await fetchWithBackoff(searchUrl, bricklinkAjaxHeaders(itemtype, itemid));
         if (!resp.ok) throw new Error(`Search upstream HTTP ${resp.status}`);
-        return await resp.json() as BricklinkSearchResult;
+        return (await resp.json()) as BricklinkSearchResult;
       });
       if (json.returnCode === 0) {
         await saveBricklinkItemSearch(itemid, json);
@@ -163,36 +159,39 @@ export async function GET({ url }: APIContext): Promise<Response> {
 
   // API-client calls (colors, catalog, subsets, image) are independent of
   // idItem and should succeed even when www.bricklink.com/ajax is throttled.
-  const colorsPromise = isInitial && client
-    ? client.getItemColors(itemtype, itemid)
-      .then((itemColors) =>
-        Promise.all(
-          itemColors.map(async (ic) => {
-            const kvColor = await getColor(ic.color_id);
-            return { color_id: ic.color_id, color_name: kvColor?.color_name ?? ic.color_name };
-          }),
-        )
-      )
-      .catch(() => [] as { color_id: number; color_name: string }[])
-    : Promise.resolve([] as { color_id: number; color_name: string }[]);
+  const colorsPromise =
+    isInitial && client
+      ? client
+          .getItemColors(itemtype, itemid)
+          .then((itemColors) =>
+            Promise.all(
+              itemColors.map(async (ic) => {
+                const kvColor = await getColor(ic.color_id);
+                return { color_id: ic.color_id, color_name: kvColor?.color_name ?? ic.color_name };
+              }),
+            ),
+          )
+          .catch(() => [] as { color_id: number; color_name: string }[])
+      : Promise.resolve([] as { color_id: number; color_name: string }[]);
 
-  const catalogItemPromise: Promise<BLCatalogItem | null> = isInitial && client
-    ? client.getCatalogItem(itemtype, itemid).catch(() => null)
-    : Promise.resolve(null);
+  const catalogItemPromise: Promise<BLCatalogItem | null> =
+    isInitial && client ? client.getCatalogItem(itemtype, itemid).catch(() => null) : Promise.resolve(null);
 
-  const imageUrlPromise: Promise<string | null> = !listOnly && colorIdNum !== null && colorIdNum > 0 && client
-    ? client.getItemImage(itemtype, itemid, colorIdNum)
-      .then((img) => img.thumbnail_url ?? null)
-      .catch((err) => {
-        logger.warn`getItemImage failed for ${itemtype}/${itemid} color ${colorIdNum}: ${String(err)}`;
-        return null;
-      })
-    : Promise.resolve(null);
+  const imageUrlPromise: Promise<string | null> =
+    !listOnly && colorIdNum !== null && colorIdNum > 0 && client
+      ? client
+          .getItemImage(itemtype, itemid, colorIdNum)
+          .then((img) => img.thumbnail_url ?? null)
+          .catch((err) => {
+            logger.warn`getItemImage failed for ${itemtype}/${itemid} color ${colorIdNum}: ${String(err)}`;
+            return null;
+          })
+      : Promise.resolve(null);
 
-  const subsetsPromise: Promise<BLSubsetEntry[]> = isInitial && client &&
-      (itemtype === "S" || itemtype === "M")
-    ? client.getSubsets(itemtype, itemid).catch(() => [])
-    : Promise.resolve([]);
+  const subsetsPromise: Promise<BLSubsetEntry[]> =
+    isInitial && client && (itemtype === "S" || itemtype === "M")
+      ? client.getSubsets(itemtype, itemid).catch(() => [])
+      : Promise.resolve([]);
 
   // Phase 1: Marketplace listings – catch everything so a 429/403/non-ok
   // response never bubbles up and kills the API-client data.
@@ -226,18 +225,15 @@ export async function GET({ url }: APIContext): Promise<Response> {
       marketplaceUrl.searchParams.set("loc", "AU");
       marketplaceUrl.searchParams.set("rpp", String(MARKETPLACE_PAGE_SIZE));
       marketplaceUrl.searchParams.set("pi", String(page));
-      if (colorIdNum !== null && colorIdNum > 0 && !isNaN(colorIdNum)) {
+      if (colorIdNum !== null && colorIdNum > 0 && !Number.isNaN(colorIdNum)) {
         marketplaceUrl.searchParams.set("color", String(colorIdNum));
       }
       try {
-        upstreamData = await coalesced(
-          `marketplace:${idItem}:${colorIdNum ?? "all"}:${page}`,
-          async () => {
-            const resp = await fetchWithBackoff(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid));
-            if (!resp.ok) throw new Error(`Upstream HTTP ${resp.status}`);
-            return await resp.json() as Record<string, unknown>;
-          },
-        );
+        upstreamData = await coalesced(`marketplace:${idItem}:${colorIdNum ?? "all"}:${page}`, async () => {
+          const resp = await fetchWithBackoff(marketplaceUrl, bricklinkAjaxHeaders(itemtype, itemid));
+          if (!resp.ok) throw new Error(`Upstream HTTP ${resp.status}`);
+          return (await resp.json()) as Record<string, unknown>;
+        });
       } catch (err) {
         upstreamError = String(err);
         logger.warn`Marketplace fetch failed for ${itemid}: ${upstreamError}`;
@@ -271,33 +267,35 @@ export async function GET({ url }: APIContext): Promise<Response> {
   // Phase 2: Store items – fetch the store's own lots through the official
   // BrickLink Store API. The store.bricklink.com scrape is WAF-blocked for
   // server-side fetch (needs browser session cookies + aws-waf-token).
-  const storePromise = listOnly ? Promise.resolve(null) : (async () => {
-    if (!client) return [];
-    try {
-      const cached = await getStoreItemsCache(itemtype, itemid, colorIdNum);
-      if (cached) {
-        logger.debug`Store items cache hit for ${itemid} color=${colorIdNum ?? "all"}`;
-        return cached;
-      }
-      const inventories = await client.getStoreInventories(
-        itemtype,
-        colorIdNum && colorIdNum > 0 ? colorIdNum : undefined,
-      );
-      const items = inventories
-        .filter((inv) => inv.item.no.toLowerCase() === itemid.toLowerCase())
-        .map((inv) => ({
-          invQty: inv.quantity,
-          nativePrice: `AU ${parseFloat(inv.unit_price).toFixed(2)}`,
-          invNew: inv.new_or_used === "N" ? "New" : "Used",
-          invDescription: inv.description,
-        }));
-      await saveStoreItemsCache(itemtype, itemid, colorIdNum, items);
-      return items;
-    } catch (err) {
-      logger.warn`Store fetch failed for ${itemid}: ${String(err)}`;
-      return [];
-    }
-  })();
+  const storePromise = listOnly
+    ? Promise.resolve(null)
+    : (async () => {
+        if (!client) return [];
+        try {
+          const cached = await getStoreItemsCache(itemtype, itemid, colorIdNum);
+          if (cached) {
+            logger.debug`Store items cache hit for ${itemid} color=${colorIdNum ?? "all"}`;
+            return cached;
+          }
+          const inventories = await client.getStoreInventories(
+            itemtype,
+            colorIdNum && colorIdNum > 0 ? colorIdNum : undefined,
+          );
+          const items = inventories
+            .filter((inv) => inv.item.no.toLowerCase() === itemid.toLowerCase())
+            .map((inv) => ({
+              invQty: inv.quantity,
+              nativePrice: `AU ${parseFloat(inv.unit_price).toFixed(2)}`,
+              invNew: inv.new_or_used === "N" ? "New" : "Used",
+              invDescription: inv.description,
+            }));
+          await saveStoreItemsCache(itemtype, itemid, colorIdNum, items);
+          return items;
+        } catch (err) {
+          logger.warn`Store fetch failed for ${itemid}: ${String(err)}`;
+          return [];
+        }
+      })();
 
   let marketplaceResult: {
     data: Record<string, unknown>;
@@ -326,9 +324,8 @@ export async function GET({ url }: APIContext): Promise<Response> {
     return Response.json({ error: String(err) }, { status: 502 });
   }
 
-  const partCount = subsets.length > 0
-    ? subsets.reduce((sum, s) => sum + s.entries.reduce((n, e) => n + e.quantity, 0), 0)
-    : null;
+  const partCount =
+    subsets.length > 0 ? subsets.reduce((sum, s) => sum + s.entries.reduce((n, e) => n + e.quantity, 0), 0) : null;
 
   // Phase 3: Return everything we have; include marketplaceError so the UI
   // can show a helpful message without losing the catalog/colors data.

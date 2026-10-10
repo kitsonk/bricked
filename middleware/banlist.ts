@@ -43,7 +43,7 @@ export const banlist: RespondingMiddleware = async (context, next) => {
     return await next();
   }
 
-  const ip = getClientIp(context.request);
+  const ip = getClientIp(context.request, context.clientAddress);
   if (!ip) {
     // Without a usable IP, do not record or block — let auth do its thing.
     return await next();

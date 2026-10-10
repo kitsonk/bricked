@@ -57,7 +57,7 @@ export const auth: RespondingMiddleware = async (context, next) => {
   logger.info`Unauthenticated request blocked: ${context.request.method} ${context.url.pathname}`;
   const res = new Response(null, {
     status: 302,
-    headers: { location: "/login" + (query ? "?" + query : "") },
+    headers: { location: query ? `/login?${query}` : "/login" },
   });
   return applyDiscouragementHeaders(res);
 };

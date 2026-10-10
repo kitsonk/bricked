@@ -26,7 +26,7 @@ export default function ShippingMethods({ initialMethods }: { initialMethods: Sh
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       methods.value = methods.value.map((m) =>
-        m.method_id === method.method_id ? { ...m, enrichment: { ...m.enrichment, [field]: newValue } } : m
+        m.method_id === method.method_id ? { ...m, enrichment: { ...m.enrichment, [field]: newValue } } : m,
       );
     } catch (err) {
       error.value = String(err);

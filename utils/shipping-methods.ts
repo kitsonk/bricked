@@ -25,18 +25,16 @@ export async function getShippingMethodsWithEnrichment(client: BricklinkClient):
 
     if (cached) {
       const previousById = new Map(cached.methods.map((m) => [m.method_id, m]));
-      const currentIds = new Set(methods.map((m) => m.method_id));
+      const currentById = new Map(methods.map((m) => [m.method_id, m]));
 
       for (const [id, prev] of previousById) {
-        if (!currentIds.has(id)) {
+        const current = currentById.get(id);
+        if (!current) {
           logger.debug`Clearing enrichment for removed method_id=${id}`;
           await deleteShippingMethodEnrichment(id);
-        } else {
-          const current = methods.find((m) => m.method_id === id)!;
-          if (current.name !== prev.name) {
-            logger.debug`Clearing enrichment for renamed method_id=${id} ("${prev.name}" → "${current.name}")`;
-            await deleteShippingMethodEnrichment(id);
-          }
+        } else if (current.name !== prev.name) {
+          logger.debug`Clearing enrichment for renamed method_id=${id} ("${prev.name}" → "${current.name}")`;
+          await deleteShippingMethodEnrichment(id);
         }
       }
     }

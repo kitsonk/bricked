@@ -59,12 +59,15 @@ export async function buildCrm(): Promise<void> {
 
   const COMPLETED_STATUSES = new Set(["SHIPPED", "RECEIVED", "COMPLETED", "PURGED"]);
 
-  const customerMap = new Map<string, {
-    orderCount: number;
-    firstOrderDate: string;
-    lastOrderDate: string;
-    totalsByCurrency: Record<string, number>;
-  }>();
+  const customerMap = new Map<
+    string,
+    {
+      orderCount: number;
+      firstOrderDate: string;
+      lastOrderDate: string;
+      totalsByCurrency: Record<string, number>;
+    }
+  >();
 
   for (const order of cachedOrders) {
     if (!COMPLETED_STATUSES.has(order.status)) continue;

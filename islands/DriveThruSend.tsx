@@ -69,56 +69,60 @@ export default function DriveThruSend({
         </div>
       )}
 
-      {templates.length === 0
-        ? (
-          <div class="text-center py-12 text-base-content/50">
-            <span class="iconify lucide--file-text size-12 block mx-auto mb-3"></span>
-            <p class="font-medium">No templates yet</p>
-            <p class="text-sm mt-1">
-              <a href="/drive-thru/templates" class="link">Create a template</a> to get started.
-            </p>
-          </div>
-        )
-        : (
-          <>
-            <fieldset class="fieldset">
-              <legend class="fieldset-legend">Template</legend>
-              <select
-                class="select w-full"
-                value={selectedId.value}
-                onChange={(e) => (selectedId.value = e.currentTarget.value)}
-              >
-                {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-              <p class="label flex items-center gap-2">
-                <a href="/drive-thru/templates" class="link link-primary text-xs">Manage templates</a>
-                {matchedRuleName && <span class="badge badge-xs badge-info">Auto: {matchedRuleName}</span>}
-              </p>
-            </fieldset>
-
-            <fieldset class="fieldset">
-              <legend class="fieldset-legend">Preview</legend>
-              <div class="bg-base-200 rounded-box p-4 text-sm whitespace-pre-wrap min-h-24 font-mono">
-                {preview || <span class="text-base-content/40 italic">Select a template to preview</span>}
-              </div>
-              <p class="label text-xs text-base-content/50">
-                This previews how your BrickLink Drive Thru message will appear with order data substituted in.
-              </p>
-            </fieldset>
-
-            <button
-              type="button"
-              class="btn btn-primary"
-              disabled={sending.value || !selectedTemplate}
-              onClick={send}
+      {templates.length === 0 ? (
+        <div class="text-center py-12 text-base-content/50">
+          <span class="iconify lucide--file-text size-12 block mx-auto mb-3"></span>
+          <p class="font-medium">No templates yet</p>
+          <p class="text-sm mt-1">
+            <a href="/drive-thru/templates" class="link">
+              Create a template
+            </a>{" "}
+            to get started.
+          </p>
+        </div>
+      ) : (
+        <>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Template</legend>
+            <select
+              class="select w-full"
+              value={selectedId.value}
+              onChange={(e) => (selectedId.value = e.currentTarget.value)}
             >
-              {sending.value
-                ? <span class="loading loading-spinner loading-sm"></span>
-                : <span class="iconify lucide--send size-4"></span>}
-              {sent.value ? "Send Again" : "Send Drive Thru"}
-            </button>
-          </>
-        )}
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <p class="label flex items-center gap-2">
+              <a href="/drive-thru/templates" class="link link-primary text-xs">
+                Manage templates
+              </a>
+              {matchedRuleName && <span class="badge badge-xs badge-info">Auto: {matchedRuleName}</span>}
+            </p>
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Preview</legend>
+            <div class="bg-base-200 rounded-box p-4 text-sm whitespace-pre-wrap min-h-24 font-mono">
+              {preview || <span class="text-base-content/40 italic">Select a template to preview</span>}
+            </div>
+            <p class="label text-xs text-base-content/50">
+              This previews how your BrickLink Drive Thru message will appear with order data substituted in.
+            </p>
+          </fieldset>
+
+          <button type="button" class="btn btn-primary" disabled={sending.value || !selectedTemplate} onClick={send}>
+            {sending.value ? (
+              <span class="loading loading-spinner loading-sm"></span>
+            ) : (
+              <span class="iconify lucide--send size-4"></span>
+            )}
+            {sent.value ? "Send Again" : "Send Drive Thru"}
+          </button>
+        </>
+      )}
     </div>
   );
 }

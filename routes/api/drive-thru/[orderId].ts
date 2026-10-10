@@ -9,7 +9,7 @@ export async function POST({ request, params }: APIContext): Promise<Response> {
   }
 
   const orderId = Number(params.orderId);
-  if (isNaN(orderId)) {
+  if (Number.isNaN(orderId)) {
     return Response.json({ error: "Invalid order ID" }, { status: 400 });
   }
 

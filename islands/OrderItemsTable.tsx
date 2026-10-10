@@ -60,7 +60,8 @@ export default function OrderItemsTable({ orderId, items, currencyCode }: Props)
                         class="size-10 object-contain"
                         loading="lazy"
                         onError={(e) => {
-                          e.currentTarget.parentElement!.style.display = "none";
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) parent.style.display = "none";
                         }}
                       />
                     </button>
@@ -86,9 +87,11 @@ export default function OrderItemsTable({ orderId, items, currencyCode }: Props)
                 </td>
                 <td class="text-right font-bold">{item.quantity}</td>
                 <td>
-                  {item.remarks
-                    ? <span class="font-mono text-sm text-primary">{item.remarks}</span>
-                    : <span class="text-base-content/30 text-xs">—</span>}
+                  {item.remarks ? (
+                    <span class="font-mono text-sm text-primary">{item.remarks}</span>
+                  ) : (
+                    <span class="text-base-content/30 text-xs">—</span>
+                  )}
                 </td>
                 <td class="text-right text-sm font-mono">
                   {currencyCode} {formatAmount(item.disp_unit_price)}

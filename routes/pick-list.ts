@@ -18,7 +18,7 @@ export async function loadPickList({ url }: APIContext): Promise<PageResult<Pick
   const orderIds = orderParam
     .split(",")
     .map(Number)
-    .filter((n) => !isNaN(n) && n > 0);
+    .filter((n) => !Number.isNaN(n) && n > 0);
 
   if (orderIds.length === 0) {
     return { kind: "redirect", to: "/orders" };

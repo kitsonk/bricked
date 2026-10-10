@@ -1,14 +1,6 @@
-const EXEMPT_PATHS: ReadonlySet<string> = new Set([
-  "/login",
-  "/api/notifications",
-]);
+const EXEMPT_PATHS: ReadonlySet<string> = new Set(["/login", "/api/notifications"]);
 
-const EXEMPT_PREFIXES: readonly string[] = [
-  "/_astro/",
-  "/favicon",
-  "/logo",
-  "/robots.txt",
-];
+const EXEMPT_PREFIXES: readonly string[] = ["/_astro/", "/favicon", "/logo", "/robots.txt"];
 
 const STATIC_EXTENSIONS = new Set([
   ".js",

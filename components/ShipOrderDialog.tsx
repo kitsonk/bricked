@@ -42,12 +42,12 @@ export function ShipOrderDialog({ order, hasTracking, isOpen, onConfirm, onClose
   const addr = order.shipping?.address;
   const addressLines = addr
     ? [
-      addr.name?.full || [addr.name?.first, addr.name?.last].filter(Boolean).join(" "),
-      addr.address1,
-      addr.address2,
-      [addr.city, addr.state, addr.postal_code].filter(Boolean).join(", "),
-      addr.country_code,
-    ].filter(Boolean)
+        addr.name?.full || [addr.name?.first, addr.name?.last].filter(Boolean).join(" "),
+        addr.address1,
+        addr.address2,
+        [addr.city, addr.state, addr.postal_code].filter(Boolean).join(", "),
+        addr.country_code,
+      ].filter(Boolean)
     : [];
 
   return (
@@ -58,7 +58,9 @@ export function ShipOrderDialog({ order, hasTracking, isOpen, onConfirm, onClose
         <div class="grid grid-cols-2 gap-4 mb-5 text-sm">
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Ship To</div>
-            {addressLines.map((line, i) => <div key={i}>{line}</div>)}
+            {addressLines.map((line, i) => (
+              <div key={i}>{line}</div>
+            ))}
           </div>
           <div>
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Method</div>
@@ -102,7 +104,9 @@ export function ShipOrderDialog({ order, hasTracking, isOpen, onConfirm, onClose
         )}
 
         <div class="modal-action">
-          <button type="button" class="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button type="button" class="btn btn-ghost" onClick={onClose}>
+            Cancel
+          </button>
           <button
             type="button"
             class="btn btn-info"
@@ -112,14 +116,17 @@ export function ShipOrderDialog({ order, hasTracking, isOpen, onConfirm, onClose
                 dateShipped: dateShipped.value,
                 trackingNo: trackingNo.value,
                 trackingLink: trackingLink.value,
-              })}
+              })
+            }
           >
             Ship Order
           </button>
         </div>
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button type="submit" onClick={onClose}>close</button>
+        <button type="submit" onClick={onClose}>
+          close
+        </button>
       </form>
     </dialog>
   );

@@ -34,16 +34,21 @@ function packageLabel(pt: PackageType): string {
   return `${pt.label} (${dims})`;
 }
 
-export default function ShipList(
-  { orders, packageTypes, addresses: initialAddresses, trackingMethodIds, printLabelMethodIds, shippingMethods }: {
-    orders: BLOrder[];
-    packageTypes: PackageType[];
-    addresses: Record<number, AusPostAddress>;
-    trackingMethodIds: number[];
-    printLabelMethodIds: number[];
-    shippingMethods: BLShippingMethod[];
-  },
-) {
+export default function ShipList({
+  orders,
+  packageTypes,
+  addresses: initialAddresses,
+  trackingMethodIds,
+  printLabelMethodIds,
+  shippingMethods,
+}: {
+  orders: BLOrder[];
+  packageTypes: PackageType[];
+  addresses: Record<number, AusPostAddress>;
+  trackingMethodIds: number[];
+  printLabelMethodIds: number[];
+  shippingMethods: BLShippingMethod[];
+}) {
   const trackingMethodSet = new Set(trackingMethodIds);
   const printLabelMethodSet = new Set(printLabelMethodIds);
   const packageById = new Map(packageTypes.map((pt) => [pt.id, pt]));
@@ -52,21 +57,15 @@ export default function ShipList(
   const shippingOverrides = useSignal<Set<number>>(new Set());
   const savingMethodId = useSignal<number | null>(null);
 
-  const selectedPackage = useSignal<Record<number, string>>(
-    Object.fromEntries(orders.map((o) => [o.order_id, ""])),
-  );
+  const selectedPackage = useSignal<Record<number, string>>(Object.fromEntries(orders.map((o) => [o.order_id, ""])));
 
   const dimensions = useSignal<Record<number, Dims>>(
     Object.fromEntries(orders.map((o) => [o.order_id, { l: "", w: "", h: "" }])),
   );
 
-  const weights = useSignal<Record<number, string>>(
-    Object.fromEntries(orders.map((o) => [o.order_id, ""])),
-  );
+  const weights = useSignal<Record<number, string>>(Object.fromEntries(orders.map((o) => [o.order_id, ""])));
 
-  const extraCover = useSignal<Record<number, string>>(
-    Object.fromEntries(orders.map((o) => [o.order_id, "0"])),
-  );
+  const extraCover = useSignal<Record<number, string>>(Object.fromEntries(orders.map((o) => [o.order_id, "0"])));
 
   const addresses = useSignal<Record<number, AusPostAddress>>(initialAddresses);
   const verifyStatuses = useSignal<Record<number, "verifying" | "success" | "unmatched" | "error">>({});
@@ -104,7 +103,7 @@ export default function ShipList(
       }
       // Update local order so isExportable / isPrintLabel recompute
       localOrders.value = localOrders.value.map((o) =>
-        o.order_id === orderId ? { ...o, shipping: { ...o.shipping, method: methodName, method_id: methodId } } : o
+        o.order_id === orderId ? { ...o, shipping: { ...o.shipping, method: methodName, method_id: methodId } } : o,
       );
       shippingOverrides.value = new Set([...shippingOverrides.value, orderId]);
     } catch (err) {
@@ -224,20 +223,22 @@ export default function ShipList(
         const dims = dimensions.value[order.order_id];
         const weight = weights.value[order.order_id];
         return dims.l && dims.w && dims.h && weight;
-      })
+      }),
   );
 
   async function exportManifest() {
-    const rows = localOrders.value.filter((o) => isExportable(o, trackingMethodSet)).map((order) => ({
-      orderId: order.order_id,
-      countryCode: order.shipping?.address?.country_code ?? "",
-      address: addresses.value[order.order_id],
-      lengthCm: dimensions.value[order.order_id].l,
-      widthCm: dimensions.value[order.order_id].w,
-      heightCm: dimensions.value[order.order_id].h,
-      weightKg: (parseFloat(weights.value[order.order_id]) / 1000).toString(),
-      extraCover: extraCover.value[order.order_id],
-    }));
+    const rows = localOrders.value
+      .filter((o) => isExportable(o, trackingMethodSet))
+      .map((order) => ({
+        orderId: order.order_id,
+        countryCode: order.shipping?.address?.country_code ?? "",
+        address: addresses.value[order.order_id],
+        lengthCm: dimensions.value[order.order_id].l,
+        widthCm: dimensions.value[order.order_id].w,
+        heightCm: dimensions.value[order.order_id].h,
+        weightKg: (parseFloat(weights.value[order.order_id]) / 1000).toString(),
+        extraCover: extraCover.value[order.order_id],
+      }));
 
     const resp = await fetch("/api/ship-list/manifest", {
       method: "POST",
@@ -284,9 +285,10 @@ export default function ShipList(
 
   async function verifyAllAddresses() {
     verifyingAll.value = true;
-    const verifyOrders = localOrders.value.filter((o) =>
-      isExportable(o, trackingMethodSet) ||
-      (printLabelMethodSet.has(o.shipping?.method_id) && o.shipping?.address?.country_code === "AU")
+    const verifyOrders = localOrders.value.filter(
+      (o) =>
+        isExportable(o, trackingMethodSet) ||
+        (printLabelMethodSet.has(o.shipping?.method_id) && o.shipping?.address?.country_code === "AU"),
     );
     verifyStatuses.value = Object.fromEntries(verifyOrders.map((o) => [o.order_id, "verifying" as const]));
 
@@ -340,12 +342,7 @@ export default function ShipList(
         </div>
       )}
       <div class="flex justify-end mb-4 gap-2">
-        <button
-          type="button"
-          class="btn btn-primary btn-sm"
-          disabled={!hasSelection.value}
-          onClick={printLabels}
-        >
+        <button type="button" class="btn btn-primary btn-sm" disabled={!hasSelection.value} onClick={printLabels}>
           <span class="iconify lucide--printer size-4"></span>
           Print Labels
         </button>
@@ -353,9 +350,9 @@ export default function ShipList(
           type="button"
           class="btn btn-primary btn-sm"
           disabled={!exportReady.value}
-          title={!exportReady.value
-            ? "All exportable rows must have length, width, height and weight filled in"
-            : undefined}
+          title={
+            !exportReady.value ? "All exportable rows must have length, width, height and weight filled in" : undefined
+          }
           onClick={exportManifest}
         >
           <span class="iconify lucide--download size-4"></span>
@@ -465,14 +462,14 @@ export default function ShipList(
                   disabled={verifying.value || saving.value}
                   onClick={verifyAddress}
                 >
-                  {verifying.value
-                    ? (
-                      <>
-                        <span class="loading loading-spinner loading-xs"></span>
-                        Verifying
-                      </>
-                    )
-                    : "Verify"}
+                  {verifying.value ? (
+                    <>
+                      <span class="loading loading-spinner loading-xs"></span>
+                      Verifying
+                    </>
+                  ) : (
+                    "Verify"
+                  )}
                 </button>
               )}
               <button type="button" class="btn btn-ghost btn-sm" onClick={closeAddressDialog}>
@@ -485,7 +482,9 @@ export default function ShipList(
           </form>
         </div>
         <form method="dialog" class="modal-backdrop">
-          <button type="submit" onClick={closeAddressDialog}>close</button>
+          <button type="submit" onClick={closeAddressDialog}>
+            close
+          </button>
         </form>
       </dialog>
 
@@ -514,9 +513,11 @@ export default function ShipList(
                     disabled={verifyingAll.value}
                     onClick={verifyAllAddresses}
                   >
-                    {verifyingAll.value
-                      ? <span class="loading loading-spinner loading-xs"></span>
-                      : <span class="iconify lucide--wand-sparkles size-3.5"></span>}
+                    {verifyingAll.value ? (
+                      <span class="loading loading-spinner loading-xs"></span>
+                    ) : (
+                      <span class="iconify lucide--wand-sparkles size-3.5"></span>
+                    )}
                   </button>
                 </div>
               </th>
@@ -584,7 +585,11 @@ export default function ShipList(
                           if (method) updateShippingMethod(order.order_id, methodId, method.name);
                         }}
                       >
-                        {methodOptions.map((m) => <option key={m.method_id} value={m.method_id}>{m.name}</option>)}
+                        {methodOptions.map((m) => (
+                          <option key={m.method_id} value={m.method_id}>
+                            {m.name}
+                          </option>
+                        ))}
                       </select>
                       {hasOverride && (
                         <span class="iconify lucide--pencil size-3 text-warning" title="Locally overridden"></span>
@@ -601,8 +606,7 @@ export default function ShipList(
                         {(addr.suburb || addr.state || addr.postcode) && (
                           <div>{[addr.suburb, addr.state, addr.postcode].filter(Boolean).join(", ")}</div>
                         )}
-                        {order.shipping?.address?.country_code &&
-                          order.shipping.address.country_code !== "AU" && (
+                        {order.shipping?.address?.country_code && order.shipping.address.country_code !== "AU" && (
                           <div class="text-base-content/60">{order.shipping.address.country_code}</div>
                         )}
                         {verifyStatuses.value[order.order_id] === "verifying" && (
@@ -639,90 +643,96 @@ export default function ShipList(
                       </button>
                     </div>
                   </td>
-                  {exportable
-                    ? (
-                      <>
-                        <td>
-                          <select
-                            class="select select-sm w-full min-w-40"
-                            value={selectedPackage.value[order.order_id]}
-                            onChange={(e) => setPackage(order.order_id, e.currentTarget.value)}
-                          >
-                            <option value="">Custom</option>
-                            {packageTypes.map((pt) => <option key={pt.id} value={pt.id}>{packageLabel(pt)}</option>)}
-                          </select>
-                        </td>
-                        <td>
-                          <div class="space-y-1">
-                            <div class="flex items-center gap-2">
-                              <span class="text-xs text-base-content/50 w-10">L (cm)</span>
-                              <input
-                                type="number"
-                                class="input input-sm w-24"
-                                step="0.1"
-                                min="0"
-                                disabled={!isCustom}
-                                value={dims.l}
-                                onInput={(e) => setDim(order.order_id, "l", e.currentTarget.value)}
-                              />
-                            </div>
-                            <div class="flex items-center gap-2">
-                              <span class="text-xs text-base-content/50 w-10">W (cm)</span>
-                              <input
-                                type="number"
-                                class="input input-sm w-24"
-                                step="0.1"
-                                min="0"
-                                disabled={!isCustom}
-                                value={dims.w}
-                                onInput={(e) => setDim(order.order_id, "w", e.currentTarget.value)}
-                              />
-                            </div>
-                            <div class="flex items-center gap-2">
-                              <span class="text-xs text-base-content/50 w-10">H (cm)</span>
-                              <input
-                                type="number"
-                                class="input input-sm w-24"
-                                step="0.1"
-                                min="0"
-                                disabled={!isCustom}
-                                value={dims.h}
-                                onInput={(e) => setDim(order.order_id, "h", e.currentTarget.value)}
-                              />
-                            </div>
+                  {exportable ? (
+                    <>
+                      <td>
+                        <select
+                          class="select select-sm w-full min-w-40"
+                          value={selectedPackage.value[order.order_id]}
+                          onChange={(e) => setPackage(order.order_id, e.currentTarget.value)}
+                        >
+                          <option value="">Custom</option>
+                          {packageTypes.map((pt) => (
+                            <option key={pt.id} value={pt.id}>
+                              {packageLabel(pt)}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs text-base-content/50 w-10">L (cm)</span>
+                            <input
+                              type="number"
+                              class="input input-sm w-24"
+                              step="0.1"
+                              min="0"
+                              disabled={!isCustom}
+                              value={dims.l}
+                              onInput={(e) => setDim(order.order_id, "l", e.currentTarget.value)}
+                            />
                           </div>
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            class="input input-sm w-24"
-                            step="1"
-                            min="0"
-                            value={weights.value[order.order_id]}
-                            onInput={(e) =>
-                              weights.value = {
-                                ...weights.value,
-                                [order.order_id]: e.currentTarget.value,
-                              }}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            class="input input-sm w-24"
-                            step="100"
-                            min="0"
-                            value={extraCover.value[order.order_id]}
-                            onInput={(e) =>
-                              extraCover.value = {
-                                ...extraCover.value,
-                                [order.order_id]: e.currentTarget.value,
-                              }}
-                          />
-                        </td>
-                      </>
-                    )
-                    : <td colSpan={4} />}
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs text-base-content/50 w-10">W (cm)</span>
+                            <input
+                              type="number"
+                              class="input input-sm w-24"
+                              step="0.1"
+                              min="0"
+                              disabled={!isCustom}
+                              value={dims.w}
+                              onInput={(e) => setDim(order.order_id, "w", e.currentTarget.value)}
+                            />
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs text-base-content/50 w-10">H (cm)</span>
+                            <input
+                              type="number"
+                              class="input input-sm w-24"
+                              step="0.1"
+                              min="0"
+                              disabled={!isCustom}
+                              value={dims.h}
+                              onInput={(e) => setDim(order.order_id, "h", e.currentTarget.value)}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          class="input input-sm w-24"
+                          step="1"
+                          min="0"
+                          value={weights.value[order.order_id]}
+                          onInput={(e) =>
+                            (weights.value = {
+                              ...weights.value,
+                              [order.order_id]: e.currentTarget.value,
+                            })
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          class="input input-sm w-24"
+                          step="100"
+                          min="0"
+                          value={extraCover.value[order.order_id]}
+                          onInput={(e) =>
+                            (extraCover.value = {
+                              ...extraCover.value,
+                              [order.order_id]: e.currentTarget.value,
+                            })
+                          }
+                        />
+                      </td>
+                    </>
+                  ) : (
+                    <td colSpan={4} />
+                  )}
                 </tr>
               );
             })}

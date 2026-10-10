@@ -3,9 +3,13 @@ import type { BLOrder, OrderStatus } from "@/utils/types.ts";
 import { ShipOrderDialog } from "@/components/ShipOrderDialog.tsx";
 import type { ShipFormData } from "@/components/ShipOrderDialog.tsx";
 
-export default function OrderShipButton(
-  { order: initialOrder, hasTracking }: { order: BLOrder; hasTracking: boolean },
-) {
+export default function OrderShipButton({
+  order: initialOrder,
+  hasTracking,
+}: {
+  order: BLOrder;
+  hasTracking: boolean;
+}) {
   const dialogOpen = useSignal(false);
   const shipped = useSignal(false);
   const loading = useSignal(false);
@@ -49,9 +53,11 @@ export default function OrderShipButton(
         disabled={loading.value}
         onClick={() => (dialogOpen.value = true)}
       >
-        {loading.value
-          ? <span class="loading loading-spinner loading-xs"></span>
-          : <span class="iconify lucide--truck size-4"></span>}
+        {loading.value ? (
+          <span class="loading loading-spinner loading-xs"></span>
+        ) : (
+          <span class="iconify lucide--truck size-4"></span>
+        )}
         Ship Order
       </button>
       <ShipOrderDialog

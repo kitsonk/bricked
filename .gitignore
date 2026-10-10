@@ -13,5 +13,9 @@ dist/
 node_modules/
 vendor/
 
+# Deno KV SQLite database (KV_PATH default)
+kv.sqlite3
+kv.sqlite3-*
+
 # Local config files
 .mcp.json

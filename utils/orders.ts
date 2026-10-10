@@ -5,9 +5,7 @@ import { getShippingOverride } from "@/utils/kv.ts";
  * Apply a locally-stored shipping method override to a single order.
  * Mutates the order in place and returns it.
  */
-export async function patchOrderShipping<T extends Pick<BLOrder, "order_id" | "shipping">>(
-  order: T,
-): Promise<T> {
+export async function patchOrderShipping<T extends Pick<BLOrder, "order_id" | "shipping">>(order: T): Promise<T> {
   const override = await getShippingOverride(order.order_id);
   if (override) {
     order.shipping.method = override.methodName;

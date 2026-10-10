@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from "astro";
+import cron from "node-cron";
 import { logging } from "@/middleware/logging.ts";
 import { banlist } from "@/middleware/banlist.ts";
 import { auth } from "@/middleware/auth.ts";
@@ -14,15 +15,18 @@ const logger = getLogger(["bricked", "middleware"]);
 export const onRequest: MiddlewareHandler = (context, next) =>
   logging(context, () => originCheck(context, () => banlist(context, () => auth(context, next))));
 
-// `deno task dev` re-evaluates this module on every HMR update, and a bare `Deno.cron` throws
-// "Cron with this name already exists". Track registrations process-wide.
+// Vite re-evaluates this module on every HMR update, which would stack a second copy of each
+// schedule. Track registrations process-wide.
 const CRONS = Symbol.for("bricked.crons");
-const registeredCrons = ((globalThis as Record<symbol, Set<string>>)[CRONS] ??= new Set<string>());
+const cronsGlobal = globalThis as Record<symbol, Set<string> | undefined>;
+const registeredCrons = cronsGlobal[CRONS] ?? new Set<string>();
+cronsGlobal[CRONS] = registeredCrons;
 
 function registerCron(name: string, spec: string, fn: () => Promise<void>): void {
   if (registeredCrons.has(name)) return;
   registeredCrons.add(name);
-  Deno.cron(name, spec, fn);
+  // node-cron defaults to the host timezone; the old Deno.cron schedules were UTC, so pin it.
+  cron.schedule(spec, fn, { timezone: "UTC" });
 }
 
 // Refresh the CRM database once every 24 hours.

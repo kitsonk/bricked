@@ -15,19 +15,19 @@
   }
 
   .no-print {
-    display: none !important;
+    display: none;
   }
 
   .label-page {
-    height: 150mm !important;
-    width: 100mm !important;
-    padding: 10mm 10mm 10mm 0 !important;
+    height: 150mm;
+    width: 100mm;
+    padding: 10mm 10mm 10mm 0;
     break-after: page;
     overflow: hidden;
   }
 
   .label-page:first-child {
-    padding-top: 0 !important;
+    padding-top: 0;
   }
 
   .label-page:last-child {
@@ -37,6 +37,6 @@
   body {
     margin: 0;
     padding: 0;
-    background: white !important;
+    background: white;
   }
 }
