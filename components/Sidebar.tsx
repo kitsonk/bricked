@@ -45,6 +45,7 @@ export function Sidebar() {
         <div class="mt-2">
           <MenuItem icon="scroll" label="Logs" href="/admin/logs" />
           <MenuItem icon="history" label="Change Log" href="/admin/changelog" />
+          <MenuItem icon="database-backup" label="Restore Backup" href="/admin/restore" />
         </div>
       </div>
     </div>

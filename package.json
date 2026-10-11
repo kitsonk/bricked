@@ -22,6 +22,7 @@
     "@astrojs/preact": "^6.0.5",
     "@blaze/human-readable-timestamp": "npm:@jsr/blaze__human-readable-timestamp@^1.0.0",
     "@deno/kv": "^0.14.0",
+    "@deno/kv-utils": "npm:@jsr/deno__kv-utils@^0.1.4",
     "@iconify-json/lucide": "^1.2.129",
     "@iconify/tailwind4": "^1.2.3",
     "@kitsonk/logtape-kv-sink": "npm:@jsr/kitsonk__logtape-kv-sink@^0.2.1",

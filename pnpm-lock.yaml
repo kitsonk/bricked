@@ -20,6 +20,9 @@ importers:
       '@deno/kv':
         specifier: ^0.14.0
         version: 0.14.0
+      '@deno/kv-utils':
+        specifier: npm:@jsr/deno__kv-utils@^0.1.4
+        version: '@jsr/deno__kv-utils@0.1.4'
       '@iconify-json/lucide':
         specifier: ^1.2.129
         version: 1.2.142

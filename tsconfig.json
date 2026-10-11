@@ -28,6 +28,8 @@
     "utils/",
     "middleware/",
     "src/",
-    "tests/"
-  ]
+    "tests/",
+    "types/"
+  ],
+  "exclude": ["scripts"]
 }

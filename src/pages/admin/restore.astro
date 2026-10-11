@@ -1,0 +1,11 @@
+---
+import Shell from "../../layouts/Shell.astro";
+import Frame from "../../layouts/Frame.astro";
+import RestoreBackup from "@/islands/RestoreBackup.tsx";
+---
+<Shell>
+  <Frame>
+    <h1 class="text-2xl font-bold mb-6">Restore Backup</h1>
+    <RestoreBackup client:load />
+  </Frame>
+</Shell>

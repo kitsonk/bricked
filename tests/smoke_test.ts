@@ -35,6 +35,7 @@ const PAGE_ROUTES = [
   { path: "/", marker: "BrickLink store management", islands: 1 },
   { path: "/environment", marker: "BrickLink API Credentials", islands: 1 },
   { path: "/admin/changelog", marker: "collapse collapse-arrow", islands: 1 },
+  { path: "/admin/restore", marker: "Import NDJSON Export", islands: 2 },
   { path: "/colors", marker: 'component-url="/_astro/Colors.', islands: 2 },
   { path: "/configuration", marker: ">Sender Address<", islands: 2 },
   { path: "/package-types", marker: 'placeholder="Small box"', islands: 2 },

@@ -88,6 +88,24 @@ will boot.
 The KV database is a plain SQLite file (`kv.sqlite3` under the working directory by default). It is byte-compatible with
 databases Deno itself created, so an existing store can be copied into place before the first Node boot.
 
+### Migrating Data From a Deno Store
+
+The `@deno/kv` bridge reads most values from a database Deno wrote, but its deserialiser is not compatible with every
+value a Deno runtime serialised — pointing the Node app at the live Deno store surfaced errors on some records. When a
+direct copy does not work, transfer the data through a Deno runtime instead, which reads its own store natively:
+
+```sh
+# Requires Deno. `target` is a local SQLite path or a remote KV URL (see DENO_KV_ACCESS_TOKEN).
+deno run -A --unstable-kv scripts/kv-export.ts ./kv.sqlite3 export.ndjson
+```
+
+`scripts/kv-export.ts` writes every entry as newline-delimited JSON using `exportEntries` from `@deno/kv-utils`; the
+typed `{ type, value }` encoding preserves bigint, `Uint8Array`, `Date` and `KvU64` values that plain JSON would lose.
+
+Import the resulting file through **Admin → Restore Backup** (`/admin/restore`), which uploads it to
+`POST /api/admin/restore` and writes it back with `importEntries`. Existing keys are skipped unless *Overwrite existing
+keys* is ticked, and a malformed record is counted and skipped rather than aborting the whole import.
+
 ### Other Commands
 
 ```sh
