@@ -431,6 +431,63 @@ export interface BLInventory {
   description: string;
 }
 
+/** One row of GET /items/{type}/{no}/price `price_detail`. */
+export interface BLPriceGuideDetail {
+  quantity: number;
+  unit_price: string;
+  /** guide_type=stock rows only. */
+  shipping_available?: boolean;
+  /** guide_type=sold rows only. */
+  seller_country_code?: string;
+  buyer_country_code?: string;
+  date_ordered?: string;
+}
+
+/** Aggregate market statistics from GET /items/{type}/{no}/price. */
+export interface BLPriceGuide {
+  item: { no: string; type: string };
+  new_or_used: string;
+  currency_code: string;
+  min_price: string;
+  max_price: string;
+  avg_price: string;
+  qty_avg_price: string;
+  /** stock: number of lots for sale. sold: times sold in the window. */
+  unit_quantity: number;
+  /** stock: total quantity for sale. sold: total quantity sold in the window. */
+  total_quantity: number;
+  price_detail: BLPriceGuideDetail[];
+}
+
+/** Configured competitor tiers and currency settings for the pricing assistant. */
+export interface PricingSettings {
+  /** Lowercase BrickLink store slugs, e.g. "sydneybrickemp". */
+  tiers: { premium: string[]; mid: string[]; competitive: string[] };
+  /** ISO-3166 alpha-2 uppercase; "" widens to worldwide. */
+  marketCountry: string;
+  /** ISO-4217 uppercase; all analysis math happens in this currency. */
+  analysisCurrency: string;
+  /** Foreign code → analysis-currency units per 1 foreign unit. */
+  fxRates: Record<string, number>;
+}
+
+/** A listing row from the unofficial catalogifs.ajax endpoint. */
+export interface CatalogIfsListing {
+  idInv: number;
+  /** "N" | "U" */
+  codeNew: string;
+  n4Qty: number;
+  /** Native currency with a prefix, e.g. "AU $0.095". */
+  mInvSalePrice: string;
+  /** Fallback display price used when the prefix is unparseable. */
+  mDisplaySalePrice: string;
+  strStorename: string;
+  /** Store slug — present in the raw JSON. */
+  strSellerUsername: string;
+  n4SellerFeedbackScore: number;
+  idCurrencyStore: number;
+}
+
 export type ImportedItemType = "S" | "P" | "M" | "B" | "G" | "C" | "I" | "O";
 export type ImportedItemCondition = "N" | "U";
 

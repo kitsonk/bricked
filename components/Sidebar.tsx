@@ -29,6 +29,7 @@ export function Sidebar() {
           <MenuItem icon="house" label="Home" href="/" />
           <MenuItem icon="shopping-bag" label="Orders" href="/orders" />
           <MenuItem icon="warehouse" label="Inventory" href="/inventory" />
+          <MenuItem icon="tag" label="Pricing" href="/pricing" />
           <MenuItem icon="users" label="Customers" href="/customers" />
         </div>
         <p class="menu-label mt-4 px-2.5">Settings</p>

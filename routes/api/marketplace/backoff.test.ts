@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { computeBackoffDelay, isBricklinkAjaxCoolingDown, noteBricklinkAjaxThrottle } from "./index.ts";
+import { computeBackoffDelay, isBricklinkAjaxCoolingDown, noteBricklinkAjaxThrottle } from "@/utils/bricklinkAjax.ts";
 import { isMarketplaceCacheFresh } from "@/utils/kv.ts";
 
 // ---------------------------------------------------------------------------

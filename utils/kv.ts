@@ -4,6 +4,7 @@ import type {
   AusPostAddress,
   BLColor,
   BLOrderSummary,
+  BLPriceGuide,
   BLShippingMethod,
   BricklinkCredentials,
   BricklinkSearchResult,
@@ -14,6 +15,7 @@ import type {
   DriveThruTemplate,
   LocalShippingOverride,
   PackageType,
+  PricingSettings,
   ShippingMethodEnrichment,
   StoredNotification,
   TemplateRule,
@@ -249,12 +251,25 @@ export async function listCachedOrdersByBuyer(buyerName: string): Promise<BLOrde
   return all.filter((o) => o.buyer_name === buyerName).sort((a, b) => b.date_ordered.localeCompare(a.date_ordered));
 }
 
+// Pricing Settings
+
+const PRICING_SETTINGS_KEY: KvKey = ["pricing_settings"];
+
+export async function getPricingSettings(): Promise<PricingSettings | null> {
+  const result = await (await kv()).get<PricingSettings>(PRICING_SETTINGS_KEY);
+  return result.value;
+}
+
+export async function savePricingSettings(settings: PricingSettings): Promise<KvCommitResult> {
+  return (await kv()).set(PRICING_SETTINGS_KEY, settings);
+}
+
 // Marketplace Cache
 
 const MARKETPLACE_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-function marketplaceCacheKey(idItem: number, colorId: number | null, page: number): KvKey {
-  return ["marketplace_cache", idItem, colorId ?? "all", page];
+function marketplaceCacheKey(idItem: number, colorId: number | null, page: number, loc: string): KvKey {
+  return ["marketplace_cache", idItem, colorId ?? "all", page, loc || "any"];
 }
 
 export interface MarketplaceCacheEntry {
@@ -266,8 +281,9 @@ export async function getMarketplaceCache(
   idItem: number,
   colorId: number | null,
   page: number,
+  loc: string,
 ): Promise<{ data: unknown; savedAt: string | null } | null> {
-  const result = await (await kv()).get<unknown>(marketplaceCacheKey(idItem, colorId, page));
+  const result = await (await kv()).get<unknown>(marketplaceCacheKey(idItem, colorId, page, loc));
   const value = result.value;
   if (value === null || value === undefined) return null;
   if (
@@ -287,17 +303,89 @@ export async function saveMarketplaceCache(
   idItem: number,
   colorId: number | null,
   page: number,
+  loc: string,
   data: unknown,
 ): Promise<void> {
   const entry: MarketplaceCacheEntry = { data, savedAt: new Date().toISOString() };
   // Hard 24h expiry bounds KV growth; freshness is judged by savedAt, not expiry.
-  await (await kv()).set(marketplaceCacheKey(idItem, colorId, page), entry, {
+  await (await kv()).set(marketplaceCacheKey(idItem, colorId, page, loc), entry, {
     expireIn: 24 * 60 * 60 * 1000,
   });
 }
 
 export function isMarketplaceCacheFresh(savedAt: string | null, nowMs = Date.now()): boolean {
   return savedAt !== null && nowMs - Date.parse(savedAt) < MARKETPLACE_CACHE_TTL_MS;
+}
+
+// Price Guide Cache
+
+const PRICE_GUIDE_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+function priceGuideCacheKey(
+  itemType: string,
+  itemNo: string,
+  colorId: number | null,
+  newOrUsed: string,
+  guideType: string,
+  countryCode: string,
+  currencyCode: string,
+): KvKey {
+  // Guides are country- and currency-specific, so both belong in the key.
+  return [
+    "price_guide_cache",
+    itemType,
+    itemNo.toLowerCase(),
+    colorId ?? "all",
+    newOrUsed,
+    guideType,
+    countryCode || "any",
+    currencyCode,
+  ];
+}
+
+export interface PriceGuideCacheEntry {
+  guide: BLPriceGuide;
+  savedAt: string; // ISO-8601
+}
+
+export async function getPriceGuideCache(
+  itemType: string,
+  itemNo: string,
+  colorId: number | null,
+  newOrUsed: string,
+  guideType: string,
+  countryCode: string,
+  currencyCode: string,
+): Promise<{ guide: BLPriceGuide; savedAt: string } | null> {
+  const result = await (await kv()).get<PriceGuideCacheEntry>(
+    priceGuideCacheKey(itemType, itemNo, colorId, newOrUsed, guideType, countryCode, currencyCode),
+  );
+  const value = result.value;
+  if (value === null || value === undefined) return null;
+  return { guide: value.guide, savedAt: value.savedAt };
+}
+
+export async function savePriceGuideCache(
+  itemType: string,
+  itemNo: string,
+  colorId: number | null,
+  newOrUsed: string,
+  guideType: string,
+  countryCode: string,
+  currencyCode: string,
+  guide: BLPriceGuide,
+): Promise<void> {
+  const entry: PriceGuideCacheEntry = { guide, savedAt: new Date().toISOString() };
+  // Hard 24h expiry bounds KV growth; freshness is judged by savedAt, not expiry.
+  await (await kv()).set(
+    priceGuideCacheKey(itemType, itemNo, colorId, newOrUsed, guideType, countryCode, currencyCode),
+    entry,
+    { expireIn: 24 * 60 * 60 * 1000 },
+  );
+}
+
+export function isPriceGuideCacheFresh(savedAt: string | null, nowMs = Date.now()): boolean {
+  return savedAt !== null && nowMs - Date.parse(savedAt) < PRICE_GUIDE_CACHE_TTL_MS;
 }
 
 // Store Items Cache

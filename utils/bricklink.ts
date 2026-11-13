@@ -10,6 +10,7 @@ import type {
   BLOrderItem,
   BLOrderMessage,
   BLOrderSummary,
+  BLPriceGuide,
   BLShippingMethod,
   BLSubsetEntry,
   BricklinkCredentials,
@@ -149,6 +150,27 @@ export class BricklinkClient {
   getItemColors(itemType: string, itemNo: string): Promise<BLItemColor[]> {
     const apiType = ITEM_TYPE_API[itemType] ?? itemType;
     return this.get<BLItemColor[]>(`/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/colors`);
+  }
+
+  getPriceGuide(
+    itemType: string,
+    itemNo: string,
+    opts: {
+      colorId?: number;
+      guideType?: "stock" | "sold";
+      newOrUsed?: "N" | "U";
+      countryCode?: string;
+      currencyCode?: string;
+    } = {},
+  ): Promise<BLPriceGuide> {
+    const apiType = ITEM_TYPE_API[itemType] ?? itemType;
+    const query: Record<string, string> = {};
+    if (opts.colorId !== undefined) query.color_id = String(opts.colorId);
+    if (opts.guideType) query.guide_type = opts.guideType;
+    if (opts.newOrUsed) query.new_or_used = opts.newOrUsed;
+    if (opts.countryCode) query.country_code = opts.countryCode;
+    if (opts.currencyCode) query.currency_code = opts.currencyCode;
+    return this.get<BLPriceGuide>(`/items/${encodeURIComponent(apiType)}/${encodeURIComponent(itemNo)}/price`, query);
   }
 
   getCatalogItem(itemType: string, itemNo: string): Promise<BLCatalogItem> {
